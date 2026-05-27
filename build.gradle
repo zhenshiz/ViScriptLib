@@ -1,0 +1,283 @@
+plugins {
+    id 'java-library'
+    id 'maven-publish'
+    id 'idea'
+    id 'net.neoforged.moddev' version '2.0.82'
+    id 'io.freefair.lombok' version '8.6'
+    id("dev.vfyjxf.modaccessor") version "1.1"
+}
+
+version = mod_version
+group = mod_group_id
+
+repositories {
+    mavenLocal()
+    mavenCentral()
+
+    //kubejs
+    maven {
+        name = "Latvian"
+        url = "https://maven.latvian.dev/releases"
+        content {
+            includeGroup "dev.latvian.mods"
+            includeGroup "dev.latvian.apps"
+        }
+    }
+    maven {
+        name = "JitPack"
+        url = "https://jitpack.io"
+        content {
+            includeGroup "com.github.rtyley"
+        }
+    }
+
+    // LDLib2
+    maven {
+        name = "Jared's maven"
+        url = "https://maven.firstdarkdev.xyz/snapshots"
+    }
+
+    //GeckoLib
+    maven {
+        name = 'GeckoLib'
+        url 'https://dl.cloudsmith.io/public/geckolib3/geckolib/maven/'
+        content {
+            includeGroupByRegex("software\\.bernie.*")
+            includeGroup("com.eliotlash.mclib")
+        }
+    }
+
+    //Modrinth
+    maven {
+        name = "Modrinth"
+        url = "https://api.modrinth.com/maven"
+    }
+
+    //cf
+    maven {
+        url "https://cursemaven.com"
+    }
+
+    maven {
+        url "https://maven.sighs.cc/repository/maven-public/"
+    }
+
+    maven {
+        name = "Illusive Soulworks maven"
+        url = "https://maven.theillusivec4.top/"
+    }
+    maven {
+        name = "magicTeam MavenReleases"
+        url = "https://maven.confluence.ink/releases"
+    }
+    maven {
+        name = "magicTeam MavenSnapshots"
+        url = "https://maven.confluence.ink/snapshots"
+    }
+}
+
+base {
+    archivesName = "${mod_name}-neoforge-${minecraft_version}"
+}
+
+java.toolchain.languageVersion = JavaLanguageVersion.of(21)
+
+configurations {
+    create("mixinAgent") {
+        canBeConsumed = false
+        canBeResolved = true
+        defaultDependencies {
+            add(dependencyFactory.create("dev.vfyjxf:mixin-hotswap-agent:1.1").setTransitive(false))
+        }
+    }
+}
+
+
+neoForge {
+    version = project.neo_version
+
+    parchment {
+        mappingsVersion = project.parchment_mappings_version
+        minecraftVersion = project.parchment_minecraft_version
+    }
+
+    runs {
+        client {
+            client()
+
+            systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
+        }
+
+        clinet2 {
+            client()
+
+            systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
+            programArgument '--username'
+            programArgument 'zhenshiz'
+        }
+
+        server {
+            server()
+            systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
+        }
+
+        gameTestServer {
+            type = "gameTestServer"
+            systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
+        }
+
+        data {
+            data()
+            programArguments.addAll '--mod', project.mod_id, '--all', '--output', file('src/generated/resources/').getAbsolutePath(), '--existing', file('src/main/resources/').getAbsolutePath()
+        }
+
+        configureEach {
+            def files = configurations.mixinAgent.files
+            if (!files.isEmpty()) {
+                jvmArgument '-javaagent:' + files.first().toPath()
+            }
+            systemProperty 'forge.logging.markers', 'REGISTRIES'
+
+            jvmArguments.add '-XX:+AllowEnhancedClassRedefinition'
+            jvmArguments.add '-XX:HotswapAgent=fatjar'
+
+            logLevel = org.slf4j.event.Level.DEBUG
+        }
+    }
+
+    mods {
+        "${mod_id}" {
+            sourceSet(sourceSets.main)
+        }
+    }
+}
+
+sourceSets.main.resources { srcDir 'src/generated/resources' }
+
+modAccessor {
+    createTransformConfiguration(configurations.compileOnly)
+    accessTransformerFiles = project.files('src/main/resources/META-INF/accesstransformer.cfg')
+}
+
+dependencies {
+    // LDLib2
+    implementation("com.lowdragmc.ldlib2:ldlib2-neoforge-${minecraft_version}:${ldlib2_version}:all")
+
+    //联动模组
+    // KubeJS
+    implementation "dev.latvian.mods:rhino:${rhino_version}"
+    implementation "dev.latvian.mods:kubejs-neoforge:${kubejs_version}"
+    //精妙背包
+    compileOnly "maven.modrinth:sophisticated-backpacks:${sophisticated_backpacks_version}"
+    compileOnly "maven.modrinth:sophisticated-core:${sophisticated_core_version}"
+    //超越维度
+    compileOnly "curse.maven:beyond-dimensions-1222890:${beyonddimensions_version}"
+    //Lightman's Currency
+    compileOnly "maven.modrinth:lightmans-currency:${lightmans_currency_version}"
+    //汇流来世
+    compileOnly "top.theillusivec4.curios:curios-neoforge:${curios_version}"
+    compileOnly "org.confluence.lib:Confluence-Magic-Lib:${confluence_lib_version}"
+    compileOnly ("org.confluence.mod:ConfluenceOtherworld:${confluence_version}") {
+        transitive = false
+    }
+    compileOnly "org.confluence:TerraCurio:${terra_curio_version}"
+    compileOnly "org.confluence:TerraEntity:${terra_entity_version}"
+    //Magic Coins
+    compileOnly "curse.maven:magic-coins-597281:${magic_coins_version}"
+    compileOnly "curse.maven:sg-economy-api-1446971:${sg_economy_api_version}"
+    //jech
+    compileOnly "curse.maven:just-enough-characters-250702:${jech_version}"
+
+    //must
+    runtimeOnly "maven.modrinth:sodium:${sodium_version}"
+    runtimeOnly "maven.modrinth:iris:${iris_version}"
+    runtimeOnly "maven.modrinth:lan-server-properties:${lsp_version}"
+    runtimeOnly "maven.modrinth:jei:${jei_version}"
+
+    //plugin
+    additionalRuntimeClasspath("dev.vfyjxf:mixin-hotswap-agent:1.1")
+}
+
+tasks.withType(ProcessResources).configureEach {
+    var replaceProperties = [minecraft_version      : minecraft_version,
+                             minecraft_version_range: minecraft_version_range,
+                             neo_version            : neo_version,
+                             neo_version_range      : neo_version_range,
+                             loader_version_range   : loader_version_range,
+                             mod_id                 : mod_id,
+                             mod_name               : mod_name,
+                             mod_license            : mod_license,
+                             mod_version            : mod_version,
+                             mod_authors            : mod_authors,
+                             mod_description        : mod_description,
+                             ldlib2_version         : ldlib2_version]
+    inputs.properties replaceProperties
+
+    filesMatching(['META-INF/neoforge.mods.toml']) {
+        expand replaceProperties
+    }
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+
+            groupId = project.group
+            artifactId = base.archivesName.get()
+            version = project.version
+
+            pom.withXml {
+                def dependenciesNode = asNode().getAt("dependencies")[0]
+                if (dependenciesNode != null) {
+                    // 这里添加你希望保留在 POM 中的 groupId 或 artifactId，也就是从 Maven 拉依赖时会附带的库、模组啥的
+                    def whiteList = [
+                    ]
+
+                    def dependencies = dependenciesNode.children()
+                    def toRemove = []
+
+                    dependencies.each { dep ->
+                        def artifactId = dep.artifactId.text()
+                        def groupId = dep.groupId.text()
+
+                        if (!whiteList.contains(artifactId) && !whiteList.contains(groupId)) {
+                            toRemove.add(dep)
+                        }
+                    }
+
+                    toRemove.each { dependenciesNode.remove(it) }
+                }
+            }
+        }
+    }
+
+    repositories {
+        def modVersion = project.findProperty('mod_version') ?: 'unknown'
+
+        boolean isSnapshot = modVersion.toLowerCase().contains('snapshot')
+
+        def publishUrl = isSnapshot ?
+                "https://maven.sighs.cc/repository/maven-snapshots/" :
+                "https://maven.sighs.cc/repository/maven-releases/"
+
+        def publishUser = System.getenv("SIGHS_PUBLISH_USER")
+        def publishPassword = System.getenv("SIGHS_PUBLISH_PASSWORD")
+
+        maven {
+            name = "remoteRepo"
+            url = uri(publishUrl)
+            credentials {
+                username = publishUser
+                password = publishPassword
+            }
+        }
+    }
+}
+
+idea {
+    module {
+        downloadSources = true
+        downloadJavadoc = true
+    }
+}

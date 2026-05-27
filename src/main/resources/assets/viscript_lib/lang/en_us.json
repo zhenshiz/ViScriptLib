@@ -1,0 +1,4 @@
+{
+  "command.target.player.only": "The target of this command must be a player",
+  "command.target.entity.only": "The target of this command must be an entity"
+}
