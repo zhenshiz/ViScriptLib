@@ -2,7 +2,7 @@ package com.viscript_lib.container;
 
 import com.lowdragmc.lowdraglib2.registry.annotation.LDLRegister;
 import com.viscript_lib.register.IContainerHelper;
-import com.viscriptshop.util.ItemUtil;
+import com.viscript_lib.util.ItemUtil;
 import io.github.lightman314.lightmanscurrency.LightmansCurrency;
 import io.github.lightman314.lightmanscurrency.api.money.coins.CoinAPI;
 import io.github.lightman314.lightmanscurrency.common.attachments.WalletHandler;
