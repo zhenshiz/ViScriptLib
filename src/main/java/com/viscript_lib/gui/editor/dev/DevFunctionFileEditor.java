@@ -11,6 +11,7 @@ import javax.annotation.Nonnull;
  */
 public class DevFunctionFileEditor extends FunctionFileEditor {
     public DevFunctionFileEditor() {
+        removeBottomWindow();
         registerFunctionFileType(DevFunctionFileProjectType.TYPE);
     }
 

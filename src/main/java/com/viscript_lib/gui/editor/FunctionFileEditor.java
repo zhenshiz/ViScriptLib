@@ -1,7 +1,6 @@
 package com.viscript_lib.gui.editor;
 
 import com.lowdragmc.lowdraglib2.editor.project.ProjectType;
-import com.lowdragmc.lowdraglib2.editor.ui.Editor;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.Dialog;
 
 import javax.annotation.Nullable;
@@ -15,7 +14,7 @@ import java.util.List;
  *
  * <p>这种编辑器没有单独工程文件，LDLib2 的保存、另存为和打开都直接作用于运行时文件。
  */
-public abstract class FunctionFileEditor extends Editor {
+public abstract class FunctionFileEditor extends ViScriptEditor {
     private final List<ProjectType> functionFileTypes = new ArrayList<>();
 
     @Override

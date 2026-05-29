@@ -126,6 +126,27 @@ New -> Open -> Save -> Save As
 assets/viscript_lib/test/*.test
 ```
 
+## 删除 LDLib2 默认窗口
+
+两种编辑器都继承自 `ViScriptEditor`，可以直接删除 LDLib2 默认拆出来的窗口。比如编辑器不需要资源 View 所在的底部窗口时：
+
+```java
+public MyFunctionEditor() {
+    removeBottomWindow();
+    registerFunctionFileType(MyFunctionProjectType.TYPE);
+}
+```
+
+可用的窗口方法有：
+
+- `removeLeftWindow()`：删除左侧窗口。
+- `removeCenterWindow()`：删除中间窗口。
+- `removeBottomWindow()`：删除底部窗口，LDLib2 的资源 View 默认在这里。
+- `removeRightWindow()`：删除右侧窗口，LDLib2 的检查器和历史记录 View 默认在这里。
+- `removeEditorWindows(leftWindow, bottomWindow)`：一次删除多个窗口。
+
+删除窗口时会移除里面已有的 View 和布局回退记录，然后优先从 LDLib2 的拆分树里摘掉窗口。根节点直属窗口无法直接提升兄弟窗口时，会回退为隐藏窗口本身。
+
 ## 工程文件分离型
 
 这种编辑器适合工程文件和运行时文件不是同一个内容的场景。工程文件可以保存 UI 布局、编辑器注释、未编译 graph、调试数据等；运行时文件只保存服务端实际消费的数据。

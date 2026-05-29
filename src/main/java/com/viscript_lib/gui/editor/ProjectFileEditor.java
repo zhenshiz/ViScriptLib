@@ -1,7 +1,6 @@
 package com.viscript_lib.gui.editor;
 
 import com.lowdragmc.lowdraglib2.Platform;
-import com.lowdragmc.lowdraglib2.editor.ui.Editor;
 import com.lowdragmc.lowdraglib2.gui.texture.Icons;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.Dialog;
 import net.minecraft.nbt.CompoundTag;
@@ -21,7 +20,7 @@ import java.util.List;
  * <p>这种编辑器使用 LDLib2 默认的工程文件保存流程，并额外提供本地导出运行时文件、
  * 上传工程文件、上传运行时文件和同时上传两种文件的菜单动作。
  */
-public abstract class ProjectFileEditor extends Editor {
+public abstract class ProjectFileEditor extends ViScriptEditor {
     private final List<ProjectFileProjectType> projectFileTypes = new ArrayList<>();
 
     @Override
