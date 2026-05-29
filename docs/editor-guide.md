@@ -147,6 +147,42 @@ public MyFunctionEditor() {
 
 删除窗口时会移除里面已有的 View 和布局回退记录，然后优先从 LDLib2 的拆分树里摘掉窗口。根节点直属窗口无法直接提升兄弟窗口时，会回退为隐藏窗口本身。
 
+## 服务端文件列表
+
+指令、重载逻辑或服务端运行时可以通过 `EditorAssetFiles` 扫描指定目录下的编辑器文件。比如获取服务端全部配方运行时文件：
+
+```java
+public static final EditorFileFormat FORMAT = EditorFileFormat.of("viscript_recipe", "recipe", "recipe");
+
+List<String> recipes = EditorAssetFiles.listRuntimeFiles(FORMAT, true);
+```
+
+如果服务端存在：
+
+```text
+assets/viscript_recipe/recipe/foo/bar.recipe
+```
+
+返回的路径会是：
+
+```text
+foo/bar
+```
+
+通用目录也可以直接扫描：
+
+```java
+EditorAssetFiles.listAssetFiles("viscript_recipe", "recipe", "recipe", true);
+```
+
+需要把用户输入解析回文件路径时：
+
+```java
+Path file = EditorAssetFiles.resolveRuntimeFile(FORMAT, "foo/bar", true);
+```
+
+解析方法会清理非法字符并拒绝 `..`，避免路径逃出编辑器约定目录。命令补全层只需要自己决定是否加引号，例如 `recipes.forEach(builder::suggest)`。
+
 ## 工程文件分离型
 
 这种编辑器适合工程文件和运行时文件不是同一个内容的场景。工程文件可以保存 UI 布局、编辑器注释、未编译 graph、调试数据等；运行时文件只保存服务端实际消费的数据。
