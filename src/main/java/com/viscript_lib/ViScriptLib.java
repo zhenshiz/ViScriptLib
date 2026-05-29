@@ -1,5 +1,6 @@
 package com.viscript_lib;
 
+import com.lowdragmc.lowdraglib2.Platform;
 import com.lowdragmc.lowdraglib2.registry.AutoRegistry;
 import com.lowdragmc.lowdraglib2.registry.annotation.LDLRegister;
 import com.mojang.logging.LogUtils;
@@ -30,5 +31,10 @@ public class ViScriptLib {
         for (AutoRegistry.Holder<LDLRegister, ICommand, Supplier<ICommand>> command : ViScriptLibRegistries.COMMANDS) {
             command.value().get().register(event.getDispatcher(), event.getBuildContext(), event.getCommandSelection());
         }
+    }
+
+    //Just Enough Characters
+    public static boolean isJECharactersLoaded() {
+        return Platform.isModLoaded("jecharacters");
     }
 }
