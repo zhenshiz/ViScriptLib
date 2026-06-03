@@ -187,6 +187,11 @@ dependencies {
     compileOnly "curse.maven:sg-economy-api-1446971:${sg_economy_api_version}"
     //jech
     compileOnly "curse.maven:just-enough-characters-250702:${jech_version}"
+    //ftb
+    compileOnly "curse.maven:ftb-quests-forge-289412:7324136"
+    compileOnly "curse.maven:ftb-library-forge-404465:7312258"
+    compileOnly "curse.maven:ftb-teams-forge-404468:7369021"
+    compileOnly "curse.maven:architectury-api-419699:5786327"
 
     //must
     runtimeOnly "maven.modrinth:sodium:${sodium_version}"
