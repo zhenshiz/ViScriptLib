@@ -193,9 +193,9 @@ dependencies {
     compileOnly "curse.maven:ftb-teams-forge-404468:7369021"
     compileOnly "curse.maven:architectury-api-419699:5786327"
     //tacz
-    implementation "maven.modrinth:tacz-1.21.1:${tacz_version}"
+    runtimeOnly "maven.modrinth:tacz-1.21.1:${tacz_version}"
     //拔刀剑
-    implementation "maven.modrinth:slashblade-resharped:${slashblade_resharped_version}"
+    runtimeOnly "maven.modrinth:slashblade-resharped:${slashblade_resharped_version}"
 
     //must
     runtimeOnly "maven.modrinth:sodium:${sodium_version}"
