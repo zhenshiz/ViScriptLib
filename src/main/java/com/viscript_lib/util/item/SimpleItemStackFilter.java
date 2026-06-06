@@ -1,4 +1,4 @@
-package com.viscript_lib.util;
+package com.viscript_lib.util.item;
 
 import com.viscript_lib.compat.JechHelper;
 import net.minecraft.core.Holder;

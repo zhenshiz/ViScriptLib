@@ -202,19 +202,59 @@ public class DraggableUI<T> extends UIElement {
             int maxIndex = Math.max(0, children.size() - 1);
             if (actualInsertIndex > maxIndex) actualInsertIndex = maxIndex;
 
-            if (lastTargetIndex == actualInsertIndex || actualInsertIndex == currentIndex) {
-                return;
-            }
-            lastTargetIndex = actualInsertIndex;
-
-            snapshotPositionsForFlip();
-
-            this.removeChild(draggedCard);
-            this.addChildAt(draggedCard, actualInsertIndex);
-
-            this.markTaffyStyleDirty();
+            moveDraggedCardTo(currentIndex, actualInsertIndex);
             return;
         }
+
+        maybeMoveToLastPosition(children, currentIndex, mouseX, mouseY);
+    }
+
+    /**
+     * 兼容拖到最后一个元素后方的空白区域。
+     *
+     * <p>普通换位依赖鼠标命中某个 sibling；最后一个元素下面或右侧没有 sibling，
+     * 所以需要额外把这块区域视为“插入到末尾”。
+     */
+    private void maybeMoveToLastPosition(List<UIElement> children, int currentIndex, float mouseX, float mouseY) {
+        int lastIndex = children.size() - 1;
+        if (currentIndex == lastIndex) return;
+
+        UIElement lastSibling = null;
+        for (int i = children.size() - 1; i >= 0; i--) {
+            UIElement child = children.get(i);
+            if (child != draggedCard) {
+                lastSibling = child;
+                break;
+            }
+        }
+        if (lastSibling == null) return;
+
+        float lastX = lastSibling.getPositionX();
+        float lastY = lastSibling.getPositionY();
+        float lastW = lastSibling.getSizeWidth();
+        float lastH = lastSibling.getSizeHeight();
+        float centerX = lastX + lastW / 2f;
+        float centerY = lastY + lastH / 2f;
+
+        boolean afterLastRow = mouseY > centerY;
+        boolean afterLastColumn = mouseY >= lastY && mouseY <= lastY + lastH && mouseX > centerX;
+        if (afterLastRow || afterLastColumn) {
+            moveDraggedCardTo(currentIndex, lastIndex);
+        }
+    }
+
+    private void moveDraggedCardTo(int currentIndex, int targetIndex) {
+        if (lastTargetIndex == targetIndex || targetIndex == currentIndex) {
+            return;
+        }
+        lastTargetIndex = targetIndex;
+
+        snapshotPositionsForFlip();
+
+        this.removeChild(draggedCard);
+        this.addChildAt(draggedCard, targetIndex);
+
+        this.markTaffyStyleDirty();
     }
 
     private void snapshotPositionsForFlip() {

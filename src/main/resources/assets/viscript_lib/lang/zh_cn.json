@@ -1,6 +1,9 @@
 {
   "command.target.player.only": "此命令的目标对象应该是玩家",
   "command.target.entity.only": "此命令的目标对象应该是实体",
+  "viscript_lib.item_stack_compare_mode.all_components": "比较所有物品组件",
+  "viscript_lib.item_stack_compare_mode.include_components": "只比较指定物品组件",
+  "viscript_lib.item_stack_compare_mode.exclude_components": "排除指定物品组件",
   "viscript_lib.editor.menu.upload": "上传",
   "viscript_lib.editor.menu.upload_to_server": "上传到服务端",
   "viscript_lib.editor.menu.export_runtime_file": "导出运行时文件",

@@ -2,6 +2,9 @@ package com.viscript_lib.container;
 
 import com.lowdragmc.lowdraglib2.registry.annotation.LDLRegister;
 import com.viscript_lib.register.IContainerHelper;
+import com.viscript_lib.util.item.ItemStackCompareMode;
+import com.viscript_lib.util.item.ItemUtil;
+import net.minecraft.core.component.DataComponentType;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
@@ -29,9 +32,16 @@ import java.util.function.Consumer;
 public class SophisticatedBackpacksHelper implements IContainerHelper {
     @Override
     public int getItemStackCount(ServerPlayer player, ItemStack item) {
+        return getItemStackCount(player, item, ItemStackCompareMode.ALL_COMPONENTS, List.of());
+    }
+
+    @Override
+    public int getItemStackCount(ServerPlayer player, ItemStack item,
+                                 ItemStackCompareMode compareMode,
+                                 List<DataComponentType<?>> components) {
         int count = 0;
         for (ItemStack itemStack : getItemsFromInventoryBackpack(player)) {
-            if (ItemStack.isSameItemSameComponents(itemStack, item)) {
+            if (ItemUtil.isSameItem(itemStack, item, compareMode, components)) {
                 count += itemStack.getCount();
             }
         }
@@ -41,6 +51,13 @@ public class SophisticatedBackpacksHelper implements IContainerHelper {
     //从精妙背包中扣除指定物品
     @Override
     public int removeItemStackByCount(ServerPlayer player, ItemStack item, int count) {
+        return removeItemStackByCount(player, item, count, ItemStackCompareMode.ALL_COMPONENTS, List.of());
+    }
+
+    @Override
+    public int removeItemStackByCount(ServerPlayer player, ItemStack item, int count,
+                                      ItemStackCompareMode compareMode,
+                                      List<DataComponentType<?>> components) {
         if (count <= 0) return 0;
 
         final int[] remain = {count};
@@ -49,7 +66,7 @@ public class SophisticatedBackpacksHelper implements IContainerHelper {
                 for (int i = 0; i < inventoryHandler.getSlots(); i++) {
                     if (remain[0] <= 0) break;
                     ItemStack stackInSlot = inventoryHandler.getStackInSlot(i);
-                    if (ItemStack.isSameItemSameComponents(stackInSlot, item)) {
+                    if (ItemUtil.isSameItem(stackInSlot, item, compareMode, components)) {
                         int canRemove = Math.min(stackInSlot.getCount(), remain[0]);
                         ItemStack removed = inventoryHandler.extractItem(i, canRemove, false);
                         remain[0] -= removed.getCount();
