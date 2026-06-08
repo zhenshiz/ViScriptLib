@@ -17,8 +17,8 @@ import java.util.function.Supplier;
 
 public class ItemUtil {
     //删除玩家物品，兼容背包，精妙背包，超越维度等库存模组
-    public static void removeItemForPlayer(ServerPlayer player, ItemStack itemStack, int count) {
-        removeItemForPlayer(player, itemStack, count, ItemStackCompareMode.ALL_COMPONENTS, List.of());
+    public static int removeItemForPlayer(ServerPlayer player, ItemStack itemStack, int count) {
+        return removeItemForPlayer(player, itemStack, count, ItemStackCompareMode.ALL_COMPONENTS, List.of());
     }
 
     /**
@@ -30,7 +30,7 @@ public class ItemUtil {
      * @param compareMode 物品比较模式
      * @param components 参与或排除比较的组件列表，语义由 compareMode 决定
      */
-    public static void removeItemForPlayer(ServerPlayer player, ItemStack itemStack, int count,
+    public static int removeItemForPlayer(ServerPlayer player, ItemStack itemStack, int count,
                                            ItemStackCompareMode compareMode,
                                            List<DataComponentType<?>> components) {
         for (AutoRegistry.Holder<LDLRegister, IContainerHelper, Supplier<IContainerHelper>> containerHelperSupplierHolder : ViScriptLibRegistries.ContainerHelper) {
@@ -38,8 +38,8 @@ public class ItemUtil {
             if (count > 0) {
                 count = iContainerHelper.removeItemStackByCount(player, itemStack, count, compareMode, components);
             }
-
         }
+        return count;
     }
 
     //获取玩家物品，兼容背包，精妙背包，超越维度等库存模组
