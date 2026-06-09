@@ -77,6 +77,32 @@ public final class EditorFileNames {
     }
 
     /**
+     * 判断用户输入的文件名是否为空。
+     *
+     * <p>该方法会先剥离目录和目标后缀，因此只输入空白字符或只输入后缀名
+     * 都会被视为没有提供文件名。
+     *
+     * @param fileName 用户输入的文件名
+     * @param suffixesToStrip 判断前需要剥离的后缀
+     * @return 没有有效文件名时返回 <code>true</code>
+     */
+    public static boolean isBlankFileName(String fileName, String... suffixesToStrip) {
+        var normalized = fileName == null ? "" : fileName.trim().replace('\\', '/');
+        var lastSlash = normalized.lastIndexOf('/');
+        if (lastSlash >= 0) {
+            normalized = normalized.substring(lastSlash + 1);
+        }
+        for (var suffix : suffixesToStrip) {
+            var normalizedSuffix = normalizeSuffix(suffix);
+            if (!normalizedSuffix.isEmpty()
+                    && normalized.toLowerCase(Locale.ROOT).endsWith(normalizedSuffix.toLowerCase(Locale.ROOT))) {
+                normalized = normalized.substring(0, normalized.length() - normalizedSuffix.length());
+            }
+        }
+        return normalized.isBlank();
+    }
+
+    /**
      * 规范化单级目录名。
      *
      * @param value 用户或调用方提供的目录片段

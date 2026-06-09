@@ -144,11 +144,13 @@ public abstract class ProjectFileEditor extends ViScriptEditor {
         if (context == null) return;
 
         var format = context.format();
-        Dialog.showFileDialog("viscript_lib.editor.dialog.export_runtime_file", format.functionDirectory(), false,
+        EditorLocalFileDialogs.showSaveFileDialog("viscript_lib.editor.dialog.export_runtime_file", format.functionDirectory(),
                 Dialog.suffixFilter(format.runtimeSuffix()), file -> {
-                    if (file != null && !file.isDirectory()) {
+                    if (validateLocalSaveFile(file, format.runtimeSuffix())) {
                         exportRuntimeFile(context, file);
+                        return true;
                     }
+                    return false;
                 }).show(getModularUI());
     }
 

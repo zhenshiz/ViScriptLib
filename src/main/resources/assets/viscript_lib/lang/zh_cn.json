@@ -33,6 +33,7 @@
   "viscript_lib.editor.server_upload_result.success.overwritten": "已覆盖服务端同名文件：%s",
   "viscript_lib.editor.server_upload_result.error.title": "上传文件失败",
   "viscript_lib.editor.server_upload_result.error.content": "服务端保存失败：%s",
+  "viscript_lib.editor.file_name_empty": "文件名不能为空",
   "viscript_lib.editor.project_save_failed": "项目文件保存失败",
   "viscript_lib.dev_editor.function_file.view": "功能文件测试",
   "viscript_lib.dev_editor.function_file.type": "测试运行时文件",

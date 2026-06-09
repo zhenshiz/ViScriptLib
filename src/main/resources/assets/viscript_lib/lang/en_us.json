@@ -33,6 +33,7 @@
   "viscript_lib.editor.server_upload_result.success.overwritten": "Overwrote the server file: %s",
   "viscript_lib.editor.server_upload_result.error.title": "File upload failed",
   "viscript_lib.editor.server_upload_result.error.content": "Server save failed: %s",
+  "viscript_lib.editor.file_name_empty": "File name cannot be empty",
   "viscript_lib.editor.project_save_failed": "Project save failed",
   "viscript_lib.dev_editor.function_file.view": "Function File Test",
   "viscript_lib.dev_editor.function_file.type": "Test Runtime File",

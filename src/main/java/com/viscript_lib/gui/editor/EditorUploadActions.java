@@ -21,6 +21,12 @@ final class EditorUploadActions {
     }
 
     private static void uploadToServer(Editor editor, EditorUploadAction action, String fileName) {
+        if (EditorFileNames.isBlankFileName(fileName, action.getSuffix())) {
+            Dialog.showNotification("editor.error", "viscript_lib.editor.file_name_empty", null)
+                    .show(editor.getModularUI());
+            return;
+        }
+
         try {
             var normalizedFileName = action.normalizeFileName(fileName);
             action.uploadToServer(normalizedFileName);

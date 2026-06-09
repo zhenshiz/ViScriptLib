@@ -1,10 +1,14 @@
 package com.viscript_lib.gui.editor;
 
+import com.lowdragmc.lowdraglib2.LDLib2;
+import com.lowdragmc.lowdraglib2.editor.project.IProject;
 import com.lowdragmc.lowdraglib2.editor.ui.Editor;
 import com.lowdragmc.lowdraglib2.editor.ui.SplittableWindow;
 import com.lowdragmc.lowdraglib2.editor.ui.View;
+import com.lowdragmc.lowdraglib2.gui.ui.elements.Dialog;
 
 import javax.annotation.Nullable;
+import java.io.File;
 import java.util.ArrayList;
 
 /**
@@ -15,6 +19,57 @@ import java.util.ArrayList;
  * <code>removeBottomWindow()</code> 删除资源 View 所在的底部窗口。
  */
 public abstract class ViScriptEditor extends Editor {
+    @Override
+    public void saveAsProject(@Nullable Runnable onFinish) {
+        var project = getCurrentProject();
+        if (project == null) return;
+
+        var suffix = project.getSuffix();
+        EditorLocalFileDialogs.showSaveFileDialog("ldlib.gui.editor.tips.save_as",
+                project.getProjectType().getRootSavePath(project, LDLib2.getAssetsDir()),
+                Dialog.suffixFilter(suffix), file -> saveProjectAsLocalFile(project, suffix, file, onFinish)
+        ).show(getModularUI());
+    }
+
+    private boolean saveProjectAsLocalFile(IProject project, String suffix, @Nullable File file,
+                                           @Nullable Runnable onFinish) {
+        if (!validateLocalSaveFile(file, suffix)) {
+            return false;
+        }
+
+        if (!file.getName().endsWith(suffix)) {
+            file = new File(file.getParentFile(), file.getName() + suffix);
+        }
+        try {
+            project.getProjectType().saveProjectToFile(project, file);
+            currentProjectFile = file;
+        } catch (Exception ignored) {
+        }
+        if (onFinish != null) {
+            onFinish.run();
+        }
+        return true;
+    }
+
+    /**
+     * 校验本地保存目标是否有有效文件名。
+     *
+     * @param file 玩家确认的文件
+     * @param suffix 当前文件类型后缀
+     * @return 可以继续写文件时返回 <code>true</code>
+     */
+    protected final boolean validateLocalSaveFile(@Nullable File file, String suffix) {
+        if (file == null) {
+            return false;
+        }
+        if (file.isDirectory() || EditorFileNames.isBlankFileName(file.getName(), suffix)) {
+            Dialog.showNotification("editor.error", "viscript_lib.editor.file_name_empty", null)
+                    .show(getModularUI());
+            return false;
+        }
+        return true;
+    }
+
     /**
      * 删除左侧窗口。
      */
