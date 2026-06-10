@@ -145,6 +145,7 @@ public abstract class ProjectFileEditor extends ViScriptEditor {
 
         var format = context.format();
         EditorLocalFileDialogs.showSaveFileDialog("viscript_lib.editor.dialog.export_runtime_file", format.functionDirectory(),
+                defaultRuntimeFile(format),
                 Dialog.suffixFilter(format.runtimeSuffix()), file -> {
                     if (validateLocalSaveFile(file, format.runtimeSuffix())) {
                         exportRuntimeFile(context, file);
@@ -227,6 +228,10 @@ public abstract class ProjectFileEditor extends ViScriptEditor {
             return new EditorFileContext(project, projectType.getFormat());
         }
         return null;
+    }
+
+    private File defaultRuntimeFile(EditorFileFormat format) {
+        return new File(format.functionDirectory(), defaultBaseName(format) + format.runtimeSuffix());
     }
 
     private String defaultBaseName(EditorFileFormat format) {

@@ -24,9 +24,25 @@ public abstract class ViScriptEditor extends Editor {
         var project = getCurrentProject();
         if (project == null) return;
 
+        var projectType = project.getProjectType();
+        var projectRoot = LDLib2.getAssetsDir();
+        var defaultSaveFile = currentProjectFile == null
+                ? projectType.getDefaultSaveFile(project, projectRoot)
+                : currentProjectFile;
+        saveAsProject(defaultSaveFile, onFinish);
+    }
+
+    @Override
+    public void saveAsProject(@Nullable File defaultSaveFile, @Nullable Runnable onFinish) {
+        var project = getCurrentProject();
+        if (project == null) return;
+
+        var projectType = project.getProjectType();
+        var projectRoot = LDLib2.getAssetsDir();
         var suffix = project.getSuffix();
         EditorLocalFileDialogs.showSaveFileDialog("ldlib.gui.editor.tips.save_as",
-                project.getProjectType().getRootSavePath(project, LDLib2.getAssetsDir()),
+                projectType.getRootSavePath(project, projectRoot),
+                defaultSaveFile,
                 Dialog.suffixFilter(suffix), file -> saveProjectAsLocalFile(project, suffix, file, onFinish)
         ).show(getModularUI());
     }

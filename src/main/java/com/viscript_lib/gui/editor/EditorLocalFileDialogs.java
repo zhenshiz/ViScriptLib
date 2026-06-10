@@ -14,6 +14,9 @@ import net.minecraft.network.chat.Component;
 
 import javax.annotation.Nullable;
 import java.io.File;
+import java.io.IOException;
+import java.util.ArrayDeque;
+import java.util.List;
 import java.util.function.Predicate;
 
 /**
@@ -26,14 +29,15 @@ final class EditorLocalFileDialogs {
     private EditorLocalFileDialogs() {
     }
 
-    static Dialog showSaveFileDialog(String title, File dir, @Nullable Predicate<FileNode> valid,
-                                     SaveFileHandler handler) {
+    static Dialog showSaveFileDialog(String title, File dir, @Nullable File defaultValue,
+                                     @Nullable Predicate<FileNode> valid, SaveFileHandler handler) {
         var dialog = new Dialog();
         var textField = new TextField();
         var treeList = new TreeList<FileNode>();
         if (!dir.isDirectory() && !dir.mkdirs()) {
             return dialog;
         }
+        var root = new FileNode(dir).setValid(valid);
 
         dialog.overlay.layout(layout -> layout.width(200));
         dialog.setTitle(title);
@@ -64,12 +68,13 @@ final class EditorLocalFileDialogs {
                                 Icons.getIcon(node.getKey().getName()
                                         .substring(node.getKey().getName().lastIndexOf('.') + 1)),
                         node -> Component.translatable(node.getKey().getName())))
-                        .setRoot(new FileNode(dir).setValid(valid))
+                        .setRoot(root)
                 ).layout(layout -> {
                     layout.widthPercent(100);
                     layout.height(180);
                 })
         );
+        applyDefault(treeList, textField, root, defaultValue);
         dialog.addButton(new Button()
                 .setOnClick(e -> {
                     var targetDir = dir;
@@ -93,6 +98,64 @@ final class EditorLocalFileDialogs {
                 .setText("ldlib.gui.tips.cancel")
                 .addClass("__cancel-button__"));
         return dialog;
+    }
+
+    private static void applyDefault(TreeList<FileNode> treeList, TextField textField, FileNode root,
+                                     @Nullable File defaultValue) {
+        if (defaultValue == null) return;
+
+        var selectedFile = defaultValue.isDirectory() ? defaultValue : defaultValue.getParentFile();
+        var selectedNode = findVisibleFileNode(root, selectedFile);
+        if (selectedNode != null) {
+            treeList.expandNodeAlongPath(selectedNode);
+            treeList.setSelected(List.of(selectedNode), false);
+        }
+        textField.setText(defaultValue.isDirectory() ? "" : defaultValue.getName(), false);
+    }
+
+    @Nullable
+    private static FileNode findVisibleFileNode(FileNode root, @Nullable File file) {
+        if (file == null) return null;
+        var rootFile = normalizeFile(root.getKey());
+        var targetFile = normalizeFile(file);
+        var path = new ArrayDeque<File>();
+        var currentFile = targetFile;
+        while (currentFile != null) {
+            path.addFirst(currentFile);
+            if (rootFile.equals(currentFile)) {
+                break;
+            }
+            currentFile = currentFile.getParentFile();
+        }
+        if (path.isEmpty() || !rootFile.equals(path.peekFirst())) {
+            return null;
+        }
+
+        var currentNode = root;
+        path.removeFirst();
+        while (!path.isEmpty()) {
+            var nextFile = path.removeFirst();
+            FileNode nextNode = null;
+            for (var child : currentNode.getChildren()) {
+                if (normalizeFile(child.getKey()).equals(nextFile)) {
+                    nextNode = child;
+                    break;
+                }
+            }
+            if (nextNode == null) {
+                return null;
+            }
+            currentNode = nextNode;
+        }
+        return currentNode;
+    }
+
+    private static File normalizeFile(File file) {
+        try {
+            return file.getCanonicalFile();
+        } catch (IOException ignored) {
+            return file.getAbsoluteFile();
+        }
     }
 
     @FunctionalInterface
