@@ -2,6 +2,7 @@ package com.viscript_lib.util.item;
 
 import com.lowdragmc.lowdraglib2.registry.AutoRegistry;
 import com.lowdragmc.lowdraglib2.registry.annotation.LDLRegister;
+import com.viscript_lib.ViScriptLib;
 import com.viscript_lib.ViScriptLibRegistries;
 import com.viscript_lib.register.IContainerHelper;
 import net.minecraft.core.component.DataComponentType;
@@ -36,7 +37,12 @@ public class ItemUtil {
         for (AutoRegistry.Holder<LDLRegister, IContainerHelper, Supplier<IContainerHelper>> containerHelperSupplierHolder : ViScriptLibRegistries.ContainerHelper) {
             IContainerHelper iContainerHelper = containerHelperSupplierHolder.value().get();
             if (count > 0) {
-                count = iContainerHelper.removeItemStackByCount(player, itemStack, count, compareMode, components);
+                try {
+                    count = iContainerHelper.removeItemStackByCount(player, itemStack, count, compareMode, components);
+                } catch (Throwable e) {
+                    ViScriptLib.LOGGER.error("容器兼容 {} 扣除物品失败，已跳过并继续尝试其它库存来源",
+                            containerHelperSupplierHolder.annotation().name(), e);
+                }
             }
         }
         return count;
@@ -63,7 +69,12 @@ public class ItemUtil {
         if (player != null) {
             for (AutoRegistry.Holder<LDLRegister, IContainerHelper, Supplier<IContainerHelper>> containerHelperSupplierHolder : ViScriptLibRegistries.ContainerHelper) {
                 IContainerHelper iContainerHelper = containerHelperSupplierHolder.value().get();
-                count += iContainerHelper.getItemStackCount(player, item, compareMode, components);
+                try {
+                    count += iContainerHelper.getItemStackCount(player, item, compareMode, components);
+                } catch (Throwable e) {
+                    ViScriptLib.LOGGER.error("容器兼容 {} 统计物品失败，已跳过并继续统计其它库存来源",
+                            containerHelperSupplierHolder.annotation().name(), e);
+                }
             }
         }
         return count;

@@ -7,13 +7,12 @@ import com.viscript_lib.util.item.ItemUtil;
 import com.wintercogs.beyonddimensions.api.dimensionnet.DimensionsNet;
 import com.wintercogs.beyonddimensions.api.dimensionnet.UnifiedStorage;
 import com.wintercogs.beyonddimensions.api.ids.BDConstants;
-import com.wintercogs.beyonddimensions.api.storage.key.IStackKey;
 import com.wintercogs.beyonddimensions.api.storage.key.KeyAmount;
-import com.wintercogs.beyonddimensions.api.storage.key.impl.ItemStackKey;
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -30,15 +29,10 @@ public class BeyondDimensionsHelper implements IContainerHelper {
     public int getItemStackCount(ServerPlayer player, ItemStack item,
                                  ItemStackCompareMode compareMode,
                                  List<DataComponentType<?>> components) {
-        DimensionsNet net = DimensionsNet.getNetFromPlayer(player);
+        DimensionsNet net = DimensionsNet.getPrimaryNetFromPlayer(player);
         if (net != null) {
             UnifiedStorage storage = net.getUnifiedStorage();
-            if (compareMode != ItemStackCompareMode.ALL_COMPONENTS) {
-                return getMatchingItemCount(storage, item, compareMode, components);
-            }
-            IStackKey<?> key = new ItemStackKey(item);
-            KeyAmount keyAmount = storage.getStackByKey(key);
-            return Math.clamp(keyAmount.amount(), 0, Integer.MAX_VALUE);
+            return getMatchingItemCount(storage, item, compareMode, components);
         }
         return 0;
     }
@@ -52,21 +46,13 @@ public class BeyondDimensionsHelper implements IContainerHelper {
     public int removeItemStackByCount(ServerPlayer player, ItemStack item, int count,
                                       ItemStackCompareMode compareMode,
                                       List<DataComponentType<?>> components) {
-        DimensionsNet net = DimensionsNet.getNetFromPlayer(player);
+        DimensionsNet net = DimensionsNet.getPrimaryNetFromPlayer(player);
         if (net == null) return count;
         if (count <= 0) return 0;
 
         var storage = net.getUnifiedStorage();
 
-        if (compareMode != ItemStackCompareMode.ALL_COMPONENTS) {
-            return removeMatchingItems(storage, item, count, compareMode, components);
-        }
-
-        IStackKey<?> key = new ItemStackKey(item);
-
-        KeyAmount extracted = storage.extract(key, count, false, false);
-
-        return count - Math.clamp(extracted.amount(), 0, Integer.MAX_VALUE);
+        return removeMatchingItems(storage, item, count, compareMode, components);
     }
 
     private static int getMatchingItemCount(UnifiedStorage storage, ItemStack item,
@@ -86,7 +72,8 @@ public class BeyondDimensionsHelper implements IContainerHelper {
                                            ItemStackCompareMode compareMode,
                                            List<DataComponentType<?>> components) {
         int remain = count;
-        for (KeyAmount keyAmount : storage.getStorage()) {
+        // UnifiedStorage#getStorage 是基于内部 slotIndex 的视图，扣除时会改变它；先复制一份避免遍历中跳项。
+        for (KeyAmount keyAmount : new ArrayList<>(storage.getStorage())) {
             if (remain <= 0) break;
 
             Object stack = keyAmount.toStack();
