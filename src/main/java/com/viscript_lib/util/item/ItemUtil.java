@@ -39,9 +39,7 @@ public class ItemUtil {
             if (count > 0) {
                 try {
                     count = iContainerHelper.removeItemStackByCount(player, itemStack, count, compareMode, components);
-                } catch (Throwable e) {
-                    ViScriptLib.LOGGER.error("容器兼容 {} 扣除物品失败，已跳过并继续尝试其它库存来源",
-                            containerHelperSupplierHolder.annotation().name(), e);
+                } catch (Throwable ignored) {
                 }
             }
         }
@@ -71,9 +69,7 @@ public class ItemUtil {
                 IContainerHelper iContainerHelper = containerHelperSupplierHolder.value().get();
                 try {
                     count += iContainerHelper.getItemStackCount(player, item, compareMode, components);
-                } catch (Throwable e) {
-                    ViScriptLib.LOGGER.error("容器兼容 {} 统计物品失败，已跳过并继续统计其它库存来源",
-                            containerHelperSupplierHolder.annotation().name(), e);
+                } catch (Throwable ignored) {
                 }
             }
         }
