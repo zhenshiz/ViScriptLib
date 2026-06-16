@@ -31,6 +31,7 @@ public abstract class ProjectFileEditor extends ViScriptEditor {
             if (currentContext() != null) {
                 menu.leaf(Icons.EXPORT, "viscript_lib.editor.menu.export_runtime_file", this::exportRuntimeFile);
             }
+            addExportLeaf(menu);
         });
         var uploadMenu = new UploadMenu(this);
         menuContainer.addChild(uploadMenu.createMenuTab());
@@ -246,16 +247,16 @@ public abstract class ProjectFileEditor extends ViScriptEditor {
     }
 
     @FunctionalInterface
-    private interface FileNameNormalizer {
+    public interface FileNameNormalizer {
         String normalize(String fileName);
     }
 
     @FunctionalInterface
-    private interface UploadHandler {
+    public interface UploadHandler {
         void upload(String fileName) throws Exception;
     }
 
-    private record ProjectUploadAction(String displayKey, String dialogTitleKey, String defaultFileName,
+    public record ProjectUploadAction(String displayKey, String dialogTitleKey, String defaultFileName,
                                        String suffix, FileNameNormalizer normalizer,
                                        UploadHandler uploadHandler) implements EditorUploadAction {
         @Override

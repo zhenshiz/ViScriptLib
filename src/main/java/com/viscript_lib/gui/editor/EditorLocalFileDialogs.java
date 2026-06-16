@@ -2,11 +2,7 @@ package com.viscript_lib.gui.editor;
 
 import com.lowdragmc.lowdraglib2.gui.texture.Icons;
 import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
-import com.lowdragmc.lowdraglib2.gui.ui.elements.Button;
-import com.lowdragmc.lowdraglib2.gui.ui.elements.Dialog;
-import com.lowdragmc.lowdraglib2.gui.ui.elements.ScrollerView;
-import com.lowdragmc.lowdraglib2.gui.ui.elements.TextField;
-import com.lowdragmc.lowdraglib2.gui.ui.elements.TreeList;
+import com.lowdragmc.lowdraglib2.gui.ui.elements.*;
 import com.lowdragmc.lowdraglib2.gui.util.FileNode;
 import dev.vfyjxf.taffy.style.FlexDirection;
 import net.minecraft.Util;

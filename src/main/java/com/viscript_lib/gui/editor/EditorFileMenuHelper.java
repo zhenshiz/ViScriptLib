@@ -1,13 +1,10 @@
 package com.viscript_lib.gui.editor;
 
 import com.lowdragmc.lowdraglib2.editor.ui.menu.FileMenu;
-import com.lowdragmc.lowdraglib2.gui.texture.Icons;
-import com.lowdragmc.lowdraglib2.gui.util.ITreeNode;
-import com.lowdragmc.lowdraglib2.gui.util.TreeBuilder;
+import com.lowdragmc.lowdraglib2.gui.texture.IGuiTexture;
+import com.lowdragmc.lowdraglib2.gui.util.TreeNode;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.Tuple;
-
-import java.util.List;
 
 /**
  * 复用 LDLib2 File 菜单的顺序，并替换默认打开目录。
@@ -26,26 +23,16 @@ final class EditorFileMenuHelper {
      */
     static void replaceOpen(FileMenu fileMenu, Runnable openAction) {
         fileMenu.registerMenuCreator((tab, menu) -> {
-            menu.remove(OPEN_MENU_KEY);
-            menu.leaf(Icons.OPEN_FILE, OPEN_MENU_KEY, openAction);
-            moveOpenMenuToDefaultPosition(menu);
-        });
-    }
-
-    @SuppressWarnings({"rawtypes", "unchecked"})
-    private static void moveOpenMenuToDefaultPosition(TreeBuilder.Menu menu) {
-        var openName = Component.translatable(OPEN_MENU_KEY);
-        List children = (List) menu.peek().getChildren();
-        for (var index = 0; index < children.size(); index++) {
-            var child = children.get(index);
-            if (child instanceof ITreeNode<?, ?> node
-                    && node.getKey() instanceof Tuple<?, ?> key
-                    && openName.equals(key.getB())) {
-                children.remove(index);
-                // LDLib2 的扩展点只能追加节点，这里把替换后的 Open 放回 New 之后。
-                children.add(Math.min(1, children.size()), child);
-                return;
+            Tuple<IGuiTexture, Component> key = null;
+            for (var child : menu.peek().getChildren()) {
+                var tuple = child.getKey();
+                if (tuple.getB().equals(Component.translatable(OPEN_MENU_KEY))) {
+                    key = tuple;
+                    break;
+                }
             }
-        }
+            if (key != null && menu.peek() instanceof TreeNode<Tuple<IGuiTexture, Component>, Runnable> node)
+                node.addContent(key, openAction);
+        });
     }
 }

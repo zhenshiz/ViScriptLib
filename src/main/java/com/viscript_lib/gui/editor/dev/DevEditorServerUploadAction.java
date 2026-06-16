@@ -2,8 +2,8 @@ package com.viscript_lib.gui.editor.dev;
 
 import com.lowdragmc.lowdraglib2.gui.texture.IGuiTexture;
 import com.lowdragmc.lowdraglib2.gui.texture.Icons;
-import com.viscript_lib.gui.editor.EditorUploadAction;
 import com.viscript_lib.gui.editor.EditorServerUploads;
+import com.viscript_lib.gui.editor.EditorUploadAction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 

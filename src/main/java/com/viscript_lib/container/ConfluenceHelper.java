@@ -2,8 +2,8 @@ package com.viscript_lib.container;
 
 import com.lowdragmc.lowdraglib2.registry.annotation.LDLRegister;
 import com.viscript_lib.register.IContainerHelper;
-import com.viscript_lib.util.item.ItemUtil;
 import com.viscript_lib.util.item.ItemStackCompareMode;
+import com.viscript_lib.util.item.ItemUtil;
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;

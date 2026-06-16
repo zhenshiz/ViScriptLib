@@ -3,6 +3,7 @@ package com.viscript_lib.gui.editor;
 import com.lowdragmc.lowdraglib2.editor.project.IProject;
 import com.lowdragmc.lowdraglib2.editor.project.ProjectType;
 import com.lowdragmc.lowdraglib2.gui.texture.IGuiTexture;
+import lombok.Getter;
 
 import java.io.File;
 import java.util.function.Supplier;
@@ -14,6 +15,7 @@ import java.util.function.Supplier;
  * 依赖由运行时后缀派生出的工程后缀。
  */
 public class ProjectFileProjectType extends ProjectType {
+    @Getter
     private final EditorFileFormat format;
 
     /**
@@ -26,17 +28,8 @@ public class ProjectFileProjectType extends ProjectType {
      */
     public ProjectFileProjectType(IGuiTexture icon, String name, EditorFileFormat format,
                                   Supplier<? extends IRuntimeFileProject> projectCreator) {
-        super(icon, name, format.projectSuffix(), () -> projectCreator.get());
+        super(icon, name, format.projectSuffix(), projectCreator::get);
         this.format = format;
-    }
-
-    /**
-     * 返回文件格式定义。
-     *
-     * @return 文件格式定义
-     */
-    public EditorFileFormat getFormat() {
-        return format;
     }
 
     /**

@@ -2,7 +2,6 @@ package com.viscript_lib.util.item;
 
 import com.lowdragmc.lowdraglib2.registry.AutoRegistry;
 import com.lowdragmc.lowdraglib2.registry.annotation.LDLRegister;
-import com.viscript_lib.ViScriptLib;
 import com.viscript_lib.ViScriptLibRegistries;
 import com.viscript_lib.register.IContainerHelper;
 import net.minecraft.core.component.DataComponentType;

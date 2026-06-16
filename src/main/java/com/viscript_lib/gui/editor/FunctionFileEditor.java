@@ -21,6 +21,7 @@ public abstract class FunctionFileEditor extends ViScriptEditor {
     protected void initMenus() {
         super.initMenus();
         EditorFileMenuHelper.replaceOpen(fileMenu, this::openFunctionFile);
+        fileMenu.registerMenuCreator((tab, menu) -> addExportLeaf(menu));
         var uploadMenu = new UploadMenu(this);
         menuContainer.addChild(uploadMenu.createMenuTab());
     }
