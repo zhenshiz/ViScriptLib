@@ -1,6 +1,7 @@
 package com.viscript_lib.gui.editor;
 
 import com.lowdragmc.lowdraglib2.Platform;
+import com.lowdragmc.lowdraglib2.editor.project.ProjectType;
 import com.lowdragmc.lowdraglib2.gui.texture.Icons;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.Dialog;
 import net.minecraft.nbt.CompoundTag;
@@ -10,9 +11,6 @@ import net.minecraft.network.chat.Component;
 import javax.annotation.Nullable;
 import java.io.File;
 import java.nio.file.Files;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 
 /**
  * 工程文件和运行时文件分离的编辑器基类。
@@ -21,8 +19,6 @@ import java.util.List;
  * 上传工程文件、上传运行时文件和同时上传两种文件的菜单动作。
  */
 public abstract class ProjectFileEditor extends ViScriptEditor {
-    private final List<ProjectFileProjectType> projectFileTypes = new ArrayList<>();
-
     @Override
     protected void initMenus() {
         super.initMenus();
@@ -35,25 +31,6 @@ public abstract class ProjectFileEditor extends ViScriptEditor {
         });
         var uploadMenu = new UploadMenu(this);
         menuContainer.addChild(uploadMenu.createMenuTab());
-    }
-
-    /**
-     * 注册工程文件项目类型。
-     *
-     * @param projectType 项目类型
-     */
-    protected final void registerProjectFileType(ProjectFileProjectType projectType) {
-        fileMenu.addProjectProvider(projectType);
-        projectFileTypes.add(projectType);
-    }
-
-    /**
-     * 返回此编辑器支持的工程文件类型。
-     *
-     * @return 不可修改的项目类型列表
-     */
-    protected final List<ProjectFileProjectType> getProjectFileTypes() {
-        return Collections.unmodifiableList(projectFileTypes);
     }
 
     /**
@@ -126,9 +103,9 @@ public abstract class ProjectFileEditor extends ViScriptEditor {
      * 从工程文件目录打开项目。
      */
     public final void openProjectFile() {
-        if (projectFileTypes.isEmpty()) return;
-        var suffixes = projectFileTypes.stream().map(ProjectFileProjectType::getSuffix).toArray(String[]::new);
-        var root = projectFileTypes.getFirst().getRootSavePath(null, null);
+        if (projectTypes.isEmpty()) return;
+        var suffixes = projectTypes.stream().map(ProjectType::getSuffix).toArray(String[]::new);
+        var root = projectTypes.getFirst().getRootSavePath(null, null);
         Dialog.showFileDialog("ldlib.gui.editor.tips.load_project", root, true,
                 Dialog.suffixFilter(suffixes), file -> {
                     if (file != null && file.isFile()) {
@@ -179,7 +156,7 @@ public abstract class ProjectFileEditor extends ViScriptEditor {
 
     private void openProjectFile(File file) {
         var fileName = file.getName();
-        projectFileTypes.stream()
+        projectTypes.stream()
                 .filter(type -> fileName.endsWith(type.getSuffix()))
                 .findFirst()
                 .ifPresent(type -> {

@@ -3,6 +3,7 @@ package com.viscript_lib.gui.editor;
 import com.lowdragmc.lowdraglib2.LDLib2;
 import com.lowdragmc.lowdraglib2.Platform;
 import com.lowdragmc.lowdraglib2.editor.project.IProject;
+import com.lowdragmc.lowdraglib2.editor.project.ProjectType;
 import com.lowdragmc.lowdraglib2.editor.ui.Editor;
 import com.lowdragmc.lowdraglib2.editor.ui.SplittableWindow;
 import com.lowdragmc.lowdraglib2.editor.ui.View;
@@ -17,6 +18,8 @@ import net.minecraft.client.Minecraft;
 import javax.annotation.Nullable;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * ViScript Lib 编辑器公共基类。
@@ -26,6 +29,27 @@ import java.util.ArrayList;
  * <code>removeBottomWindow()</code> 删除资源 View 所在的底部窗口。
  */
 public abstract class ViScriptEditor extends Editor {
+    final List<ProjectType> projectTypes = new ArrayList<>();
+
+    /**
+     * 注册工程文件项目类型。
+     *
+     * @param projectType 项目类型
+     */
+    protected final void registerProjectType(ProjectType projectType) {
+        fileMenu.addProjectProvider(projectType);
+        projectTypes.add(projectType);
+    }
+
+    /**
+     * 返回此编辑器支持的工程文件类型。
+     *
+     * @return 不可修改的项目类型列表
+     */
+    protected final List<ProjectType> getProjectTypes() {
+        return Collections.unmodifiableList(projectTypes);
+    }
+
     @Override
     public void saveAsProject(@Nullable Runnable onFinish) {
         var project = getCurrentProject();
@@ -128,13 +152,12 @@ public abstract class ViScriptEditor extends Editor {
     }
 
     protected String loadFromClipboard() {
-        var project = getCurrentProject();
-        if (project == null) return "viscript_lib.editor.no_project"; // 请先打开一个项目
-
+        var project = getProjectTypes().getFirst().newEmptyProject();
         try {
             var tag = NbtHelper.tagFromString(Minecraft.getInstance().keyboardHandler.getClipboard());
             project.deserializeNBT(Platform.getFrozenRegistry(), tag);
-            closeCurrentProject(false, () -> loadNewProject(project, null));
+            if (getCurrentProject() != null) closeCurrentProject(false, null);
+            loadNewProject(project, null);
             return "viscript_lib.editor.import.success"; // 已从剪贴板导入数据并覆盖当前项目
         } catch (Exception e) {
             return "viscript_lib.editor.import.fail"; // 剪贴板内容解析出错！

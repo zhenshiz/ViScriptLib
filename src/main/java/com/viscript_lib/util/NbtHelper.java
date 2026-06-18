@@ -16,7 +16,7 @@ public class NbtHelper {
 
     public static String tagToString(Tag tag) {return tagToString(tag, true);}
     public static String tagToString(Tag tag, boolean pretty) {
-        String s = NbtUtils.toPrettyComponent(tag).getString();
+        String s = NbtUtils.toPrettyComponent(tag).getString().replace("I;", ""); // 移除uuid数组诡异的类型标签
         return pretty ? prettyPrint(s) : s;
     }
 
