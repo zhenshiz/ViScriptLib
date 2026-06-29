@@ -4,10 +4,10 @@
   "package": "com.viscript_lib.mixin",
   "compatibilityLevel": "JAVA_21",
   "mixins": [
-    "FtbLibraryClientMixin",
     "LDLibCommonProxyMixin"
   ],
   "client": [
+    "FtbLibraryClientMixin"
   ],
   "injectors": {
     "defaultRequire": 1
