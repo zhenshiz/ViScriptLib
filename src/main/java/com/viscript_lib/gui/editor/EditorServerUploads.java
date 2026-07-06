@@ -91,9 +91,9 @@ public final class EditorServerUploads {
         var overwritten = Files.exists(file);
         var data = request.getCompound(TAG_DATA).copy();
         if (request.getBoolean(TAG_COMPRESSED)) {
-            NbtIo.writeCompressed(data, file);
+            NbtIo.writeCompressed(data, file.toFile());
         } else {
-            NbtIo.write(data, file);
+            NbtIo.write(data, file.toFile());
         }
         return new UploadResult(file, overwritten);
     }

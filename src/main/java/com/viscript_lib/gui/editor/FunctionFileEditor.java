@@ -37,7 +37,7 @@ public abstract class FunctionFileEditor extends ViScriptEditor {
     public final void openFunctionFile() {
         if (projectTypes.isEmpty()) return;
         var suffixes = projectTypes.stream().map(ProjectType::getSuffix).toArray(String[]::new);
-        var root = projectTypes.getFirst().getRootSavePath(null, null);
+        var root = projectTypes.get(0).getRootSavePath(null, null);
         Dialog.showFileDialog("ldlib.gui.editor.tips.load_project", root, true,
                 Dialog.suffixFilter(suffixes), file -> {
                     if (file != null && file.isFile()) {

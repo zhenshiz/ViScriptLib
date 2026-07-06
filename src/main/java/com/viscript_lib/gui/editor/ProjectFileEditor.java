@@ -105,7 +105,7 @@ public abstract class ProjectFileEditor extends ViScriptEditor {
     public final void openProjectFile() {
         if (projectTypes.isEmpty()) return;
         var suffixes = projectTypes.stream().map(ProjectType::getSuffix).toArray(String[]::new);
-        var root = projectTypes.getFirst().getRootSavePath(null, null);
+        var root = projectTypes.get(0).getRootSavePath(null, null);
         Dialog.showFileDialog("ldlib.gui.editor.tips.load_project", root, true,
                 Dialog.suffixFilter(suffixes), file -> {
                     if (file != null && file.isFile()) {
@@ -179,9 +179,9 @@ public abstract class ProjectFileEditor extends ViScriptEditor {
             Files.createDirectories(file.getParentFile().toPath());
             var tag = serializeRuntimeFile(context);
             if (context.format().compressed()) {
-                NbtIo.writeCompressed(tag, file.toPath());
+                NbtIo.writeCompressed(tag, file);
             } else {
-                NbtIo.write(tag, file.toPath());
+                NbtIo.write(tag, file);
             }
             Dialog.showNotification("viscript_lib.editor.runtime_file_export_success", 2)
                     .show(getModularUI());
