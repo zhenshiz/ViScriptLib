@@ -1,21 +1,20 @@
+/*
 package com.viscript_lib.container;
 
 import com.lowdragmc.lowdraglib2.registry.annotation.LDLRegister;
 import com.viscript_lib.register.IContainerHelper;
 import com.viscript_lib.util.item.ItemStackCompareMode;
 import com.viscript_lib.util.item.ItemUtil;
-import net.minecraft.core.component.DataComponentType;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
-import net.neoforged.neoforge.items.IItemHandler;
+import net.minecraftforge.items.IItemHandler;
 import net.p3pp3rf1y.sophisticatedbackpacks.SophisticatedBackpacks;
 import net.p3pp3rf1y.sophisticatedbackpacks.backpack.BackpackStorage;
 import net.p3pp3rf1y.sophisticatedbackpacks.backpack.wrapper.BackpackWrapper;
 import net.p3pp3rf1y.sophisticatedbackpacks.backpack.wrapper.IBackpackWrapper;
 import net.p3pp3rf1y.sophisticatedbackpacks.common.gui.BackpackContext;
-import net.p3pp3rf1y.sophisticatedbackpacks.network.BackpackContentsPayload;
 import net.p3pp3rf1y.sophisticatedbackpacks.util.PlayerInventoryProvider;
 import net.p3pp3rf1y.sophisticatedcore.inventory.InventoryHandler;
 
@@ -24,9 +23,11 @@ import java.util.List;
 import java.util.UUID;
 import java.util.function.Consumer;
 
+*/
 /**
  * 精妙背包兼容
- */
+ *//*
+
 @LDLRegister(name = SophisticatedBackpacks.MOD_ID, registry = IContainerHelper.CONTAINER_HELPER_ID, modID = SophisticatedBackpacks.MOD_ID)
 public class SophisticatedBackpacksHelper implements IContainerHelper {
     @Override
@@ -37,7 +38,7 @@ public class SophisticatedBackpacksHelper implements IContainerHelper {
     @Override
     public int getItemStackCount(ServerPlayer player, ItemStack item,
                                  ItemStackCompareMode compareMode,
-                                 List<DataComponentType<?>> components) {
+                                 List<String> components) {
         int count = 0;
         for (ItemStack itemStack : getItemsFromInventoryBackpack(player)) {
             if (ItemUtil.isSameItem(itemStack, item, compareMode, components)) {
@@ -56,7 +57,7 @@ public class SophisticatedBackpacksHelper implements IContainerHelper {
     @Override
     public int removeItemStackByCount(ServerPlayer player, ItemStack item, int count,
                                       ItemStackCompareMode compareMode,
-                                      List<DataComponentType<?>> components) {
+                                      List<String> components) {
         if (count <= 0) return 0;
 
         final int[] remain = {count};
@@ -114,7 +115,7 @@ public class SophisticatedBackpacksHelper implements IContainerHelper {
 
     public static void modifyInventoryBackpack(ServerPlayer player, ItemStack backpackItem, Consumer<IItemHandler> action) {
         PlayerInventoryProvider.get().runOnBackpacks(player, (backpack, inventoryName, identifier, index) -> {
-            if (!ItemStack.isSameItemSameComponents(backpack, backpackItem)) return false;
+            if (!ItemStack.isSameItemSameTags(backpack, backpackItem)) return false;
             modifyBackpack(player, BackpackWrapper.fromStack(backpack), action);
             return false;
         });
@@ -148,3 +149,4 @@ public class SophisticatedBackpacksHelper implements IContainerHelper {
         player.connection.send(new BackpackContentsPayload(uuid, backpackContent));
     }
 }
+*/

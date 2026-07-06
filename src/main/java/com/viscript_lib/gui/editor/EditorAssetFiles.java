@@ -221,7 +221,7 @@ public final class EditorAssetFiles {
             if ("..".equals(segment)) {
                 throw new IllegalArgumentException("Editor asset path cannot contain '..'");
             }
-            if (result.length() > 0) {
+            if (!result.isEmpty()) {
                 result.append('/');
             }
             result.append(segment.replaceAll("[^A-Za-z0-9_.-]", "_"));

@@ -15,12 +15,12 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Pseudo
-@Mixin(FTBLibraryClient.class)
+@Mixin(value = FTBLibraryClient.class, remap = false)
 public class FtbLibraryClientMixin {
 
     @Inject(method = "areButtonsVisible", at = @At("HEAD"), cancellable = true)
-    private static void viscript_lib$hideSidebarButtonsInEditor(Screen screen, CallbackInfoReturnable<Boolean> cir) {
-        if (viscript_lib$isEditorScreen(screen)) {
+    private static void viscript_lib$hideSidebarButtonsInEditor(Screen gui, CallbackInfoReturnable<Boolean> cir) {
+        if (viscript_lib$isEditorScreen(gui)) {
             cir.setReturnValue(false);
         }
     }

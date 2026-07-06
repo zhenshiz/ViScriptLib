@@ -1,3 +1,4 @@
+/*
 package com.viscript_lib.configurator.accessor;
 
 import com.lowdragmc.lowdraglib2.configurator.accessors.TypesAccessor;
@@ -16,9 +17,11 @@ import java.lang.reflect.Field;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
+*/
 /**
  * 物品组件类型配置器访问器，用自动补全输入框选择已注册的 DataComponentType。
- */
+ *//*
+
 @LDLRegisterClient(name = "data_component_type", registry = "ldlib2:configurator_accessor")
 public class DataComponentTypeAccessor extends TypesAccessor<DataComponentType<?>> {
 
@@ -62,3 +65,4 @@ public class DataComponentTypeAccessor extends TypesAccessor<DataComponentType<?
         return (Registry) BuiltInRegistries.DATA_COMPONENT_TYPE;
     }
 }
+*/

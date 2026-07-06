@@ -4,7 +4,7 @@ import com.lowdragmc.lowdraglib2.registry.AutoRegistry;
 import com.lowdragmc.lowdraglib2.registry.annotation.LDLRegister;
 import com.viscript_lib.ViScriptLibRegistries;
 import com.viscript_lib.register.IContainerHelper;
-import net.minecraft.core.component.DataComponentType;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.Container;
 import net.minecraft.world.item.ItemStack;
@@ -32,7 +32,7 @@ public class ItemUtil {
      */
     public static int removeItemForPlayer(ServerPlayer player, ItemStack itemStack, int count,
                                            ItemStackCompareMode compareMode,
-                                           List<DataComponentType<?>> components) {
+                                           List<String> components) {
         for (AutoRegistry.Holder<LDLRegister, IContainerHelper, Supplier<IContainerHelper>> containerHelperSupplierHolder : ViScriptLibRegistries.ContainerHelper) {
             IContainerHelper iContainerHelper = containerHelperSupplierHolder.value().get();
             if (count > 0) {
@@ -61,7 +61,7 @@ public class ItemUtil {
      */
     public static int getItemForPlayerCount(ServerPlayer player, ItemStack item,
                                             ItemStackCompareMode compareMode,
-                                            List<DataComponentType<?>> components) {
+                                            List<String> components) {
         int count = 0;
         if (player != null) {
             for (AutoRegistry.Holder<LDLRegister, IContainerHelper, Supplier<IContainerHelper>> containerHelperSupplierHolder : ViScriptLibRegistries.ContainerHelper) {
@@ -97,7 +97,7 @@ public class ItemUtil {
      */
     public static int getItemCountByContainer(Container container, ItemStack item,
                                               ItemStackCompareMode compareMode,
-                                              List<DataComponentType<?>> components) {
+                                              List<String> components) {
         int count = 0;
         for (int i = 0; i < container.getContainerSize(); i++) {
             ItemStack stack = container.getItem(i);
@@ -133,7 +133,7 @@ public class ItemUtil {
      */
     public static int removeItemByContainer(Container container, ItemStack item, int count,
                                             ItemStackCompareMode compareMode,
-                                            List<DataComponentType<?>> components) {
+                                            List<String> components) {
         for (int i = 0; i < container.getContainerSize(); i++) {
             ItemStack stack = container.getItem(i);
             if (isSameItem(stack, item, compareMode, components)) {
@@ -156,7 +156,7 @@ public class ItemUtil {
      */
     public static boolean isSameItem(ItemStack itemA, ItemStack itemB,
                                      ItemStackCompareMode compareMode,
-                                     List<DataComponentType<?>> components) {
+                                     List<String> components) {
         ItemStackCompareMode mode = compareMode == null ? ItemStackCompareMode.ALL_COMPONENTS : compareMode;
         return switch (mode) {
             case ALL_COMPONENTS -> isSameItemWithAllComponents(itemA, itemB);
@@ -177,17 +177,17 @@ public class ItemUtil {
      * @return 物品类型相同，且未排除的组件都相同时返回 <code>true</code>
      */
     public static boolean isSameItemExcludingComponents(ItemStack itemA, ItemStack itemB,
-                                                        List<DataComponentType<?>> excludedComponents) {
+                                                        List<String> excludedComponents) {
         if (shouldFailItemComparison(itemA, itemB)) {
             return false;
         }
 
-        Set<DataComponentType<?>> excluded = toComponentSet(excludedComponents);
-        Set<DataComponentType<?>> componentTypes = new HashSet<>(itemA.getComponents().keySet());
-        componentTypes.addAll(itemB.getComponents().keySet());
+        Set<String> excluded = toComponentSet(excludedComponents);
+        Set<String> componentTypes = getNbt(itemA).getAllKeys();
+        componentTypes.addAll(getNbt(itemB).getAllKeys());
 
-        for (DataComponentType<?> component : componentTypes) {
-            if (!excluded.contains(component) && !Objects.equals(itemA.get(component), itemB.get(component))) {
+        for (String component : componentTypes) {
+            if (!excluded.contains(component) && !Objects.equals(getNbt(itemA).get(component), getNbt(itemB).get(component))) {
                 return false;
             }
         }
@@ -206,13 +206,13 @@ public class ItemUtil {
      * @return 物品类型相同，且指定组件都相同时返回 <code>true</code>
      */
     public static boolean isSameItemWithOnlyComponents(ItemStack itemA, ItemStack itemB,
-                                                       List<DataComponentType<?>> includedComponents) {
+                                                       List<String> includedComponents) {
         if (shouldFailItemComparison(itemA, itemB)) {
             return false;
         }
 
-        for (DataComponentType<?> component : toComponentSet(includedComponents)) {
-            if (!Objects.equals(itemA.get(component), itemB.get(component))) {
+        for (String component : toComponentSet(includedComponents)) {
+            if (!Objects.equals(getNbt(itemA).get(component), getNbt(itemB).get(component))) {
                 return false;
             }
         }
@@ -223,7 +223,7 @@ public class ItemUtil {
         if (itemA == null || itemB == null) {
             return false;
         }
-        return ItemStack.isSameItemSameComponents(itemA, itemB);
+        return ItemStack.isSameItemSameTags(itemA, itemB);
     }
 
     private static boolean shouldFailItemComparison(ItemStack itemA, ItemStack itemB) {
@@ -239,10 +239,15 @@ public class ItemUtil {
         return !ItemStack.isSameItem(itemA, itemB);
     }
 
-    private static Set<DataComponentType<?>> toComponentSet(List<DataComponentType<?>> components) {
+    private static Set<String> toComponentSet(List<String> components) {
         if (components == null || components.isEmpty()) {
             return Set.of();
         }
         return new HashSet<>(components);
+    }
+    
+    /**避免愚蠢的{@link ItemStack#getOrCreateTag()}给没有nbt标签的物品塞一个空的nbt*/
+    public static CompoundTag getNbt(ItemStack stack) {
+        return stack.getTag() == null ? new CompoundTag() : stack.getTag();
     }
 }

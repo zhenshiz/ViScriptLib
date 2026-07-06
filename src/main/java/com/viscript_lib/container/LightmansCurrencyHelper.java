@@ -1,3 +1,4 @@
+/*
 package com.viscript_lib.container;
 
 import com.lowdragmc.lowdraglib2.registry.annotation.LDLRegister;
@@ -6,19 +7,19 @@ import com.viscript_lib.util.item.ItemStackCompareMode;
 import com.viscript_lib.util.item.ItemUtil;
 import io.github.lightman314.lightmanscurrency.LightmansCurrency;
 import io.github.lightman314.lightmanscurrency.api.money.coins.CoinAPI;
-import io.github.lightman314.lightmanscurrency.common.attachments.WalletHandler;
+import io.github.lightman314.lightmanscurrency.common.capability.wallet.WalletHandler;
 import io.github.lightman314.lightmanscurrency.common.items.WalletItem;
-import io.github.lightman314.lightmanscurrency.common.items.data.WalletDataWrapper;
-import net.minecraft.core.component.DataComponentType;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.Container;
 import net.minecraft.world.item.ItemStack;
 
 import java.util.List;
 
+*/
 /**
  * Lightmans Currency兼容 玩家穿戴的钱袋
- */
+ *//*
+
 @LDLRegister(name = LightmansCurrency.MODID, registry = IContainerHelper.CONTAINER_HELPER_ID, modID = LightmansCurrency.MODID)
 public class LightmansCurrencyHelper implements IContainerHelper {
     @Override
@@ -29,7 +30,7 @@ public class LightmansCurrencyHelper implements IContainerHelper {
     @Override
     public int getItemStackCount(ServerPlayer player, ItemStack item,
                                  ItemStackCompareMode compareMode,
-                                 List<DataComponentType<?>> components) {
+                                 List<String> components) {
         if (!CoinAPI.getApi().IsCoin(item, false)) {
             return 0;
         }
@@ -51,7 +52,7 @@ public class LightmansCurrencyHelper implements IContainerHelper {
     @Override
     public int removeItemStackByCount(ServerPlayer player, ItemStack item, int count,
                                       ItemStackCompareMode compareMode,
-                                      List<DataComponentType<?>> components) {
+                                      List<String> components) {
         if (!CoinAPI.getApi().IsCoin(item, false)) {
             return count;
         }
@@ -71,3 +72,4 @@ public class LightmansCurrencyHelper implements IContainerHelper {
         return count;
     }
 }
+*/

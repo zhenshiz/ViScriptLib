@@ -4,7 +4,7 @@ license="${mod_license}"
 #issueTrackerURL="https://change.me.to.your.issue.tracker.example.invalid/"
 #clientSideOnly=true - defaults to false if absent
 [[mods]]
-modId="${mod_id}"
+modId="viscript_lib"
 version="${mod_version}"
 displayName="${mod_name}"
 #updateJSONURL="https://change.me.example.invalid/updates.json"
@@ -14,26 +14,26 @@ displayName="${mod_name}"
 authors="${mod_authors}"
 description='''${mod_description}'''
 
-[[dependencies.${mod_id}]]
-    modId="forge"
-    mandatory=true
-    versionRange="${forge_version_range}"
-    ordering="NONE"
-    side="BOTH"
+[[dependencies.viscript_lib]]
+modId="forge"
+mandatory=true
+versionRange="${forge_version_range}"
+ordering="NONE"
+side="BOTH"
 
-[[dependencies.${mod_id}]]
-    modId="minecraft"
-    mandatory=true
-    versionRange="${minecraft_version_range}"
-    ordering="NONE"
-    side="BOTH"
+[[dependencies.viscript_lib]]
+modId="minecraft"
+mandatory=true
+versionRange="${minecraft_version_range}"
+ordering="NONE"
+side="BOTH"
 
-[[dependencies.${mod_id}]]
+[[dependencies.viscript_lib]]
 modId = "ldlib2"
-type = "required"
+mandatory=true
 versionRange = "[2.2.27,)"
 ordering = "NONE"
 side = "BOTH"
 
-[features."${mod_id}"]
+[features.viscript_lib]
 openGLVersion = "[3.2,)"

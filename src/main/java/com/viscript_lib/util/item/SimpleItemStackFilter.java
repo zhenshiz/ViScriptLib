@@ -1,22 +1,23 @@
 package com.viscript_lib.util.item;
 
 import com.viscript_lib.compat.JechHelper;
-import net.minecraft.core.Holder;
-import net.minecraft.core.component.DataComponents;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.alchemy.PotionContents;
+import net.minecraft.world.item.alchemy.PotionUtils;
 import net.minecraft.world.item.enchantment.Enchantment;
-import net.minecraft.world.item.enchantment.EnchantmentHelper;
-import net.minecraft.world.item.enchantment.ItemEnchantments;
 
+import java.util.List;
 import java.util.Locale;
 
 /**
  * 简单的 ItemStack 筛选器
  * 支持：物品ID、物品名称、附魔、药水效果、描述筛选
  */
+@SuppressWarnings("deprecation")
 public class SimpleItemStackFilter {
 
     /**
@@ -99,7 +100,7 @@ public class SimpleItemStackFilter {
      * 检查附魔是否匹配
      */
     private static boolean matchesEnchantment(ItemStack stack, String enchantCondition) {
-        ItemEnchantments enchantments = EnchantmentHelper.getEnchantmentsForCrafting(stack);
+        var enchantments = stack.getAllEnchantments();
         if (enchantments.isEmpty()) {
             return false;
         }
@@ -109,13 +110,12 @@ public class SimpleItemStackFilter {
         String enchantName = parts[0].toLowerCase();
         int requiredLevel = parts.length > 1 ? parseIntSafely(parts[1], -1) : -1;
 
-        for (Holder<Enchantment> enchantmentHolder : enchantments.keySet()) {
-            int level = enchantments.getLevel(enchantmentHolder);
-            Enchantment enchantment = enchantmentHolder.value();
+        for (var enchantment : enchantments.keySet()) {
+            int level = enchantments.get(enchantment);
 
             // 获取附魔ID
-            String enchantId = getEnchantmentId(enchantmentHolder);
-            String enchantDisplayName = Enchantment.getFullname(enchantmentHolder, level).getString();
+            String enchantId = getEnchantmentId(enchantment);
+            String enchantDisplayName = enchantment.getFullname(level).getString();
 
             // 检查名称是否匹配
             boolean nameMatches = containsPlainText(enchantId, enchantName) ||
@@ -137,23 +137,16 @@ public class SimpleItemStackFilter {
      * 支持本地化名称和等级，例如: "力量"、"strength"、"力量:2"
      */
     private static boolean matchesPotionEffect(ItemStack stack, String potionCondition) {
-        PotionContents contents = stack.get(DataComponents.POTION_CONTENTS);
-        if (contents == null) {
-            return false;
-        }
+        List<MobEffectInstance> contents = PotionUtils.getMobEffects(stack);
 
         String[] parts = potionCondition.split(":");
         String effectName = parts[0].toLowerCase();
         int requiredLevel = parts.length > 1 ? parseIntSafely(parts[1], -1) : -1;
 
-        for (MobEffectInstance effectInstance : contents.getAllEffects()) {
-            var effectHolder = effectInstance.getEffect();
+        for (MobEffectInstance effectInstance : contents) {
+            String effectId = getEffectId(effectInstance);
 
-            String effectId = effectHolder.unwrapKey()
-                    .map(key -> key.location().toString())
-                    .orElse("");
-
-            String localizedName = Component.translatable(effectHolder.value().getDescriptionId()).getString();
+            String localizedName = Component.translatable(effectInstance.getEffect().getDescriptionId()).getString();
 
             if (containsPlainText(effectId, effectName) || containsReadableText(localizedName, effectName)) {
                 if (requiredLevel == -1) {
@@ -175,14 +168,15 @@ public class SimpleItemStackFilter {
      * 格式: "legendary"
      */
     private static boolean matchesLore(ItemStack stack, String loreCondition) {
-        var loreLines = stack.get(DataComponents.LORE);
+        var loreLines = ItemUtil.getNbt(stack).getList(ItemStack.TAG_LORE, 8);
 
-        if (loreLines == null || loreLines.lines().isEmpty()) {
+        if (loreLines.isEmpty()) {
             return false;
         }
 
-        for (var loreComponent : loreLines.lines()) {
-            if (containsReadableText(loreComponent.getString(), loreCondition)) {
+        for (int i = 0; i < loreLines.size(); ++i) {
+            MutableComponent component = Component.Serializer.fromJson(loreLines.getString(i));
+            if (component != null && containsReadableText(component.getString(), loreCondition)) {
                 return true;
             }
         }
@@ -194,27 +188,23 @@ public class SimpleItemStackFilter {
      * 获取物品ID
      */
     private static String getItemId(ItemStack stack) {
-        return net.minecraft.core.registries.BuiltInRegistries.ITEM
-                .getKey(stack.getItem())
-                .toString();
+        return BuiltInRegistries.ITEM.getKey(stack.getItem()).toString();
     }
 
     /**
      * 获取附魔ID
      */
-    private static String getEnchantmentId(Holder<Enchantment> enchantmentHolder) {
-        return enchantmentHolder.unwrapKey()
-                .map(key -> key.location().toString())
-                .orElse("");
+    private static String getEnchantmentId(Enchantment enchantment) {
+        ResourceLocation location = BuiltInRegistries.ENCHANTMENT.getKey(enchantment);
+        return location == null ? "" : location.toString();
     }
 
     /**
      * 获取药水效果ID
      */
     private static String getEffectId(MobEffectInstance effect) {
-        return net.minecraft.core.registries.BuiltInRegistries.MOB_EFFECT
-                .getKey(effect.getEffect().value())
-                .toString();
+        ResourceLocation location = BuiltInRegistries.MOB_EFFECT.getKey(effect.getEffect());
+        return location == null ? "" : location.toString();
     }
 
     /**

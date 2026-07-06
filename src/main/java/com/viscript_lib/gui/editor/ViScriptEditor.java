@@ -152,7 +152,7 @@ public abstract class ViScriptEditor extends Editor {
     }
 
     protected String loadFromClipboard() {
-        var project = getProjectTypes().get(0).newEmptyProject();
+        var project = getProjectTypes().getFirst().newEmptyProject();
         try {
             var tag = NbtHelper.tagFromString(Minecraft.getInstance().keyboardHandler.getClipboard());
             project.deserializeNBT(Platform.getFrozenRegistry(), tag);
