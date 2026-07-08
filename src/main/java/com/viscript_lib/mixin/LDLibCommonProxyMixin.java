@@ -16,8 +16,7 @@ public class LDLibCommonProxyMixin {
             at = @At(
                     value = "INVOKE",
                     target = "Lcom/lowdragmc/lowdraglib2/networking/rpc/RPCPacketDistributor;init()V",
-                    shift = At.Shift.AFTER
-
+                    shift = At.Shift.BEFORE
             )
     )
     private static void viscript_lib$registerAccessorsBeforeRpc(IEventBus eventBus, CallbackInfo ci) {
