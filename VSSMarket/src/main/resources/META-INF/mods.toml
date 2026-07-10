@@ -1,0 +1,48 @@
+modLoader = "javafml"
+loaderVersion = "${loader_version_range}"
+license = "${mod_license}"
+[[mods]]
+modId = "vss_market"
+version = "${mod_version}"
+displayName = "${mod_name}"
+authors = "${mod_authors}"
+description = '''${mod_description}'''
+logoFile = "icon.png"
+
+[[dependencies.vss_market]]
+modId = "forge"
+mandatory=true
+versionRange = "${forge_version_range}"
+ordering = "NONE"
+side = "BOTH"
+
+[[dependencies.vss_market]]
+modId = "minecraft"
+mandatory=true
+versionRange = "${minecraft_version_range}"
+ordering = "NONE"
+side = "BOTH"
+
+[[dependencies.vss_market]]
+modId = "ldlib2"
+mandatory=true
+versionRange = "[${ldlib2_version},)"
+ordering = "AFTER"
+side = "BOTH"
+
+[[dependencies.vss_market]]
+modId = "viscript_lib"
+mandatory=true
+versionRange = "[${viscriptlib_version},)"
+ordering = "AFTER"
+side = "BOTH"
+
+[[dependencies.vss_market]]
+modId = "viscript_shop"
+mandatory=true
+versionRange = "[${viscriptshop_version},)"
+ordering = "AFTER"
+side = "BOTH"
+
+[features.vss_market]
+openGLVersion = "[3.2,)"

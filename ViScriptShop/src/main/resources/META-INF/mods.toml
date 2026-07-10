@@ -31,14 +31,14 @@ side="BOTH"
 [[dependencies.viscript_shop]]
 modId = "ldlib2"
 mandatory=true
-versionRange = "[2.2.27,)"
+versionRange = "[${ldlib2_version},)"
 ordering = "NONE"
 side = "BOTH"
 
 [[dependencies.viscript_shop]]
 modId = "viscript_lib"
 mandatory=true
-versionRange = "[1,)"
+versionRange = "[${viscriptlib_version},)"
 ordering = "AFTER"
 side = "BOTH"
 
