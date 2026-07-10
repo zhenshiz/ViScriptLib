@@ -1,0 +1,10 @@
+{
+  "icon": "viscript_shop:textures/shop.png",
+  "sort_index": 1000,
+  "click": [
+    "static_method:com.viscriptshop.compat.FtbLibraryComPat:click"
+  ],
+  "required_server_mods": [
+    "ftbquests"
+  ]
+}

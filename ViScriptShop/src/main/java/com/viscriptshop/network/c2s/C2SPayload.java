@@ -1,0 +1,41 @@
+package com.viscriptshop.network.c2s;
+
+import com.lowdragmc.lowdraglib2.Platform;
+import com.lowdragmc.lowdraglib2.networking.rpc.RPCPacket;
+import com.lowdragmc.lowdraglib2.networking.rpc.RPCPacketDistributor;
+import com.lowdragmc.lowdraglib2.syncdata.rpc.RPCSender;
+import com.mojang.serialization.Codec;
+import com.viscript_lib.util.CodecUtil;
+import com.viscriptshop.ViscriptShop;
+import com.viscriptshop.command.ShopCommand;
+import com.viscriptshop.gui.data.ShopInfo;
+import com.viscriptshop.network.s2c.S2CPayload;
+import com.viscriptshop.util.ViScriptShopServerUtil;
+
+import java.util.HashMap;
+import java.util.Map;
+
+public class C2SPayload {
+    public static final String MOD_ID = ViscriptShop.MOD_ID + ":";
+    public static final String GET_SHOP_INFO_C2S = MOD_ID + "get_shop_info_c2s";
+    public static final String OPEN_SHOP_UI_C2S = MOD_ID + "open_shop_ui_c2s";
+
+    @RPCPacket(GET_SHOP_INFO_C2S)
+    public static void getShopInfo(RPCSender sender) {
+        Map<String, String> shopInfos = new HashMap<>();
+        ShopCommand.getServerShopFiles().forEach(fileName -> {
+            ShopInfo shopInfo = ViScriptShopServerUtil.getShopInfo(fileName);
+            if (shopInfo != null && shopInfo.isQuickOpening()) {
+                String name = shopInfo.getName();
+                shopInfos.put(fileName, name.isEmpty() ? "viscript_shop.ui.title" : name);
+            }
+        });
+        Codec<Map<String, String>> codec = Codec.unboundedMap(Codec.STRING, Codec.STRING);
+        RPCPacketDistributor.rpcToPlayer(sender.asPlayer(), S2CPayload.GET_SHOP_INFO_S2C, CodecUtil.serializeNBT(codec, shopInfos, Platform.getFrozenRegistry()));
+    }
+
+    @RPCPacket(OPEN_SHOP_UI_C2S)
+    public static void openShopUI(RPCSender sender, String shopFileName, String categoryId, String merchantId) {
+        ViScriptShopServerUtil.serverOpenShop(sender.asPlayer(), shopFileName, categoryId, merchantId);
+    }
+}
