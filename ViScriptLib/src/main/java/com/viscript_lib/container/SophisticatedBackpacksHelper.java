@@ -1,4 +1,3 @@
-/*
 package com.viscript_lib.container;
 
 import com.lowdragmc.lowdraglib2.registry.annotation.LDLRegister;
@@ -11,23 +10,23 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.items.IItemHandler;
 import net.p3pp3rf1y.sophisticatedbackpacks.SophisticatedBackpacks;
+import net.p3pp3rf1y.sophisticatedbackpacks.api.CapabilityBackpackWrapper;
 import net.p3pp3rf1y.sophisticatedbackpacks.backpack.BackpackStorage;
-import net.p3pp3rf1y.sophisticatedbackpacks.backpack.wrapper.BackpackWrapper;
 import net.p3pp3rf1y.sophisticatedbackpacks.backpack.wrapper.IBackpackWrapper;
 import net.p3pp3rf1y.sophisticatedbackpacks.common.gui.BackpackContext;
+import net.p3pp3rf1y.sophisticatedbackpacks.network.BackpackContentsMessage;
 import net.p3pp3rf1y.sophisticatedbackpacks.util.PlayerInventoryProvider;
 import net.p3pp3rf1y.sophisticatedcore.inventory.InventoryHandler;
+import net.p3pp3rf1y.sophisticatedcore.network.PacketHandler;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.function.Consumer;
 
-*/
 /**
  * 精妙背包兼容
- *//*
-
+ */
 @LDLRegister(name = SophisticatedBackpacks.MOD_ID, registry = IContainerHelper.CONTAINER_HELPER_ID, modID = SophisticatedBackpacks.MOD_ID)
 public class SophisticatedBackpacksHelper implements IContainerHelper {
     @Override
@@ -63,7 +62,7 @@ public class SophisticatedBackpacksHelper implements IContainerHelper {
         final int[] remain = {count};
         PlayerInventoryProvider.get().runOnBackpacks(player, (backpack, inventoryName, identifier, index) -> {
             final boolean[] changed = {false};
-            IBackpackWrapper wrapper = BackpackWrapper.fromStack(backpack);
+            IBackpackWrapper wrapper = fromStack(backpack);
             InventoryHandler inventoryHandler = wrapper.getInventoryHandler();
             for (int i = 0; i < inventoryHandler.getSlots(); i++) {
                 if (remain[0] <= 0) break;
@@ -84,16 +83,19 @@ public class SophisticatedBackpacksHelper implements IContainerHelper {
         return remain[0];
     }
 
+    public static IBackpackWrapper fromStack(ItemStack backpack) {
+        return backpack.getCapability(CapabilityBackpackWrapper.getCapabilityInstance()).orElseGet(() -> IBackpackWrapper.Noop.INSTANCE);
+    }
+
     //获取玩家所有背包中所有的物品，不包括玩家物品栏
     public static List<ItemStack> getItemsFromInventoryBackpack(Player player) {
         List<ItemStack> items = new ArrayList<>();
         PlayerInventoryProvider.get().runOnBackpacks(player, (backpack, inventoryName, identifier, index) -> {
-            addHandlerItems(items, BackpackWrapper.fromStack(backpack).getInventoryHandler());
+            addHandlerItems(items, fromStack(backpack).getInventoryHandler());
             return false;
         });
         return items;
     }
-
 
     //获取玩家背包中所有的背包
     public static List<ItemStack> getAllInventoryBackpack(Player player) {
@@ -108,15 +110,15 @@ public class SophisticatedBackpacksHelper implements IContainerHelper {
     //获取背包中所有的物品
     public static List<ItemStack> getItemsFromBackpackItem(ItemStack itemStack) {
         List<ItemStack> items = new ArrayList<>();
-        BackpackWrapper.fromExistingData(itemStack)
-                .ifPresent(wrapper -> addHandlerItems(items, wrapper.getInventoryHandler()));
+        var wrapper = fromStack(itemStack);
+        addHandlerItems(items, wrapper.getInventoryHandler());
         return items;
     }
 
     public static void modifyInventoryBackpack(ServerPlayer player, ItemStack backpackItem, Consumer<IItemHandler> action) {
         PlayerInventoryProvider.get().runOnBackpacks(player, (backpack, inventoryName, identifier, index) -> {
             if (!ItemStack.isSameItemSameTags(backpack, backpackItem)) return false;
-            modifyBackpack(player, BackpackWrapper.fromStack(backpack), action);
+            modifyBackpack(player, fromStack(backpack), action);
             return false;
         });
     }
@@ -146,7 +148,6 @@ public class SophisticatedBackpacksHelper implements IContainerHelper {
         UUID uuid = wrapper.getContentsUuid().orElse(null);
         if (uuid == null) return;
         CompoundTag backpackContent = BackpackStorage.get().getOrCreateBackpackContents(uuid);
-        player.connection.send(new BackpackContentsPayload(uuid, backpackContent));
+        PacketHandler.INSTANCE.sendToClient(player, new BackpackContentsMessage(uuid, backpackContent));
     }
 }
-*/

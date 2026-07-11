@@ -11,6 +11,10 @@ var fabricDeps = [
 ]
 
 allprojects {
+    var dir = new File(rootProject.projectDir as String + "/build/${project.name}")
+    if (!dir.exists()) dir.mkdirs()
+    buildDir dir
+
     repositories {
         mavenLocal()
         mavenCentral()
@@ -126,10 +130,10 @@ allprojects {
             modImplementation "maven.modrinth:jei:${jei_version}"
             modImplementation "curse.maven:just-enough-characters-250702:${jech_version}"
             //ftb
-            modImplementation "curse.maven:ftb-quests-forge-289412:8078538"
-            modImplementation "curse.maven:ftb-library-forge-404465:8226927"
-            modImplementation "curse.maven:ftb-teams-forge-404468:7499810"
-            modImplementation "curse.maven:architectury-api-419699:5137938"
+            modCompileOnly "curse.maven:ftb-quests-forge-289412:8078538"
+            modCompileOnly "curse.maven:ftb-library-forge-404465:8226927"
+            modCompileOnly "curse.maven:ftb-teams-forge-404468:7499810"
+            modCompileOnly "curse.maven:architectury-api-419699:5137938"
             //tacz
             modCompileOnly "maven.modrinth:timeless-and-classics-zero:${tacz_version}"
             //拔刀剑

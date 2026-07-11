@@ -9,18 +9,14 @@ import com.mojang.authlib.GameProfile;
 import com.mojang.authlib.properties.Property;
 import com.mojang.serialization.Codec;
 import com.vss_market.VSSMarket;
+import io.netty.buffer.ByteBuf;
 import lombok.Getter;
 import net.minecraft.nbt.CompoundTag;
-import io.netty.buffer.ByteBuf;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.saveddata.SavedData;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Locale;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 public class MarketSavedData extends SavedData implements IPersistedSerializable {
     private static final String DATA_NAME = VSSMarket.MOD_ID + "_market";

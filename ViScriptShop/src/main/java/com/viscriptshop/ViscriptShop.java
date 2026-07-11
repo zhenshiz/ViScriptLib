@@ -62,44 +62,14 @@ public class ViscriptShop {
         return Minecraft.getInstance().getResourceManager().getResource(resourceLocation).isPresent();
     }
 
-    //精妙背包
-    public static boolean isSophisticatedBackpacksLoaded() {
-        return isModLoaded("sophisticatedbackpacks");
-    }
-
-    //超越维度
-    public static boolean isBeyondDimensionsLoaded() {
-        return isModLoaded("beyonddimensions");
-    }
-
     //jei
     public static boolean isJEILoaded() {
         return isModLoaded("jei");
     }
 
-    //Just Enough Characters
-    public static boolean isJECharactersLoaded() {
-        return isModLoaded("jecharacters");
-    }
-
     //FtbLibrary
     public static boolean isFtbLibraryLoaded() {
         return isModLoaded("ftblibrary");
-    }
-
-    //Lightmans Currency
-    public static boolean isLightmansCurrencyLoaded() {
-        return isModLoaded("lightmanscurrency");
-    }
-
-    //汇流来世
-    public static boolean isConfluenceLoaded() {
-        return isModLoaded("confluence");
-    }
-
-    //Magic Coins
-    public static boolean isMagicCoinsLoaded() {
-        return isModLoaded("magic_coins");
     }
 
     private static boolean isModLoaded(String modId) {

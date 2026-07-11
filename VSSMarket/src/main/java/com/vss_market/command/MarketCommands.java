@@ -1,8 +1,8 @@
 package com.vss_market.command;
 
 import com.lowdragmc.lowdraglib2.registry.annotation.LDLRegister;
-import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.CommandDispatcher;
+import com.mojang.brigadier.arguments.StringArgumentType;
 import com.viscript_lib.register.ICommand;
 import com.vss_market.VSSMarket;
 import com.vss_market.data.MarketSavedData;

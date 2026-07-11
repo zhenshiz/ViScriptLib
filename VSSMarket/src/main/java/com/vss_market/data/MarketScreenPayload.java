@@ -6,11 +6,11 @@ import com.lowdragmc.lowdraglib2.utils.PersistedParser;
 import com.lowdragmc.lowdraglib2.utils.codec.StreamCodec;
 import com.mojang.serialization.Codec;
 import com.viscriptshop.gui.components.Message;
+import io.netty.buffer.ByteBuf;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.Accessors;
-import io.netty.buffer.ByteBuf;
 import net.minecraft.world.item.ItemStack;
 
 import java.util.UUID;

@@ -103,7 +103,8 @@ var generateModMetadata = tasks.register("generateModMetadata", ProcessResources
     filesMatching(['META-INF/mods.toml', 'pack.mcmeta']) {
         expand replaceProperties
     }
-    from "src/main/resources" into "build/generated/sources/modMetadata"
+    from "src/main/resources"
+    into rootProject.projectDir as String + "/build/${project.name}/generated/sources/modMetadata"
 }
 // Include the output of "generateModMetadata" as an input directory for the build
 // this works with both building through Gradle and the IDE.

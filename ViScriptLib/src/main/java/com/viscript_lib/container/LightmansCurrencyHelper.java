@@ -1,4 +1,3 @@
-/*
 package com.viscript_lib.container;
 
 import com.lowdragmc.lowdraglib2.registry.annotation.LDLRegister;
@@ -15,11 +14,9 @@ import net.minecraft.world.item.ItemStack;
 
 import java.util.List;
 
-*/
 /**
  * Lightmans Currency兼容 玩家穿戴的钱袋
- *//*
-
+ */
 @LDLRegister(name = LightmansCurrency.MODID, registry = IContainerHelper.CONTAINER_HELPER_ID, modID = LightmansCurrency.MODID)
 public class LightmansCurrencyHelper implements IContainerHelper {
     @Override
@@ -35,13 +32,13 @@ public class LightmansCurrencyHelper implements IContainerHelper {
             return 0;
         }
 
-        WalletHandler walletHandler = WalletHandler.get(player);
+        WalletHandler walletHandler = new WalletHandler(player);
         ItemStack wallet = walletHandler.getWallet();
         if (!WalletItem.isWallet(wallet)) {
             return 0;
         }
 
-        return ItemUtil.getItemCountByContainer(WalletItem.getDataWrapper(wallet).getContents(), item, compareMode, components);
+        return ItemUtil.getItemCountByContainer(WalletItem.getWalletInventory(wallet), item, compareMode, components);
     }
 
     @Override
@@ -57,19 +54,15 @@ public class LightmansCurrencyHelper implements IContainerHelper {
             return count;
         }
 
-        WalletHandler walletHandler = WalletHandler.get(player);
+        WalletHandler walletHandler = new WalletHandler(player);
         ItemStack wallet = walletHandler.getWallet();
         if (!WalletItem.isWallet(wallet)) {
             return count;
         }
 
-        WalletDataWrapper wrapper = WalletItem.getDataWrapper(wallet);
-        Container contents = wrapper.getContents();
+        Container contents = WalletItem.getWalletInventory(wallet);
         count = ItemUtil.removeItemByContainer(contents, item, count, compareMode, components);
-
-        wrapper.setContents(contents, player);
 
         return count;
     }
 }
-*/

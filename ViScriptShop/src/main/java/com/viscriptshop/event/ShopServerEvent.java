@@ -8,6 +8,7 @@ import com.viscriptshop.gui.data.ShopSavedData;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
+import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.event.level.LevelEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -22,5 +23,12 @@ public class ShopServerEvent {
             ViscriptShop.setShopSavedData(world.getDataStorage().computeIfAbsent(nbt -> ShopSavedData.fromNbt(nbt, Platform.getFrozenRegistry()), ShopSavedData::new, "shop_info"));
             ShopRegistries.setMoneySavedData(world.getDataStorage().computeIfAbsent(MoneySavedData::fromNbt, MoneySavedData::new, "vss_player_money"));
         }
+    }
+
+    @SubscribeEvent
+    public static void onPlayerJoin(PlayerEvent.PlayerLoggedInEvent event) {
+        var data = ShopRegistries.getMoneySavedData();
+        var player = event.getEntity();
+        data.setMoney(player, data.getMoney(player));
     }
 }
