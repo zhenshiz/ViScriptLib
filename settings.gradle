@@ -16,3 +16,5 @@ rootProject.name = 'ViScript'
 include(':ViScriptLib')
 include(':ViScriptShop')
 include(':VSSMarket')
+
+include(':ViScriptRecipe')

@@ -1,0 +1,180 @@
+plugins {
+    id 'idea'
+    id 'java-library'
+    id 'maven-publish'
+    id 'net.neoforged.moddev.legacyforge'
+    id 'io.freefair.lombok'
+}
+
+version = mod_version
+group = mod_group_id
+
+repositories {
+    // Player Animator
+    maven {
+        name = "KosmX"
+        url = "https://maven.kosmx.dev/"
+        content {
+            includeGroup "dev.kosmx.player-anim"
+        }
+    }
+
+    maven {
+        name = "Iron's Maven"
+        url = "https://code.redspace.io/releases"
+    }
+
+    // Create
+    maven {
+        name = "Create"
+        url = "https://maven.createmod.net"
+    }
+    maven {
+        name = "Registrate"
+        url = "https://maven.ithundxr.dev/snapshots"
+    }
+}
+
+base {
+    archivesName = "${mod_name}-forge-${minecraft_version}"
+}
+
+configurations.configureEach {
+    resolutionStrategy.cacheChangingModulesFor 0, 'seconds'
+}
+
+legacyForge {
+    runs {
+        client {
+            client()
+            // Comma-separated list of namespaces to load gametests from. Empty = all namespaces.
+            systemProperty 'forge.enabledGameTestNamespaces', project.mod_id
+            var file = file("../runs/client")
+            if (!file.exists()) file.mkdirs()
+            setGameDirectory file
+        }
+
+        server {
+            server()
+            programArgument '--nogui'
+            systemProperty 'forge.enabledGameTestNamespaces', project.mod_id
+            var file = file("../runs/server")
+            if (!file.exists()) file.mkdirs()
+            setGameDirectory file
+        }
+
+        // applies to all the run configs above
+        configureEach {
+            systemProperty 'forge.logging.markers', 'REGISTRIES'
+            logLevel = org.slf4j.event.Level.DEBUG
+        }
+    }
+
+    mods {
+        "${mod_id}" {
+            sourceSet(sourceSets.main)
+        }
+    }
+}
+
+sourceSets.main.resources { srcDir 'src/generated/resources' }
+
+dependencies {
+    implementation project(":ViScriptLib")
+    jarJar(project(":ViScriptLib"))
+
+    // Optional
+    //铁魔法
+//    implementation "io.redspace:irons_spellbooks:${irons_spells_version}"
+//    runtimeOnly "io.redspace:irons_lib:${irons_lib_version}"
+//    runtimeOnly "dev.kosmx.player-anim:player-animation-lib-forge:${playeranimator_version}"
+    //冰火传说
+//    implementation "curse.maven:iceandfire-ce-1040076:7722420"
+//    runtimeOnly "curse.maven:uranus-1010827:8008516"
+//    runtimeOnly "curse.maven:jupiter-1072905:7738312"
+    //农夫乐事
+//    implementation "maven.modrinth:farmers-delight:${farmers_delight_version}"
+    //机械动力
+    modImplementation "maven.modrinth:create:${create_version}"
+    modImplementation "net.createmod.ponder:Ponder-Forge-${minecraft_version}:${ponder_version}"
+//    runtimeOnly "dev.engine-room.flywheel:flywheel-forge-api-${minecraft_version}:${flywheel_version}"
+//    runtimeOnly "dev.engine-room.flywheel:flywheel-forge-${minecraft_version}:${flywheel_version}"
+//    runtimeOnly "com.tterrag.registrate:Registrate:${registrate_version}"
+    //新生魔艺
+//    implementation "curse.maven:ars-nouveau-401955:${ars_nouveau_file}"
+    //无尽贪婪：重生
+//    implementation "curse.maven:re-avaritia-623969:${re_avaritia_file}"
+    //合成拓展
+//    implementation "curse.maven:cucumber-272335:${cucumber_file}"
+//    implementation "curse.maven:extended-crafting-268387:${extended_crafting_file}"
+    //森罗物语：厨房
+//    implementation "maven.modrinth:kaleidoscope-cookery:${kaleidoscope_cookery_version}"
+    //灾变：L_Ender's Cataclysm
+//    implementation "curse.maven:lendercataclysm-551586:${cataclysm_file}"
+//    runtimeOnly "curse.maven:lionfish-api-1001614:${lionfish_api_file}"
+    //菌类感染：孢子
+//    implementation "curse.maven:fungal-infection-spore-678295:${fungal_infection_spore_file}"
+    //诡厄巫法：Goety
+//    implementation "curse.maven:goety-586095:${goety_file}"
+    //东方女仆：Touhou Little Maid
+//    implementation "curse.maven:touhou-little-maid-355044:${touhou_little_maid_file}"
+
+    //must
+//    implementation "maven.modrinth:advanced-loot-info:${advanced_loot_info_version}"
+}
+
+// Uncomment the lines below if you wish to configure mixin. The mixin file should be named modid.mixins.json.
+mixin {
+    add sourceSets.main, "${mod_id}.refmap.json"
+    config "${mod_id}.mixins.json"
+}
+
+jar {
+    manifest.attributes([
+            "MixinConfigs": "${mod_id}.mixins.json"
+    ])
+}
+
+publishing {
+    publications {
+        register('mavenJava', MavenPublication) {
+            from components.java
+        }
+    }
+    repositories {
+        maven {
+            url "file://${project.projectDir}/repo"
+        }
+    }
+}
+
+// This block of code expands all declared replace properties in the specified resource targets.
+// A missing property will result in an error. Properties are expanded using ${} Groovy notation.
+var generateModMetadata = tasks.register("generateModMetadata", ProcessResources) {
+    var replaceProperties = [
+            minecraft_version        : minecraft_version,
+            minecraft_version_range  : minecraft_version_range,
+            forge_version            : forge_version,
+            forge_version_range      : forge_version_range,
+            loader_version_range     : loader_version_range,
+            mod_id                   : mod_id,
+            mod_name                 : mod_name,
+            mod_license              : mod_license,
+            mod_version              : mod_version,
+            mod_authors              : mod_authors,
+            mod_description          : mod_description,
+            ldlib2_version           : ldlib2_version,
+            viscriptlib_version      : project(":ViScriptLib").mod_version
+    ]
+    inputs.properties replaceProperties
+    filesMatching(['META-INF/mods.toml', 'pack.mcmeta']) {
+        expand replaceProperties
+    }
+    from "src/main/resources"
+    into rootProject.projectDir as String + "/build/${project.name}/generated/sources/modMetadata"
+}
+// Include the output of "generateModMetadata" as an input directory for the build
+// this works with both building through Gradle and the IDE.
+sourceSets.main.resources.srcDir generateModMetadata
+// To avoid having to run "generateModMetadata" manually, make it run on every project reload
+legacyForge.ideSyncTask generateModMetadata

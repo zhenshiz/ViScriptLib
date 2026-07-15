@@ -1,0 +1,32 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "com.viscript_recipe.mixin",
+  "compatibilityLevel": "JAVA_17",
+  "mixins": [
+    "AbstractCookingRecipeMixin",
+    "CustomRecipeMixin",
+    "FluidIngredientMixin",
+    "FluidStack",
+    "FluidTag",
+    "IronAlchemistCauldronFluidHandlerMixin",
+    "IronArcaneAnvilMenuMixin",
+    "ProcessingRecipeMixin",
+    "RecipeManagerMixin",
+    "SequencedAssemblyRecipeMixin",
+    "ShapedRecipeMixin",
+    "ShapelessRecipeMixin",
+    "SingleItemRecipeMixin",
+    "SmithingTransformRecipeMixin",
+    "SmithingTrimRecipeMixin"
+  ],
+  "client": [
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  },
+  "overwrites": {
+    "requireAnnotations": true
+  },
+  "refmap": "viscript_recipe.refmap.json"
+}
