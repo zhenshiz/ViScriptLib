@@ -4,7 +4,8 @@
   "package": "com.viscript_lib.mixin",
   "compatibilityLevel": "JAVA_21",
   "mixins": [
-    "LDLibCommonProxyMixin"
+    "LDLibCommonProxyMixin",
+    "PersistedParserMixin"
   ],
   "client": [
     "FtbLibraryClientMixin",
