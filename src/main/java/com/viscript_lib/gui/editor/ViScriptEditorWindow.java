@@ -17,11 +17,11 @@ import java.util.function.Supplier;
 /**
  * ViScript Lib 对 LDLib2 {@link EditorWindow} 的轻量扩展。
  *
- * <p>这个窗口主要补充两个能力：把最小化按钮改成“缩到指定屏幕区域”，以及按需移除
+ * <p>这个窗口主要补充两个能力：把缩放按钮接管为“缩到指定屏幕区域”，以及按需移除
  * LDLib2 默认的最大化/还原按钮。
  */
 public class ViScriptEditorWindow extends EditorWindow {
-    private static final String CUSTOM_MINIMIZE_BUTTON_CLASS = "__viscript_editor-window_minimize-button__";
+    private static final String CUSTOM_SCALE_BUTTON_CLASS = "__viscript_editor-window_scale-button__";
 
     @Nullable
     private MinimizedBounds minimizedBounds;
@@ -42,14 +42,14 @@ public class ViScriptEditorWindow extends EditorWindow {
     }
 
     /**
-     * 设置并启用最小化按钮。按钮按下后，窗口会缩到给定像素区域。
+     * 设置并接管缩放按钮。按钮按下后，窗口会缩到给定像素区域。
      */
     public ViScriptEditorWindow setMinimizedBounds(float left, float top, float width, float height) {
         return setMinimizedBounds(MinimizedBounds.pixels(left, top, width, height));
     }
 
     /**
-     * 设置并启用最小化按钮。参数是屏幕百分比，<code>70</code> 表示屏幕宽/高的 70%。
+     * 设置并接管缩放按钮。参数是屏幕百分比，<code>70</code> 表示屏幕宽/高的 70%。
      */
     public ViScriptEditorWindow setMinimizedBoundsPercent(float leftPercent, float topPercent,
                                                           float widthPercent, float heightPercent) {
@@ -57,7 +57,7 @@ public class ViScriptEditorWindow extends EditorWindow {
     }
 
     /**
-     * 设置并启用最小化按钮。可以用 {@link MinimizedBounds#of(BoundsValue, BoundsValue, BoundsValue, BoundsValue)}
+     * 设置并接管缩放按钮。可以用 {@link MinimizedBounds#of(BoundsValue, BoundsValue, BoundsValue, BoundsValue)}
      * 混合像素和百分比。
      */
     public ViScriptEditorWindow setMinimizedBounds(MinimizedBounds bounds) {
@@ -67,7 +67,7 @@ public class ViScriptEditorWindow extends EditorWindow {
     }
 
     /**
-     * 关闭自定义最小化按钮。
+     * 取消缩放按钮的指定区域行为，恢复为普通最大化/还原。
      */
     public ViScriptEditorWindow clearMinimizedBounds() {
         this.minimizedBounds = null;
@@ -121,35 +121,45 @@ public class ViScriptEditorWindow extends EditorWindow {
     }
 
     private void applyWindowButtonPolicy(Editor editor) {
-        removeCustomMinimizeButton(editor);
-
-        if (minimizedBounds != null && windowID != null) {
-            removeFirstWindowButtonBeforeClose(editor);
+        var buttonIndex = removeCustomScaleButton(editor);
+        var defaultScaleIndex = findDefaultScaleButtonIndex(editor);
+        if (defaultScaleIndex >= 0) {
+            var button = editor.buttonContainer.getChildren().get(defaultScaleIndex);
+            editor.buttonContainer.removeChild(button);
+            if (buttonIndex < 0) {
+                buttonIndex = defaultScaleIndex;
+            }
         }
         if (!defaultScaleButtonVisible) {
-            removeWindowButtonsBeforeClose(editor);
+            return;
         }
-        if (minimizedBounds != null) {
-            editor.buttonContainer.addChildAt(createMinimizeButton(), 0);
+
+        if (buttonIndex < 0) {
+            buttonIndex = findScaleButtonInsertionIndex(editor);
         }
+        editor.buttonContainer.addChildAt(createScaleButton(), Math.min(buttonIndex, editor.buttonContainer.getChildren().size()));
     }
 
-    private Button createMinimizeButton() {
+    private Button createScaleButton() {
         var button = new Button();
         button.noText()
-                .addPreIcon(DynamicTexture.of(() -> minimizedToBounds && !isMaximized()
-                        ? Icons.WINDOW_RESTORE
-                        : Icons.WINDOW_MINIMIZE))
-                .setOnClick(e -> {
-                    if (minimizedToBounds && !isMaximized()) {
-                        maximizeWindow();
-                    } else {
-                        minimizeToConfiguredBounds();
-                    }
-                });
-        button.addClasses("__white_icon__", CUSTOM_MINIMIZE_BUTTON_CLASS);
+                .addPreIcon(DynamicTexture.of(() -> isMaximized() ? Icons.WINDOW_RESTORE : Icons.WINDOW_MAXIMIZE))
+                .setOnClick(e -> handleScaleButtonClick());
+        button.addClasses("__white_icon__", CUSTOM_SCALE_BUTTON_CLASS);
         button.layout(layout -> layout.height(12));
         return button;
+    }
+
+    private void handleScaleButtonClick() {
+        if (isMaximized()) {
+            if (minimizedBounds != null) {
+                minimizeToConfiguredBounds();
+            } else {
+                retoreWindow();
+            }
+            return;
+        }
+        maximizeWindow();
     }
 
     private void minimizeToConfiguredBounds() {
@@ -233,31 +243,40 @@ public class ViScriptEditorWindow extends EditorWindow {
         }
     }
 
-    private void removeCustomMinimizeButton(Editor editor) {
+    private int removeCustomScaleButton(Editor editor) {
+        var index = -1;
         for (var child : new ArrayList<>(editor.buttonContainer.getChildren())) {
-            if (child.hasClass(CUSTOM_MINIMIZE_BUTTON_CLASS)) {
+            if (child.hasClass(CUSTOM_SCALE_BUTTON_CLASS)) {
+                var childIndex = editor.buttonContainer.getChildren().indexOf(child);
+                if (index < 0) {
+                    index = childIndex;
+                }
                 editor.buttonContainer.removeChild(child);
             }
         }
+        return index;
     }
 
-    private void removeFirstWindowButtonBeforeClose(Editor editor) {
-        for (var child : new ArrayList<>(editor.buttonContainer.getChildren())) {
-            if (child == editor.closeButton) {
-                return;
-            }
-            editor.buttonContainer.removeChild(child);
-            return;
+    private int findDefaultScaleButtonIndex(Editor editor) {
+        var closeIndex = editor.buttonContainer.getChildren().indexOf(editor.closeButton);
+        if (closeIndex < 0) {
+            return -1;
         }
+        if (windowID != null) {
+            return closeIndex >= 2 ? closeIndex - 1 : -1;
+        }
+        return closeIndex >= 1 ? closeIndex - 1 : -1;
     }
 
-    private void removeWindowButtonsBeforeClose(Editor editor) {
-        for (var child : new ArrayList<>(editor.buttonContainer.getChildren())) {
-            if (child == editor.closeButton) {
-                return;
-            }
-            editor.buttonContainer.removeChild(child);
+    private int findScaleButtonInsertionIndex(Editor editor) {
+        var closeIndex = editor.buttonContainer.getChildren().indexOf(editor.closeButton);
+        if (closeIndex < 0) {
+            return editor.buttonContainer.getChildren().size();
         }
+        if (windowID != null && closeIndex >= 1) {
+            return closeIndex;
+        }
+        return Math.max(0, closeIndex);
     }
 
     public record MinimizedBounds(BoundsValue left, BoundsValue top, BoundsValue width, BoundsValue height) {

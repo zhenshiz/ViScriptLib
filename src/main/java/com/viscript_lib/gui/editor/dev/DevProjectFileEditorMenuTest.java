@@ -20,8 +20,7 @@ public class DevProjectFileEditorMenuTest implements IMenuTest {
     @Override
     public ModularUI createUI(Player player) {
         var root = new ViScriptEditorWindow(DevProjectFileEditor::new)
-                .setMinimizedBoundsPercent(0, 0, 70, 100)
-                .removeDefaultScaleButton();
+                .setMinimizedBoundsPercent(0, 0, 70, 100);
         return new ModularUI(UI.of(root), player)
                 .shouldCloseOnEsc(false)
                 .shouldCloseOnKeyInventory(false);
