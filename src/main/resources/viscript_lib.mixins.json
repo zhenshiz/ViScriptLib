@@ -8,6 +8,7 @@
     "PersistedParserMixin"
   ],
   "client": [
+    "EditorWindowAccessor",
     "FtbLibraryClientMixin",
     "ItemStackAccessorClientMixin"
   ],

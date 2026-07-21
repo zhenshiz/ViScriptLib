@@ -5,6 +5,7 @@ import com.lowdragmc.lowdraglib2.Platform;
 import com.lowdragmc.lowdraglib2.editor.project.IProject;
 import com.lowdragmc.lowdraglib2.editor.project.ProjectType;
 import com.lowdragmc.lowdraglib2.editor.ui.Editor;
+import com.lowdragmc.lowdraglib2.editor.ui.EditorLayout;
 import com.lowdragmc.lowdraglib2.editor.ui.SplittableWindow;
 import com.lowdragmc.lowdraglib2.editor.ui.View;
 import com.lowdragmc.lowdraglib2.gui.ui.data.TextWrap;
@@ -19,7 +20,9 @@ import javax.annotation.Nullable;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * ViScript Lib 编辑器公共基类。
@@ -30,6 +33,7 @@ import java.util.List;
  */
 public abstract class ViScriptEditor extends Editor {
     final List<ProjectType> projectTypes = new ArrayList<>();
+    private final Set<String> removedWindowAnchors = new HashSet<>();
 
     /**
      * 注册工程文件项目类型。
@@ -48,6 +52,38 @@ public abstract class ViScriptEditor extends Editor {
      */
     protected final List<ProjectType> getProjectTypes() {
         return Collections.unmodifiableList(projectTypes);
+    }
+
+    @Override
+    public void applyLayout(EditorLayout layout) {
+        if (!removedWindowAnchors.isEmpty()) {
+            var prunedConfig = pruneRemovedAnchors(layout.layoutConfig());
+            if (prunedConfig == null) {
+                return;
+            }
+            layout = new EditorLayout(prunedConfig, layout.slots());
+        }
+        super.applyLayout(layout);
+    }
+
+    @Nullable
+    private SplittableWindow.LayoutConfig pruneRemovedAnchors(@Nullable SplittableWindow.LayoutConfig config) {
+        if (config == null || removedWindowAnchors.contains(config.anchorId())) {
+            return null;
+        }
+
+        var first = pruneRemovedAnchors(config.first());
+        var second = pruneRemovedAnchors(config.second());
+        if (config.first() != null && first == null) {
+            return second;
+        }
+        if (config.second() != null && second == null) {
+            return first;
+        }
+        if (first != config.first() || second != config.second()) {
+            return new SplittableWindow.LayoutConfig(config.anchorId(), config.vertical(), config.percentage(), first, second);
+        }
+        return config;
     }
 
     @Override
@@ -210,13 +246,28 @@ public abstract class ViScriptEditor extends Editor {
     /**
      * 删除指定编辑器窗口。
      *
-     * <p>这里会先移除窗口里的所有 View 和布局回退记录，再优先从 LDLib2 的拆分树里
-     * 摘掉窗口。根节点直属窗口无法直接提升兄弟窗口时，会回退为隐藏窗口本身。
+     * <p>这里会先移除窗口里的所有 View 和布局回退记录，再从 LDLib2 的拆分树里
+     * 摘掉窗口。只有没有父窗口的根窗口本身才会回退为隐藏窗口。
      *
      * @param window 要删除的窗口
      */
     protected final void removeEditorWindow(@Nullable SplittableWindow window) {
         if (window == null || window == rootWindow) return;
+
+        var anchorId = window.getAnchorId();
+        if (anchorId != null) {
+            removedWindowAnchors.add(anchorId);
+            window.setAnchorId(null);
+            if (window == leftWindow) {
+                leftWindow = rootWindow;
+            } else if (window == rightWindow) {
+                rightWindow = rootWindow;
+            } else if (window == centerWindow) {
+                centerWindow = rootWindow;
+            } else if (window == bottomWindow) {
+                bottomWindow = rootWindow;
+            }
+        }
 
         for (View view : new ArrayList<>(window.getAllViews())) {
             view.removeSelf();
@@ -224,7 +275,7 @@ public abstract class ViScriptEditor extends Editor {
         }
 
         var parent = window.getParentWindow();
-        if (parent != null && parent.getParentWindow() != null) {
+        if (parent != null) {
             parent.removeSplitWindow(window);
         } else {
             window.setDisplay(false);
