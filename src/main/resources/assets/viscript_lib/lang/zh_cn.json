@@ -35,6 +35,11 @@
   "viscript_lib.editor.server_upload_result.error.content": "服务端保存失败：%s",
   "viscript_lib.editor.file_name_empty": "文件名不能为空",
   "viscript_lib.editor.project_save_failed": "项目文件保存失败",
+  "viscript_lib.editor.missing_items.title": "发现不存在的物品",
+  "viscript_lib.editor.missing_items.warning": "项目中包含以下当前未注册的物品：\n%s\n\n强行打开会把这些物品转换成屏障占位符；原数量和物品组件将无法恢复。继续前会自动把原文件备份到：\n%s\n\n请保留该备份，以便安装缺失模组后恢复原始数据。",
+  "viscript_lib.editor.missing_items.force_open": "备份并强行打开",
+  "viscript_lib.editor.missing_items.backup_failed": "无法备份原文件，已取消强行打开",
+  "viscript_lib.missing_item.placeholder_lore": "原物品不存在，此屏障仅为占位符",
   "viscript_lib.editor.no_project": "请先打开一个项目",
   "viscript_lib.editor.export": "导出数据到剪贴板",
   "viscript_lib.editor.exported": "已将当前项目数据复制到剪贴板",
@@ -52,5 +57,8 @@
   "viscript_lib.dev_editor.project_file.view": "工程文件测试",
   "viscript_lib.dev_editor.project_file.type": "测试工程文件",
   "viscript_lib.dev_editor.project_file.project_section": "工程文件内容",
-  "viscript_lib.dev_editor.project_file.runtime_section": "运行时文件内容"
+  "viscript_lib.dev_editor.project_file.runtime_section": "运行时文件内容",
+  "viscript_lib.dev_editor.project_file.item_section": "物品恢复测试",
+  "viscript_lib.dev_editor.project_file.arm_missing_item": "下次保存时写入缺失物品 ID",
+  "viscript_lib.dev_editor.project_file.missing_item_armed": "已启用；保存后重新打开文件"
 }
