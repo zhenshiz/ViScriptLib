@@ -65,7 +65,10 @@ public abstract class ViScriptEditor extends Editor {
      *
      * <p>项目会先在回调作用域中载入到内存。没有缺失物品时立即打开；存在缺失物品时，
      * 玩家确认后会先复制原文件作为备份，再打开包含替代物品栈的项目。取消操作不会载入项目，
-     * 也不会修改或备份文件。
+     * 也不会修改或备份文件。通过 LDLib2 默认访问器反序列化的物品栈会自动触发该回调；直接调用
+     * Mojang Codec 或使用自定义序列化器的数据应显式使用 {@link MissingItemStackRecovery#CODEC}
+     * 或调用 {@link MissingItemStackRecovery#recover(MissingItemStackRecovery.MissingItemContext)}。
+     * 本编辑器不会替换 LDLib2 的全局物品栈访问器。
      *
      * @param projectType 与文件后缀匹配的项目类型
      * @param file 需要打开的项目文件

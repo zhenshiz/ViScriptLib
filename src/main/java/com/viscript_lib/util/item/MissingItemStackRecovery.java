@@ -29,28 +29,30 @@ import java.util.Optional;
  * <p>{@link #CODEC} 与 LDLib2 的物品栈 Codec 保持相同的正常编解码行为。只有输入中的
  * 物品 ID 未注册，并且当前线程通过 {@link #withHandler(MissingItemHandler, RecoveryOperation)}
  * 安装了回调时，才会使用回调返回的物品栈继续反序列化。回调仅在对应操作执行期间生效，
- * 不会改变游戏其它位置加载物品栈时的容错规则。
+ * 不会改变游戏其它位置加载物品栈时的容错规则。通过 LDLib2 默认访问器反序列化的
+ * {@link ItemStack} 字段会在该作用域中自动使用此 Codec。
  */
 public final class MissingItemStackRecovery {
-    private static final ThreadLocal<Deque<MissingItemHandler>> HANDLERS =
-            ThreadLocal.withInitial(ArrayDeque::new);
+    private static final ThreadLocal<Deque<MissingItemHandler>> HANDLERS = new ThreadLocal<>();
 
     /**
      * 支持缺失物品恢复回调的物品栈 Codec。
      *
-     * <p>使用手写 Codec 序列化物品栈的模组可以用本字段替换
-     * {@link ItemStack#OPTIONAL_CODEC}。通过 LDLib2 持久化的 {@link ItemStack} 字段已由
-     * ViScript Lib 自动接入，不需要单独替换。
+     * <p>直接调用 Mojang Codec 的自定义序列化器应使用本字段代替
+     * {@link ItemStack#OPTIONAL_CODEC}。通过 LDLib2 默认访问器持久化的物品栈会在恢复作用域中
+     * 自动使用本字段，不需要逐个字段指定 Codec。ViScript Lib 不会替换 LDLib2 的全局
+     * {@link ItemStack} Accessor。
      */
     public static final Codec<ItemStack> CODEC = new Codec<>() {
         @Override
         public <T> DataResult<Pair<ItemStack, T>> decode(DynamicOps<T> ops, T input) {
-            var missingItemId = findMissingItemId(ops, input);
-            if (missingItemId != null) {
-                var recovered = recover(new MissingItemContext(missingItemId, toNbt(ops, input)));
-                if (recovered.isPresent()) {
-                    return DataResult.success(Pair.of(recovered.get(), input));
-                }
+            if (!isRecoveryActive()) {
+                return LDLibExtraCodecs.ITEM_STACK.decode(ops, input);
+            }
+
+            var recovered = recoverSerializedStack(ops, input);
+            if (recovered.isPresent()) {
+                return DataResult.success(Pair.of(recovered.get(), input));
             }
             return LDLibExtraCodecs.ITEM_STACK.decode(ops, input);
         }
@@ -88,6 +90,10 @@ public final class MissingItemStackRecovery {
         Objects.requireNonNull(operation, "operation");
 
         var handlers = HANDLERS.get();
+        if (handlers == null) {
+            handlers = new ArrayDeque<>();
+            HANDLERS.set(handlers);
+        }
         handlers.push(handler);
         try {
             return operation.run();
@@ -111,11 +117,44 @@ public final class MissingItemStackRecovery {
     public static Optional<ItemStack> recover(MissingItemContext context) {
         Objects.requireNonNull(context, "context");
         var handlers = HANDLERS.get();
-        if (handlers.isEmpty()) {
-            HANDLERS.remove();
+        if (handlers == null || handlers.isEmpty()) {
             return Optional.empty();
         }
         return Optional.ofNullable(handlers.peek().recover(context));
+    }
+
+    /**
+     * 尝试从序列化输入中恢复未注册的物品栈。
+     *
+     * <p>此方法只在当前线程存在恢复处理器，并且输入包含未注册物品 ID 时调用处理器。正常物品、
+     * 非物品栈格式和处理器拒绝恢复的输入均返回空值。
+     *
+     * @param  ops 输入数据使用的动态操作
+     * @param  input 待检查的序列化输入
+     * @param  <T> 序列化输入类型
+     * @return 处理器提供的替代物品栈；输入不需要恢复时为空
+     */
+    public static <T> Optional<ItemStack> recoverSerializedStack(DynamicOps<T> ops, T input) {
+        Objects.requireNonNull(ops, "ops");
+        Objects.requireNonNull(input, "input");
+        if (!isRecoveryActive()) {
+            return Optional.empty();
+        }
+
+        var missingItemId = findMissingItemId(ops, input);
+        return missingItemId == null
+                ? Optional.empty()
+                : recover(new MissingItemContext(missingItemId, toNbt(ops, input)));
+    }
+
+    /**
+     * 返回当前线程是否处于缺失物品恢复操作中。
+     *
+     * @return 当前线程存在恢复处理器时返回 {@code true}
+     */
+    public static boolean isRecoveryActive() {
+        var handlers = HANDLERS.get();
+        return handlers != null && !handlers.isEmpty();
     }
 
     /**

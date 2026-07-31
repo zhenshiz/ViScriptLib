@@ -11,19 +11,21 @@ import com.lowdragmc.lowdraglib2.gui.ui.elements.ItemSlot;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.Label;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.codeeditor.CodeEditor;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.codeeditor.language.Languages;
+import com.lowdragmc.lowdraglib2.syncdata.IPersistedSerializable;
+import com.lowdragmc.lowdraglib2.syncdata.annotation.Persisted;
 import com.lowdragmc.lowdraglib2.utils.TagBuilder;
 import com.viscript_lib.gui.editor.IRuntimeFileProject;
-import com.viscript_lib.util.item.MissingItemStackRecovery;
 import dev.vfyjxf.taffy.style.FlexDirection;
 import lombok.Getter;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.NbtOps;
-import net.minecraft.nbt.Tag;
+import net.minecraft.nbt.ListTag;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 
 import javax.annotation.Nonnull;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.function.Consumer;
 
 /**
@@ -37,7 +39,7 @@ public class DevProjectFileProject implements IRuntimeFileProject {
     private final Resources resources = Resources.of();
     private String projectNote = "";
     private String runtimeContent = "";
-    private ItemStack previewItem = ItemStack.EMPTY;
+    private final MissingItemTestData missingItemTestData = new MissingItemTestData();
     private boolean writeMissingItemOnNextSave;
     private View view;
     private CodeEditor projectEditor;
@@ -61,17 +63,21 @@ public class DevProjectFileProject implements IRuntimeFileProject {
                   "message": "这是由工程文件导出的运行时文件。"
                 }
                 """;
-        previewItem = new ItemStack(Items.DIAMOND);
+        missingItemTestData.reset();
         writeMissingItemOnNextSave = false;
     }
 
     @Override
     public CompoundTag serializeProject(@Nonnull HolderLookup.Provider provider) {
+        var serializedItems = missingItemTestData.serializeNBT(provider);
+        if (writeMissingItemOnNextSave) {
+            writeMissingItemTestData(serializedItems);
+        }
         return TagBuilder.compound()
                 .add("type", "project_file")
                 .add("projectNote", projectNote)
                 .add("runtimeContent", runtimeContent)
-                .add("previewItem", serializePreviewItem(provider))
+                .add("itemTestData", serializedItems)
                 .build();
     }
 
@@ -79,13 +85,16 @@ public class DevProjectFileProject implements IRuntimeFileProject {
     public void deserializeProject(@Nonnull HolderLookup.Provider provider, @Nonnull CompoundTag nbt) {
         projectNote = nbt.getString("projectNote");
         runtimeContent = nbt.getString("runtimeContent");
-        var serializedItem = nbt.get("previewItem");
-        previewItem = serializedItem == null
-                ? new ItemStack(Items.DIAMOND)
-                : MissingItemStackRecovery.CODEC.parse(
-                        provider.createSerializationContext(NbtOps.INSTANCE),
-                        serializedItem
-                ).getOrThrow();
+        var serializedItems = nbt.getCompound("itemTestData").copy();
+        if (serializedItems.isEmpty()) {
+            missingItemTestData.reset();
+            serializedItems = missingItemTestData.serializeNBT(provider);
+            var legacyItem = nbt.get("previewItem");
+            if (legacyItem != null) {
+                serializedItems.put("directItem", legacyItem.copy());
+            }
+        }
+        missingItemTestData.deserializeNBT(provider, serializedItems);
         writeMissingItemOnNextSave = false;
     }
 
@@ -145,22 +154,30 @@ public class DevProjectFileProject implements IRuntimeFileProject {
                 .addChildren(
                         new Label().setText("viscript_lib.dev_editor.project_file.item_section")
                                 .layout(layout -> layout.height(18)),
-                        new ItemSlot().setItem(previewItem),
+                        new ItemSlot().setItem(missingItemTestData.directItem),
+                        new ItemSlot().setItem(missingItemTestData.firstCollectionItem()),
+                        new ItemSlot().setItem(missingItemTestData.nested.item),
                         armButton
                 );
     }
 
-    private Tag serializePreviewItem(HolderLookup.Provider provider) {
-        if (writeMissingItemOnNextSave) {
-            var missingItem = new CompoundTag();
-            missingItem.putString("id", "viscript_lib:missing_item_recovery_test");
-            missingItem.putInt("count", 1);
-            return missingItem;
-        }
-        return MissingItemStackRecovery.CODEC.encodeStart(
-                provider.createSerializationContext(NbtOps.INSTANCE),
-                previewItem
-        ).getOrThrow();
+    private static void writeMissingItemTestData(CompoundTag serializedItems) {
+        serializedItems.put("directItem", missingItem("missing_direct_item"));
+
+        var collection = new ListTag();
+        collection.add(missingItem("missing_collection_item"));
+        serializedItems.put("collectionItems", collection);
+
+        var nested = serializedItems.getCompound("nested").copy();
+        nested.put("item", missingItem("missing_nested_item"));
+        serializedItems.put("nested", nested);
+    }
+
+    private static CompoundTag missingItem(String path) {
+        var missingItem = new CompoundTag();
+        missingItem.putString("id", "viscript_lib:" + path);
+        missingItem.putInt("count", 1);
+        return missingItem;
     }
 
     private CodeEditor createEditor(String value, Consumer<String[]> responder) {
@@ -170,5 +187,30 @@ public class DevProjectFileProject implements IRuntimeFileProject {
         editor.setLinesResponder(responder);
         editor.layout(layout -> layout.widthPercent(100).flex(1));
         return editor;
+    }
+
+    private static final class MissingItemTestData implements IPersistedSerializable {
+        @Persisted
+        private ItemStack directItem = ItemStack.EMPTY;
+        @Persisted
+        private final List<ItemStack> collectionItems = new ArrayList<>();
+        @Persisted(subPersisted = true)
+        private final NestedItemData nested = new NestedItemData();
+
+        private void reset() {
+            directItem = new ItemStack(Items.DIAMOND);
+            collectionItems.clear();
+            collectionItems.add(new ItemStack(Items.EMERALD));
+            nested.item = new ItemStack(Items.GOLD_INGOT);
+        }
+
+        private ItemStack firstCollectionItem() {
+            return collectionItems.isEmpty() ? ItemStack.EMPTY : collectionItems.getFirst();
+        }
+    }
+
+    private static final class NestedItemData {
+        @Persisted
+        private ItemStack item = ItemStack.EMPTY;
     }
 }
