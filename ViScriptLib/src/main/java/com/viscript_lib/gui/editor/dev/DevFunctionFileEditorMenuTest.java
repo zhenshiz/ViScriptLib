@@ -23,4 +23,3 @@ public class DevFunctionFileEditorMenuTest implements IMenuTest {
                 .shouldCloseOnKeyInventory(false);
     }
 }
-

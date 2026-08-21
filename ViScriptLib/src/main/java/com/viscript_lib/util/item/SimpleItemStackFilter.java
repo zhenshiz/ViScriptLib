@@ -168,7 +168,7 @@ public class SimpleItemStackFilter {
      * 格式: "legendary"
      */
     private static boolean matchesLore(ItemStack stack, String loreCondition) {
-        var loreLines = ItemUtil.getNbt(stack).getList(ItemStack.TAG_LORE, 8);
+        var loreLines = ItemUtil.getNbt(stack).getCompound("display").getList(ItemStack.TAG_LORE, 8);
 
         if (loreLines.isEmpty()) {
             return false;

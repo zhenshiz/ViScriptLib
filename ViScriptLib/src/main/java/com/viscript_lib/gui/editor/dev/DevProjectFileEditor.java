@@ -10,6 +10,7 @@ import javax.annotation.Nonnull;
  */
 public class DevProjectFileEditor extends ProjectFileEditor {
     public DevProjectFileEditor() {
+        removeLeftWindow();
         removeBottomWindow();
         registerProjectType(DevProjectFileProjectType.TYPE);
     }

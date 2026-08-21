@@ -4,6 +4,7 @@ import com.lowdragmc.lowdraglib2.gui.texture.ColorRectTexture;
 import com.lowdragmc.lowdraglib2.gui.texture.IGuiTexture;
 import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
 import com.lowdragmc.lowdraglib2.gui.ui.data.Transform2D;
+import com.lowdragmc.lowdraglib2.gui.ui.elements.ScrollerView;
 import com.lowdragmc.lowdraglib2.gui.ui.event.UIEvents;
 import com.lowdragmc.lowdraglib2.gui.ui.style.PropertyRegistry;
 import com.lowdragmc.lowdraglib2.gui.ui.style.StyleOrigin;
@@ -33,6 +34,14 @@ public class DraggableUI<T> extends UIElement {
 
     private final IGuiTexture ghostBg = new ColorRectTexture(0x804A4A4A);
 
+    private boolean autoScrollEnabled = true;
+    private ScrollerView autoScrollView = null;
+    private float autoScrollMinPixelsPerTick = 2.0f;
+    private float autoScrollMaxPixelsPerTick = 12.0f;
+    private float autoScrollAccelerationDistance = 48.0f;
+    private float lastDragMouseX = Float.NaN;
+    private float lastDragMouseY = Float.NaN;
+
     private int lastTargetIndex = -1;
 
     private final Map<UIElement, float[]> lastKnownPositions = new HashMap<>();
@@ -57,6 +66,10 @@ public class DraggableUI<T> extends UIElement {
         this.addEventListener(UIEvents.MOUSE_UP, event -> stopDragging());
 
         this.addEventListener(UIEvents.TICK, e -> {
+            if (draggedCard != null && !Float.isNaN(lastDragMouseX) && !Float.isNaN(lastDragMouseY)) {
+                maybeAutoScrollAndReorder(lastDragMouseX, lastDragMouseY);
+            }
+
             if (flipSnapshotTtlTicks > 0 && --flipSnapshotTtlTicks == 0) {
                 flipFromPositions.clear();
             }
@@ -83,6 +96,31 @@ public class DraggableUI<T> extends UIElement {
         return draggedCard != null;
     }
 
+    public DraggableUI<T> setAutoScrollEnabled(boolean autoScrollEnabled) {
+        this.autoScrollEnabled = autoScrollEnabled;
+        return this;
+    }
+
+    /**
+     * 手动指定要联动的滚动视图；不设置时会自动查找最近的 {@link ScrollerView} 父级。
+     */
+    public DraggableUI<T> setAutoScrollView(ScrollerView autoScrollView) {
+        this.autoScrollView = autoScrollView;
+        return this;
+    }
+
+    /**
+     * @param minPixelsPerTick 刚越过边界时每 tick 自动滚动的像素
+     * @param maxPixelsPerTick 越过边界较远时每 tick 自动滚动的像素上限
+     * @param accelerationDistance 从最小速度加速到最大速度所需的越界距离
+     */
+    public DraggableUI<T> setAutoScrollSpeed(float minPixelsPerTick, float maxPixelsPerTick, float accelerationDistance) {
+        this.autoScrollMinPixelsPerTick = Math.max(0, minPixelsPerTick);
+        this.autoScrollMaxPixelsPerTick = Math.max(this.autoScrollMinPixelsPerTick, maxPixelsPerTick);
+        this.autoScrollAccelerationDistance = Math.max(1, accelerationDistance);
+        return this;
+    }
+
     private void bindDragEvents(UIElement card, UIElement dragHandle) {
         UIElement handle = dragHandle == null ? card : dragHandle;
 
@@ -95,7 +133,12 @@ public class DraggableUI<T> extends UIElement {
 
         card.addEventListener(UIEvents.DRAG_SOURCE_UPDATE, event -> {
             if (draggedCard != card) return;
-            maybeReorderAt(event.x, event.y);
+            lastDragMouseX = event.x;
+            lastDragMouseY = event.y;
+
+            if (!maybeAutoScrollAndReorder(event.x, event.y, false)) {
+                maybeReorderAt(event.x, event.y);
+            }
         });
 
         card.addEventListener(UIEvents.DRAG_END, event -> stopDragging());
@@ -150,6 +193,8 @@ public class DraggableUI<T> extends UIElement {
 
         draggedCard = card;
         lastTargetIndex = -1;
+        lastDragMouseX = Float.NaN;
+        lastDragMouseY = Float.NaN;
 
         originalBackgrounds.put(card, card.getStyle().backgroundTexture());
         originalOpacities.put(card, card.getStyle().opacity());
@@ -167,6 +212,103 @@ public class DraggableUI<T> extends UIElement {
         if (w > 0.1f && h > 0.1f) {
             handler.setDragTexture(-w / 2f, -h / 2f, w, h);
         }
+    }
+
+    private boolean maybeAutoScrollAndReorder(float mouseX, float mouseY) {
+        return maybeAutoScrollAndReorder(mouseX, mouseY, true);
+    }
+
+    private boolean maybeAutoScrollAndReorder(float mouseX, float mouseY, boolean scroll) {
+        if (!autoScrollEnabled || draggedCard == null) {
+            return false;
+        }
+
+        ScrollerView scrollView = resolveAutoScrollView();
+        if (scrollView == null || !scrollView.isDisplayed()) {
+            return false;
+        }
+
+        float top = scrollView.viewPort.getContentY();
+        float bottom = top + scrollView.viewPort.getContentHeight();
+        if (bottom <= top) {
+            return false;
+        }
+
+        int direction = 0;
+        float overflowDistance = 0;
+        if (mouseY < top) {
+            direction = -1;
+            overflowDistance = top - mouseY;
+        } else if (mouseY > bottom) {
+            direction = 1;
+            overflowDistance = mouseY - bottom;
+        }
+
+        if (direction == 0) {
+            return false;
+        }
+
+        if (scroll) {
+            scrollVertically(scrollView, direction, overflowDistance);
+        }
+
+        float reorderMouseX = clampMouseXForAutoScroll(scrollView, mouseX);
+        float reorderMouseY = direction < 0 ? top + 1.0f : bottom - 1.0f;
+        maybeReorderAt(reorderMouseX, reorderMouseY);
+        return true;
+    }
+
+    private ScrollerView resolveAutoScrollView() {
+        if (autoScrollView != null) {
+            return autoScrollView;
+        }
+        return getFirstAncestorOfType(ScrollerView.class);
+    }
+
+    private boolean scrollVertically(ScrollerView scrollView, int direction, float overflowDistance) {
+        var scroller = scrollView.verticalScroller;
+        if (!scroller.isDisplayed()) {
+            return false;
+        }
+
+        float minValue = scroller.getMinValue();
+        float maxValue = scroller.getMaxValue();
+        if (maxValue <= minValue) {
+            return false;
+        }
+
+        float value = scroller.getValue();
+        if ((direction < 0 && value <= minValue + 0.0001f)
+                || (direction > 0 && value >= maxValue - 0.0001f)) {
+            return false;
+        }
+
+        float scrollablePixels = scrollView.getContainerHeight() - scrollView.viewPort.getContentHeight();
+        if (scrollablePixels <= 0.1f) {
+            return false;
+        }
+
+        float speedProgress = clamp(overflowDistance / autoScrollAccelerationDistance, 0.0f, 1.0f);
+        float pixels = autoScrollMinPixelsPerTick
+                + (autoScrollMaxPixelsPerTick - autoScrollMinPixelsPerTick) * speedProgress;
+        float valueDelta = direction * pixels / scrollablePixels * (maxValue - minValue);
+
+        scroller.setValue(value + valueDelta);
+        return true;
+    }
+
+    private float clampMouseXForAutoScroll(ScrollerView scrollView, float mouseX) {
+        float left = Math.max(getContentX(), scrollView.viewPort.getContentX());
+        float right = Math.min(getContentX() + getContentWidth(),
+                scrollView.viewPort.getContentX() + scrollView.viewPort.getContentWidth());
+        if (right - left <= 2.0f) {
+            return mouseX;
+        }
+        return clamp(mouseX, left + 1.0f, right - 1.0f);
+    }
+
+    private static float clamp(float value, float min, float max) {
+        return Math.max(min, Math.min(max, value));
     }
 
     private void maybeReorderAt(float mouseX, float mouseY) {
@@ -285,6 +427,8 @@ public class DraggableUI<T> extends UIElement {
 
             flipFromPositions.clear();
             flipSnapshotTtlTicks = 0;
+            lastDragMouseX = Float.NaN;
+            lastDragMouseY = Float.NaN;
 
             syncDataFromDOM();
         }
