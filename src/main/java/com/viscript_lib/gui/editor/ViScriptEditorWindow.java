@@ -1,5 +1,7 @@
 package com.viscript_lib.gui.editor;
 
+import com.lowdragmc.lowdraglib2.LDLib2;
+import com.lowdragmc.lowdraglib2.editor.settings.AppearanceSettings;
 import com.lowdragmc.lowdraglib2.editor.ui.Editor;
 import com.lowdragmc.lowdraglib2.editor.ui.EditorWindow;
 import com.lowdragmc.lowdraglib2.gui.texture.DynamicTexture;
@@ -8,6 +10,8 @@ import com.lowdragmc.lowdraglib2.gui.ui.elements.Button;
 import com.viscript_lib.mixin.EditorWindowAccessor;
 import dev.vfyjxf.taffy.style.TaffyPosition;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.components.toasts.SystemToast;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 
 import javax.annotation.Nullable;
@@ -29,6 +33,33 @@ public class ViScriptEditorWindow extends EditorWindow {
     private boolean defaultScaleButtonVisible = true;
     private boolean constructed;
 
+    /**
+     * 打开此编辑器窗口，并在存在时恢复已缓存的最小化实例。
+     *
+     * <p>{@code windowID} 唯一持有最小化窗口的缓存条目。若同一 ID 已缓存为其他
+     * {@link EditorWindow} 子类型，本方法不会移除该缓存，而会拒绝以错误的窗口类型恢复它。
+     *
+     * @param windowID 此编辑器窗口的稳定资源标识符
+     * @param editorCreator 未缓存最小化窗口时创建编辑器的供应器
+     * @return 已恢复或新建的 VSL 编辑器窗口
+     * @throws IllegalStateException {@code windowID} 已被其他编辑器窗口子类型的最小化实例占用时抛出
+     */
+    public static ViScriptEditorWindow open(ResourceLocation windowID, Supplier<Editor> editorCreator) {
+        var minimizedWindows = EditorWindowAccessor.viscript_lib$getMinimizedWindows();
+        var minimizedWindow = minimizedWindows.get(windowID);
+        if (minimizedWindow == null) {
+            return new ViScriptEditorWindow(windowID, editorCreator);
+        }
+        if (!(minimizedWindow instanceof ViScriptEditorWindow editorWindow)) {
+            throw new IllegalStateException("窗口 ID %s 已由 %s 的最小化窗口占用"
+                    .formatted(windowID, minimizedWindow.getClass().getName()));
+        }
+
+        minimizedWindows.remove(windowID, editorWindow);
+        restoreMinimizedWindow(editorWindow);
+        return editorWindow;
+    }
+
     public ViScriptEditorWindow(Supplier<Editor> editorCreator) {
         super(editorCreator);
         constructed = true;
@@ -39,6 +70,32 @@ public class ViScriptEditorWindow extends EditorWindow {
         super(windowID, editorCreator);
         constructed = true;
         applyWindowButtonPolicy();
+    }
+
+    private static void restoreMinimizedWindow(ViScriptEditorWindow editorWindow) {
+        if (!LDLib2.isClient()) {
+            return;
+        }
+        var minecraft = Minecraft.getInstance();
+        minecraft.getToasts().addToast(new SystemToast(
+                new SystemToast.SystemToastId(1000L),
+                Component.translatable("editor.minimized.title"),
+                Component.translatable("editor.minimized.tips")
+        ));
+        var editor = editorWindow.getCurrentEditor();
+        if (editor == null) {
+            return;
+        }
+        editor.editorSettings.getSettings(AppearanceSettings.ID).ifPresent(settings -> {
+            if (settings instanceof AppearanceSettings appearanceSettings) {
+                var guiScale = minecraft.options.guiScale();
+                var scale = appearanceSettings.getScreenScale();
+                if (guiScale.get() != scale) {
+                    guiScale.set(scale);
+                    minecraft.resizeDisplay();
+                }
+            }
+        });
     }
 
     /**

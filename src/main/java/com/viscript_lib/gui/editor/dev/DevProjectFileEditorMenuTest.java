@@ -5,7 +5,9 @@ import com.lowdragmc.lowdraglib2.gui.ui.UI;
 import com.lowdragmc.lowdraglib2.registry.RegistrationEnvironment;
 import com.lowdragmc.lowdraglib2.registry.annotation.LDLRegister;
 import com.lowdragmc.lowdraglib2.test.ui.IMenuTest;
+import com.viscript_lib.ViScriptLib;
 import com.viscript_lib.gui.editor.ViScriptEditorWindow;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Player;
 
 /**
@@ -17,9 +19,12 @@ import net.minecraft.world.entity.player.Player;
         environment = RegistrationEnvironment.DEV_ONLY
 )
 public class DevProjectFileEditorMenuTest implements IMenuTest {
+    private static final ResourceLocation WINDOW_ID = ResourceLocation.fromNamespaceAndPath(
+            ViScriptLib.MOD_ID, "dev_project_file_editor");
+
     @Override
     public ModularUI createUI(Player player) {
-        var root = new ViScriptEditorWindow(DevProjectFileEditor::new)
+        var root = ViScriptEditorWindow.open(WINDOW_ID, DevProjectFileEditor::new)
                 .setMinimizedBoundsPercent(0, 0, 70, 100);
         return new ModularUI(UI.of(root), player)
                 .shouldCloseOnEsc(false)
