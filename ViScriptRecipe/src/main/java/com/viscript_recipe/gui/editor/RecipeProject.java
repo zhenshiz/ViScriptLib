@@ -5,6 +5,9 @@ import com.lowdragmc.lowdraglib2.editor.resource.Resources;
 import com.lowdragmc.lowdraglib2.editor.ui.Editor;
 import com.viscript_lib.gui.editor.IRuntimeFileProject;
 import com.viscript_recipe.data.RecipeFile;
+import com.viscript_recipe.gui.views.NavigationView;
+import com.viscript_recipe.gui.views.PropertiesView;
+import com.viscript_recipe.gui.views.WorkBenchView;
 import lombok.Getter;
 import lombok.Setter;
 import net.minecraft.core.HolderLookup;
@@ -25,11 +28,11 @@ public class RecipeProject implements IRuntimeFileProject {
     @Getter
     private Editor editor;
     @Nullable
-    private RecipeNavigationView navigationView;
+    private NavigationView navigationView;
     @Nullable
-    private CraftingWorkbenchView workbenchView;
+    private WorkBenchView workbenchView;
     @Nullable
-    private RecipePropertiesView propertiesView;
+    private PropertiesView propertiesView;
 
     @Override
     public ProjectType getProjectType() {
@@ -42,9 +45,8 @@ public class RecipeProject implements IRuntimeFileProject {
     }
 
     public void saveCurrentVisualState() {
-        if (navigationView != null) {
-            navigationView.saveCurrentVisualState();
-        }
+        if (navigationView == null) return;
+        navigationView.saveCanvas();
     }
 
     @Override
@@ -68,10 +70,9 @@ public class RecipeProject implements IRuntimeFileProject {
     public void onLoad(@Nonnull Editor editor) {
         IRuntimeFileProject.super.onLoad(editor);
         this.editor = editor;
-        var controller = new RecipeEditorController(this);
-        this.navigationView = new RecipeNavigationView(controller);
-        this.workbenchView = new CraftingWorkbenchView(controller);
-        this.propertiesView = new RecipePropertiesView(controller);
+        this.navigationView = new NavigationView(this);
+        this.workbenchView = new WorkBenchView(navigationView);
+        this.propertiesView = new PropertiesView(navigationView, workbenchView);
         editor.placeView(navigationView, () -> editor.leftWindow.getLeftTop());
         editor.placeView(workbenchView, () -> editor.centerWindow.getLeftTop());
         editor.placeView(propertiesView, () -> editor.rightWindow.getRightTop());
@@ -80,15 +81,9 @@ public class RecipeProject implements IRuntimeFileProject {
     @Override
     public void onClosed(@Nonnull Editor editor) {
         IRuntimeFileProject.super.onClosed(editor);
-        if (navigationView != null) {
-            navigationView.removeSelf();
-        }
-        if (workbenchView != null) {
-            workbenchView.removeSelf();
-        }
-        if (propertiesView != null) {
-            propertiesView.removeSelf();
-        }
+        if (navigationView != null) navigationView.removeSelf();
+        if (workbenchView != null) workbenchView.removeSelf();
+        if (propertiesView != null) propertiesView.removeSelf();
         this.editor = null;
         this.navigationView = null;
         this.workbenchView = null;

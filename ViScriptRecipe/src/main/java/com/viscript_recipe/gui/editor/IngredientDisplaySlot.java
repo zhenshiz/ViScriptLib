@@ -1,16 +1,27 @@
 package com.viscript_recipe.gui.editor;
 
 import com.lowdragmc.lowdraglib2.gui.ui.elements.ItemSlot;
+import com.viscript_recipe.data.IngredientValueKind;
+import com.viscript_recipe.data.RecipeIngredient;
+import lombok.Getter;
 import net.minecraft.world.item.ItemStack;
 
-import java.util.Arrays;
-
-class IngredientDisplaySlot extends ItemSlot {
+public class IngredientDisplaySlot extends ItemSlot {
+    @Getter
+    private RecipeIngredient ingredient = RecipeIngredient.empty();
     private ItemStack[] tagDisplayStacks = new ItemStack[0];
     private int tagDisplayIndex;
     private int tagDisplayTicks;
 
-    void setTagDisplayStacks(ItemStack[] stacks) {
+    public void setIngredient(RecipeIngredient ingredient) {
+        // 因为内部调用setItem后会重复触发事件，通过判断新旧物品是否匹配来避免重复设置（为什么内部不把notify设置为false？因为有必要触发事件）
+        if (ingredient.getKind() == IngredientValueKind.ITEM && tagDisplayStacks.length > 0
+                && ItemStack.matches(tagDisplayStacks[tagDisplayIndex], ingredient.toStack())) return;
+        this.ingredient = ingredient;
+        setTagDisplayStacks(ingredient.getDisplayStacks());
+    }
+
+    public void setTagDisplayStacks(ItemStack[] stacks) {
         if (stacks == null || stacks.length == 0) {
             clearTagDisplayStacks();
             return;
@@ -19,16 +30,15 @@ class IngredientDisplaySlot extends ItemSlot {
         for (int i = 0; i < stacks.length; i++) {
             copies[i] = stacks[i] == null ? ItemStack.EMPTY : stacks[i].copy();
         }
-        if (sameStacks(tagDisplayStacks, copies)) {
-            return;
-        }
         tagDisplayStacks = copies;
         tagDisplayIndex = 0;
         tagDisplayTicks = 0;
-        setItem(tagDisplayStacks[0].copy(), false);
+        setItem(tagDisplayStacks[0], true);
     }
 
-    void clearTagDisplayStacks() {
+    public void clearTagDisplayStacks() {
+        ingredient = RecipeIngredient.empty();
+        setItem(ItemStack.EMPTY, true);
         if (tagDisplayStacks.length == 0) {
             return;
         }
@@ -49,21 +59,6 @@ class IngredientDisplaySlot extends ItemSlot {
         }
         tagDisplayTicks = 0;
         tagDisplayIndex = (tagDisplayIndex + 1) % tagDisplayStacks.length;
-        setItem(tagDisplayStacks[tagDisplayIndex].copy(), false);
-    }
-
-    private boolean sameStacks(ItemStack[] left, ItemStack[] right) {
-        return left.length == right.length && Arrays.equals(stackKeys(left), stackKeys(right));
-    }
-
-    private String[] stackKeys(ItemStack[] stacks) {
-        var keys = new String[stacks.length];
-        for (int i = 0; i < stacks.length; i++) {
-            var stack = stacks[i];
-            keys[i] = stack == null || stack.isEmpty()
-                    ? ""
-                    : stack.getItemHolder().unwrapKey().map(Object::toString).orElse(stack.getItem().toString()) + "x" + stack.getCount();
-        }
-        return keys;
+        setItem(tagDisplayStacks[tagDisplayIndex], true);
     }
 }

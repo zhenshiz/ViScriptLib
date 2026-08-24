@@ -18,4 +18,3 @@ include(':ViScriptShop')
 include(':VSSMarket')
 
 include(':ViScriptRecipe')
-include(':VSR')

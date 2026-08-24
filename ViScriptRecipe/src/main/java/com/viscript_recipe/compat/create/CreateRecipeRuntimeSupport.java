@@ -10,7 +10,9 @@ public final class CreateRecipeRuntimeSupport {
     }
 
     public static void invalidateRecipeCaches(@Nullable ResourceManager resourceManager) {
-        RecipeFinder.LISTENER.onResourceManagerReload(resourceManager);
-        RecipeTrieFinder.LISTENER.onResourceManagerReload(resourceManager);
+        if (resourceManager != null) {
+            RecipeFinder.LISTENER.onResourceManagerReload(resourceManager);
+            RecipeTrieFinder.LISTENER.onResourceManagerReload(resourceManager);
+        }
     }
 }

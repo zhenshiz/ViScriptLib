@@ -15,20 +15,18 @@ import com.viscript_recipe.ViScriptRecipe;
 import com.viscript_recipe.data.RecipeFile;
 import com.viscript_recipe.gui.editor.RecipeEditor;
 import com.viscript_recipe.gui.editor.RecipeProjectType;
+import com.viscript_recipe.network.RecipeRegistrySnapshot;
 import com.viscript_recipe.network.StructureTagSnapshot;
-import com.viscript_recipe.network.s2c.JeiShowcaseS2CPayload;
 import com.viscript_recipe.network.s2c.RecipeEditorS2CPayload;
 import com.viscript_recipe.recipe.RecipeOverrideManager;
+import com.viscript_recipe.recipe.RecipeReloadSyncService;
 import net.minecraft.commands.CommandBuildContext;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtIo;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.protocol.game.ClientboundUpdateRecipesPacket;
-import net.minecraft.network.protocol.game.ClientboundUpdateTagsPacket;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.tags.TagNetworkSerialization;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -52,6 +50,8 @@ public class ViScriptRecipeCommands implements ICommand {
                                 ))))
                 .then(Commands.literal("reload")
                         .executes(context -> reloadRecipes(context.getSource(), false))
+                        .then(Commands.literal("delta")
+                                .executes(context -> reloadRecipeDelta(context.getSource())))
                         .then(Commands.literal("full")
                                 .executes(context -> reloadRecipes(context.getSource(), true))))
                 .then(Commands.literal("status")
@@ -64,14 +64,15 @@ public class ViScriptRecipeCommands implements ICommand {
         if (player == null) {
             return 0;
         }
-        if (!server.isSingleplayer()) {
-            source.sendFailure(Component.translatable("commands.viscript_recipe.editor.singleplayer_only"));
-            return 0;
-        }
         RPCPacketDistributor.rpcToPlayer(
                 player,
                 RecipeEditorS2CPayload.SYNC_STRUCTURE_TAGS,
                 StructureTagSnapshot.create(server.registryAccess())
+        );
+        RPCPacketDistributor.rpcToPlayer(
+                player,
+                RecipeEditorS2CPayload.SYNC_RECIPE_REGISTRIES,
+                RecipeRegistrySnapshot.create(server.registryAccess())
         );
         if (!PlayerUIMenuType.openUI(player, RecipeEditor.WINDOW_ID)) {
             return 0;
@@ -173,7 +174,7 @@ public class ViScriptRecipeCommands implements ICommand {
         var server = source.getServer();
         Config.reloadRuntimeConfigFromDisk();
         var result = RecipeOverrideManager.reload(server.getRecipeManager(), server.registryAccess());
-        syncReloadDataToPlayers(server, syncTags);
+        RecipeReloadSyncService.syncFullToPlayers(server, syncTags);
         source.sendSuccess(() -> Component.translatable(
                 "commands.viscript_recipe.reload.success",
                 result.fileCount(),
@@ -187,25 +188,37 @@ public class ViScriptRecipeCommands implements ICommand {
         return 1;
     }
 
-    private static void syncReloadDataToPlayers(MinecraftServer server, boolean syncTags) {
-        var players = server.getPlayerList().getPlayers();
-        if (players.isEmpty()) {
-            return;
+    private static int reloadRecipeDelta(CommandSourceStack source) {
+        var server = source.getServer();
+        Config.reloadRuntimeConfigFromDisk();
+        var deltaResult = RecipeOverrideManager.reloadDelta(server.getRecipeManager(), server.registryAccess());
+        var result = deltaResult.applyResult();
+        if (deltaResult.requiresFullSync()) {
+            RecipeReloadSyncService.syncFullToPlayers(server, false);
+            var reason = deltaResult.fallbackReason() == null
+                    ? Component.translatable("commands.viscript_recipe.reload.delta.fallback.unknown")
+                    : Component.translatable(deltaResult.fallbackReason().translationKey());
+            source.sendSuccess(() -> Component.translatable(
+                    "commands.viscript_recipe.reload.delta.fallback",
+                    reason,
+                    result.resultRecipeCount()
+            ), true);
+            return 1;
         }
 
-        var recipesPacket = new ClientboundUpdateRecipesPacket(server.getRecipeManager().getRecipes());
-        var tagsPacket = syncTags
-                ? new ClientboundUpdateTagsPacket(TagNetworkSerialization.serializeTagsToNetwork(server.registries()))
-                : null;
-        var showcaseOnly = Config.SHOWCASE_ONLY_VISCRIPT_RECIPES.get();
-        for (var player : players) {
-            player.connection.send(recipesPacket);
-            if (tagsPacket != null) {
-                player.connection.send(tagsPacket);
-            }
-            player.getRecipeBook().sendInitialRecipeBook(player);
-            RPCPacketDistributor.rpcToPlayer(player, JeiShowcaseS2CPayload.SYNC_SHOWCASE_MODE, showcaseOnly);
-        }
+        var delta = deltaResult.delta();
+        RecipeReloadSyncService.syncDeltaToPlayers(server, delta);
+        source.sendSuccess(() -> Component.translatable(
+                "commands.viscript_recipe.reload.delta.success",
+                result.fileCount(),
+                result.entryCount(),
+                result.enabledEntryCount(),
+                result.appliedEntryCount(),
+                result.skippedEntryCount(),
+                result.failedEntryCount(),
+                result.resultRecipeCount()
+        ), true);
+        return 1;
     }
 
     private static int showStatus(CommandSourceStack source) {

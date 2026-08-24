@@ -70,7 +70,7 @@ public final class StructureTagSnapshot {
             }
 
             var members = entry.getList(MEMBERS_KEY, Tag.TAG_STRING);
-            var memberIds = new java.util.ArrayList<ResourceLocation>(members.size());
+            var memberIds = new ArrayList<ResourceLocation>(members.size());
             for (int memberIndex = 0; memberIndex < members.size(); memberIndex++) {
                 var memberId = ResourceLocation.tryParse(members.getString(memberIndex));
                 if (memberId != null) {

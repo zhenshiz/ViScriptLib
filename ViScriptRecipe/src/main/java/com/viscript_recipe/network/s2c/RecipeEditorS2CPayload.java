@@ -8,6 +8,7 @@ import com.lowdragmc.lowdraglib2.networking.rpc.RPCPacket;
 import com.lowdragmc.lowdraglib2.syncdata.rpc.RPCSender;
 import com.viscript_recipe.ViScriptRecipe;
 import com.viscript_recipe.gui.editor.RecipeProject;
+import com.viscript_recipe.gui.editor.RecipeRegistryClientData;
 import com.viscript_recipe.gui.editor.StructureTagClientData;
 import com.viscript_recipe.recipe.RecipeAssetPaths;
 import net.minecraft.client.Minecraft;
@@ -16,6 +17,7 @@ import net.minecraft.nbt.CompoundTag;
 public final class RecipeEditorS2CPayload {
     public static final String OPEN_RECIPE_EDITOR_FILE = ViScriptRecipe.MOD_ID + ":open_recipe_editor_file";
     public static final String SYNC_STRUCTURE_TAGS = ViScriptRecipe.MOD_ID + ":sync_structure_tags";
+    public static final String SYNC_RECIPE_REGISTRIES = ViScriptRecipe.MOD_ID + ":sync_recipe_registries";
 
     private RecipeEditorS2CPayload() {
     }
@@ -31,6 +33,12 @@ public final class RecipeEditorS2CPayload {
     @RPCPacket(value = SYNC_STRUCTURE_TAGS, modId = ViScriptRecipe.MOD_ID)
     public static void syncStructureTags(RPCSender sender, CompoundTag snapshot) {
         StructureTagClientData.updateFromServer(snapshot);
+    }
+
+    /** Replaces the client's dynamic registry completion catalog with server-owned data. */
+    @RPCPacket(value = SYNC_RECIPE_REGISTRIES, modId = ViScriptRecipe.MOD_ID)
+    public static void syncRecipeRegistries(RPCSender sender, CompoundTag snapshot) {
+        RecipeRegistryClientData.updateFromServer(snapshot);
     }
 
     @RPCPacket(value = OPEN_RECIPE_EDITOR_FILE, modId = ViScriptRecipe.MOD_ID)

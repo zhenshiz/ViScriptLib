@@ -3,7 +3,7 @@ package com.viscript_recipe.compat.jei.create;
 import com.simibubi.create.AllRecipeTypes;
 import com.simibubi.create.content.kinetics.mixer.MixingRecipe;
 import com.simibubi.create.content.processing.basin.BasinRecipe;
-import com.viscript_recipe.data.create.CreateProcessingKind;
+import com.viscript_recipe.compat.create.data.CreateProcessingKind;
 import com.viscript_recipe.recipe.RecipeOverrideManager;
 import mezz.jei.api.recipe.IRecipeManager;
 import mezz.jei.api.recipe.RecipeType;

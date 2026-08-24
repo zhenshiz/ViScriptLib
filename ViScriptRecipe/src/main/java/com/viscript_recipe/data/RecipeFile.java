@@ -1,10 +1,8 @@
 package com.viscript_recipe.data;
 
 import com.lowdragmc.lowdraglib2.configurator.IConfigurable;
-import com.lowdragmc.lowdraglib2.configurator.annotation.ConfigList;
-import com.lowdragmc.lowdraglib2.configurator.annotation.ConfigNumber;
-import com.lowdragmc.lowdraglib2.configurator.annotation.Configurable;
 import com.lowdragmc.lowdraglib2.syncdata.IPersistedSerializable;
+import com.lowdragmc.lowdraglib2.syncdata.annotation.Persisted;
 import com.viscript_recipe.ViScriptRecipe;
 import lombok.Getter;
 import lombok.Setter;
@@ -20,18 +18,13 @@ import java.util.List;
 public class RecipeFile implements IPersistedSerializable, IConfigurable {
     public static final int CURRENT_FORMAT_VERSION = 1;
 
-    @Configurable(name = "viscript_recipe.config.file.format_version")
-    @ConfigNumber(range = {1, 1}, type = ConfigNumber.Type.INTEGER)
+    @Persisted
     private int formatVersion = CURRENT_FORMAT_VERSION;
-
-    @Configurable(name = "viscript_recipe.config.file.pack_id")
+    @Persisted
     private String packId = "";
-
-    @Configurable(name = "viscript_recipe.config.file.recipe_namespace")
+    @Persisted
     private String recipeNamespace = ViScriptRecipe.MOD_ID;
-
-    @Configurable(name = "viscript_recipe.config.file.entries")
-    @ConfigList(addDefaultMethod = "createDefaultEntry")
+    @Persisted
     private List<RecipeEntry> entries = new ArrayList<>();
 
     public static boolean isValidRecipeNamespace(String namespace) {
@@ -47,9 +40,5 @@ public class RecipeFile implements IPersistedSerializable, IConfigurable {
             this.recipeNamespace = recipeNamespace;
         }
         return this;
-    }
-
-    public RecipeEntry createDefaultEntry() {
-        return new RecipeEntry().setRecipeId(new ResourceLocation(getRecipeNamespace(), "example"));
     }
 }

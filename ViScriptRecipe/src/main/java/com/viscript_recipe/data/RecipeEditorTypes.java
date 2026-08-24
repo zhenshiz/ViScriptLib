@@ -1,17 +1,8 @@
 package com.viscript_recipe.data;
 
 import com.viscript_recipe.compat.RecipeCompatModules;
-import com.viscript_recipe.data.ars_nouveau.ArsNouveauRecipeEditorTypes;
-import com.viscript_recipe.data.avaritia.AvaritiaRecipeEditorTypes;
-import com.viscript_recipe.data.cataclysm.CataclysmRecipeEditorTypes;
-import com.viscript_recipe.data.create.CreateRecipeEditorTypes;
-import com.viscript_recipe.data.extendedcrafting.ExtendedCraftingRecipeEditorTypes;
-import com.viscript_recipe.data.farmersdelight.FarmersDelightRecipeEditorTypes;
-import com.viscript_recipe.data.goety.GoetyRecipeEditorTypes;
-import com.viscript_recipe.data.iceandfire.IceAndFireRecipeEditorTypes;
-import com.viscript_recipe.data.kaleidoscope_cookery.KaleidoscopeCookeryRecipeEditorTypes;
-import com.viscript_recipe.data.spore.SporeRecipeEditorTypes;
-import com.viscript_recipe.data.touhou_little_maid.TouhouLittleMaidRecipeEditorTypes;
+import com.viscript_recipe.compat.create.CreateRecipeEditorTypes;
+import com.viscript_recipe.compat.farmersdelight.FarmersDelightRecipeEditorTypes;
 import com.viscript_recipe.data.vanilla.VanillaRecipeEditorTypes;
 import net.minecraft.resources.ResourceLocation;
 import org.jetbrains.annotations.Nullable;
@@ -37,13 +28,13 @@ public final class RecipeEditorTypes {
     public static final ResourceLocation CAMPFIRE_COOKING = VanillaRecipeEditorTypes.CAMPFIRE_COOKING;
     public static final ResourceLocation STONECUTTING = VanillaRecipeEditorTypes.STONECUTTING;
     public static final ResourceLocation SMITHING_TRANSFORM = VanillaRecipeEditorTypes.SMITHING_TRANSFORM;
-    public static final ResourceLocation ICEANDFIRE_DRAGON_FORGE = IceAndFireRecipeEditorTypes.DRAGON_FORGE;
-    public static final ResourceLocation ICEANDFIRE_DRAGONFORGE = IceAndFireRecipeEditorTypes.DRAGONFORGE;
+//    public static final ResourceLocation ICEANDFIRE_DRAGON_FORGE = IceAndFireRecipeEditorTypes.DRAGON_FORGE;
+//    public static final ResourceLocation ICEANDFIRE_DRAGONFORGE = IceAndFireRecipeEditorTypes.DRAGONFORGE;
     public static final ResourceLocation FARMERSDELIGHT_COOKING_POT = FarmersDelightRecipeEditorTypes.COOKING_POT;
     public static final ResourceLocation FARMERSDELIGHT_CUTTING_BOARD = FarmersDelightRecipeEditorTypes.CUTTING_BOARD;
     public static final ResourceLocation FARMERSDELIGHT_COOKING = FarmersDelightRecipeEditorTypes.COOKING;
     public static final ResourceLocation FARMERSDELIGHT_CUTTING = FarmersDelightRecipeEditorTypes.CUTTING;
-    public static final ResourceLocation ARS_NOUVEAU_ENCHANTING_APPARATUS = ArsNouveauRecipeEditorTypes.APPARATUS;
+/*    public static final ResourceLocation ARS_NOUVEAU_ENCHANTING_APPARATUS = ArsNouveauRecipeEditorTypes.APPARATUS;
     public static final ResourceLocation ARS_NOUVEAU_ARMOR_UPGRADE = ArsNouveauRecipeEditorTypes.ARMOR_UPGRADE;
     public static final ResourceLocation ARS_NOUVEAU_ENCHANTMENT = ArsNouveauRecipeEditorTypes.ENCHANTMENT;
     public static final ResourceLocation ARS_NOUVEAU_IMBUEMENT = ArsNouveauRecipeEditorTypes.IMBUEMENT;
@@ -57,12 +48,12 @@ public final class RecipeEditorTypes {
     public static final ResourceLocation KALEIDOSCOPE_COOKERY_MILLSTONE = KaleidoscopeCookeryRecipeEditorTypes.MILLSTONE;
     public static final ResourceLocation KALEIDOSCOPE_COOKERY_CHOPPING_BOARD = KaleidoscopeCookeryRecipeEditorTypes.CHOPPING_BOARD;
     public static final ResourceLocation KALEIDOSCOPE_COOKERY_STEAMER = KaleidoscopeCookeryRecipeEditorTypes.STEAMER;
-    public static final ResourceLocation KALEIDOSCOPE_COOKERY_TEAPOT = KaleidoscopeCookeryRecipeEditorTypes.TEAPOT;
+    public static final ResourceLocation KALEIDOSCOPE_COOKERY_TEAPOT = KaleidoscopeCookeryRecipeEditorTypes.TEAPOT;*/
     public static final ResourceLocation CREATE_CRUSHING = CreateRecipeEditorTypes.create("crushing");
     public static final ResourceLocation CREATE_MIXING = CreateRecipeEditorTypes.create("mixing");
     public static final ResourceLocation CREATE_MECHANICAL_CRAFTING = CreateRecipeEditorTypes.MECHANICAL_CRAFTING;
     public static final ResourceLocation CREATE_SEQUENCED_ASSEMBLY = CreateRecipeEditorTypes.SEQUENCED_ASSEMBLY;
-    public static final ResourceLocation EXTENDEDCRAFTING_CRAFTING_CORE = ExtendedCraftingRecipeEditorTypes.CRAFTING_CORE;
+/*    public static final ResourceLocation EXTENDEDCRAFTING_CRAFTING_CORE = ExtendedCraftingRecipeEditorTypes.CRAFTING_CORE;
     public static final ResourceLocation EXTENDEDCRAFTING_CRAFTING_TABLE = ExtendedCraftingRecipeEditorTypes.CRAFTING_TABLE;
     public static final ResourceLocation EXTENDEDCRAFTING_BASIC_TABLE = ExtendedCraftingRecipeEditorTypes.BASIC_TABLE;
     public static final ResourceLocation EXTENDEDCRAFTING_ADVANCED_TABLE = ExtendedCraftingRecipeEditorTypes.ADVANCED_TABLE;
@@ -90,6 +81,34 @@ public final class RecipeEditorTypes {
     public static final ResourceLocation GOETY_BRAZIER = GoetyRecipeEditorTypes.BRAZIER;
     public static final ResourceLocation GOETY_PULVERIZE = GoetyRecipeEditorTypes.PULVERIZE;
     public static final ResourceLocation GOETY_BREWING = GoetyRecipeEditorTypes.BREWING;
+    public static final ResourceLocation MYSTICAL_AGRICULTURE_INFUSION = MysticalAgricultureRecipeEditorTypes.INFUSION;
+    public static final ResourceLocation MYSTICAL_AGRICULTURE_AWAKENING = MysticalAgricultureRecipeEditorTypes.AWAKENING;
+    public static final ResourceLocation MYSTICAL_AGRICULTURE_ENCHANTER = MysticalAgricultureRecipeEditorTypes.ENCHANTER;
+    public static final ResourceLocation MYSTICAL_AGRICULTURE_REPROCESSOR = MysticalAgricultureRecipeEditorTypes.REPROCESSOR;
+    public static final ResourceLocation MYSTICAL_AGRICULTURE_SOUL_EXTRACTION = MysticalAgricultureRecipeEditorTypes.SOUL_EXTRACTION;
+    public static final ResourceLocation MYSTICAL_AGRICULTURE_SOULIUM_SPAWNER = MysticalAgricultureRecipeEditorTypes.SOULIUM_SPAWNER;
+    public static final ResourceLocation INDUSTRIAL_FOREGOING_CRUSHER = IndustrialForegoingRecipeEditorTypes.CRUSHER;
+    public static final ResourceLocation INDUSTRIAL_FOREGOING_DISSOLUTION_CHAMBER = IndustrialForegoingRecipeEditorTypes.DISSOLUTION_CHAMBER;
+    public static final ResourceLocation INDUSTRIAL_FOREGOING_FLUID_EXTRACTOR = IndustrialForegoingRecipeEditorTypes.FLUID_EXTRACTOR;
+    public static final ResourceLocation INDUSTRIAL_FOREGOING_LASER_DRILL_ORE = IndustrialForegoingRecipeEditorTypes.LASER_DRILL_ORE;
+    public static final ResourceLocation INDUSTRIAL_FOREGOING_LASER_DRILL_FLUID = IndustrialForegoingRecipeEditorTypes.LASER_DRILL_FLUID;
+    public static final ResourceLocation INDUSTRIAL_FOREGOING_STONEWORK_GENERATE = IndustrialForegoingRecipeEditorTypes.STONEWORK_GENERATE;
+    public static final ResourceLocation ALLOY_SMELTER_SMELTING = AlloySmelterRecipeEditorTypes.SMELTING;
+    public static final ResourceLocation CONFLUENCE_ITEM_TRANSMUTATION = ConfluenceRecipeEditorTypes.ITEM_TRANSMUTATION;
+    public static final ResourceLocation CONFLUENCE_SKY_MILL = ConfluenceRecipeEditorTypes.SKY_MILL;
+    public static final ResourceLocation CONFLUENCE_ALTAR = ConfluenceRecipeEditorTypes.ALTAR;
+    public static final ResourceLocation CONFLUENCE_HELLFORGE = ConfluenceRecipeEditorTypes.HELLFORGE;
+    public static final ResourceLocation CONFLUENCE_HEAVY_WORK_BENCH = ConfluenceRecipeEditorTypes.HEAVY_WORK_BENCH;
+    public static final ResourceLocation CONFLUENCE_ALCHEMY_TABLE = ConfluenceRecipeEditorTypes.ALCHEMY_TABLE;
+    public static final ResourceLocation CONFLUENCE_FLETCHING_TABLE = ConfluenceRecipeEditorTypes.FLETCHING_TABLE;
+    public static final ResourceLocation CONFLUENCE_COOKING_POT = ConfluenceRecipeEditorTypes.COOKING_POT;
+    public static final ResourceLocation CONFLUENCE_SAWMILL = ConfluenceRecipeEditorTypes.SAWMILL;
+    public static final ResourceLocation CONFLUENCE_SOLIDIFIER = ConfluenceRecipeEditorTypes.SOLIDIFIER;
+    public static final ResourceLocation CONFLUENCE_HARDMODE_ANVIL = ConfluenceRecipeEditorTypes.HARDMODE_ANVIL;
+    public static final ResourceLocation CONFLUENCE_HARDMODE_FORGE = ConfluenceRecipeEditorTypes.HARDMODE_FORGE;
+    public static final ResourceLocation CONFLUENCE_LOOM = ConfluenceRecipeEditorTypes.LOOM;
+    public static final ResourceLocation CONFLUENCE_DYE_VAT = ConfluenceRecipeEditorTypes.DYE_VAT;
+    public static final ResourceLocation CONFLUENCE_CRYSTAL_BALL = ConfluenceRecipeEditorTypes.CRYSTAL_BALL;*/
 
     private static final LinkedHashMap<ResourceLocation, RecipeEditorCategory> CATEGORIES = new LinkedHashMap<>();
     private static final LinkedHashMap<ResourceLocation, RecipeEditorType> TYPES = new LinkedHashMap<>();
@@ -122,19 +141,19 @@ public final class RecipeEditorTypes {
     }
 
     public static Optional<RecipeEditorType> get(@Nullable ResourceLocation id) {
-        return Optional.ofNullable(id == null ? null : TYPES.get(normalizeTypeAlias(id)));
+        return Optional.ofNullable(id == null ? null : TYPES.get(/*normalizeTypeAlias(id)*/id));
     }
 
-    private static ResourceLocation normalizeTypeAlias(ResourceLocation id) {
+/*    private static ResourceLocation normalizeTypeAlias(ResourceLocation id) {
         return AvaritiaRecipeEditorTypes.normalizeAlias(ExtendedCraftingRecipeEditorTypes.normalizeAlias(id));
-    }
+    }*/
 
     public static RecipeEditorCategory requireCategory(ResourceLocation id) {
         return getCategory(id).orElseThrow(() -> new IllegalArgumentException("Unknown recipe editor category: " + id));
     }
 
     public static RecipeEditorType require(ResourceLocation id) {
-        return get(id).orElseThrow(() -> new IllegalArgumentException("Unknown recipe editor type: " + id));
+        return get(id).orElse(MissingRecipeTypeHolder.TYPE);
     }
 
     public static List<RecipeEditorCategory> availableCategories() {
@@ -166,12 +185,5 @@ public final class RecipeEditorTypes {
         return get(id)
                 .map(type -> type.category().equals(category))
                 .orElse(false);
-    }
-
-    public static RecipeEditorLayout layoutForType(@Nullable ResourceLocation id) {
-        return get(id)
-                .flatMap(type -> getCategory(type.category()))
-                .map(RecipeEditorCategory::layout)
-                .orElse(RecipeEditorLayout.CRAFTING_GRID);
     }
 }

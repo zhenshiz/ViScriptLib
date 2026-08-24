@@ -22,9 +22,13 @@ import com.simibubi.create.content.processing.sequenced.SequencedAssemblyRecipe;
 import com.simibubi.create.content.processing.sequenced.SequencedAssemblyRecipeBuilder;
 import com.simibubi.create.foundation.fluid.FluidIngredient;
 import com.simibubi.create.foundation.item.ItemHelper;
+import com.viscript_lib.util.math.Clamp;
 import com.viscript_recipe.ViScriptRecipe;
+import com.viscript_recipe.compat.create.data.*;
+import com.viscript_recipe.data.FluidIngredientData;
+import com.viscript_recipe.data.FluidIngredientKind;
 import com.viscript_recipe.data.RecipeIngredient;
-import com.viscript_recipe.data.create.*;
+import com.viscript_recipe.data.RecipeOutputData;
 import com.viscript_recipe.data.vanilla.CookingRecipeData;
 import com.viscript_recipe.recipe.vanilla.ViscriptShapelessRecipe;
 import com.viscript_recipe.recipe.vanilla.ViscriptStonecutterRecipe;
@@ -75,15 +79,6 @@ public final class CreateRecipeFactory {
         };
     }
 
-    public static List<Recipe<?>> compileProcessingRecipes(ResourceLocation type, CreateProcessingRecipeData data) {
-        var kind = CreateProcessingKind.byType(type)
-                .orElseThrow(() -> new IllegalArgumentException("Unsupported Create processing recipe type: " + type));
-        if (kind == CreateProcessingKind.BLOCK_CUTTING) {
-            return compileBlockCutting(kind, data);
-        }
-        return List.of(compileProcessing(type, data));
-    }
-
     public static Recipe<?> compileSequencedAssembly(CreateSequencedAssemblyRecipeData data) {
         var ingredient = compileIngredient(data.getIngredient());
         if (ingredient.isEmpty()) {
@@ -127,8 +122,7 @@ public final class CreateRecipeFactory {
     }
 
     private static void addSequencedStep(SequencedAssemblyRecipeBuilder builder, CreateSequencedAssemblyStepData step) {
-        var kind = step == null || step.getKind() == null ? CreateSequencedAssemblyStepKind.DEPLOYING : step.getKind();
-        switch (kind) {
+        switch (step.getKind()) {
             case DEPLOYING -> builder.addStep(DeployerApplicationRecipe::new, stepBuilder -> {
                 var ingredient = compileIngredient(step.getIngredient());
                 if (ingredient.isEmpty()) {
@@ -147,7 +141,7 @@ public final class CreateRecipeFactory {
             });
             case FILLING -> builder.addStep(FillingRecipe::new, stepBuilder -> {
                 var fluidIngredient = compileFluidIngredient(step.getFluidIngredient());
-                if (fluidIngredient == null || fluidIngredient.matchingFluidStacks.isEmpty()) {
+                if (fluidIngredient == null || fluidIngredient.getMatchingFluidStacks().isEmpty()) {
                     throw new IllegalArgumentException("Create sequenced assembly filling step must have a fluid ingredient");
                 }
                 stepBuilder.require(fluidIngredient);
@@ -268,7 +262,7 @@ public final class CreateRecipeFactory {
                 break;
             }
             var ingredient = compileFluidIngredient(ingredientData);
-            if (ingredient != null && !ingredient.matchingFluidStacks.isEmpty()) {
+            if (ingredient != null && !ingredient.getMatchingFluidStacks().isEmpty()) {
                 ingredients.add(ingredient);
             }
         }
@@ -318,12 +312,12 @@ public final class CreateRecipeFactory {
         return ingredient == null ? Ingredient.EMPTY : ingredient.compile();
     }
 
-    private static FluidIngredient compileFluidIngredient(CreateFluidIngredientData data) {
+    private static FluidIngredient compileFluidIngredient(FluidIngredientData data) {
         if (data == null) {
             return null;
         }
-        var kind = data.getKind() == null ? CreateFluidIngredientKind.FLUID : data.getKind();
-        if (kind == CreateFluidIngredientKind.TAG) {
+        var kind = data.getKind() == null ? FluidIngredientKind.FLUID : data.getKind();
+        if (kind == FluidIngredientKind.TAG) {
             if (data.getTag() == null) {
                 throw new IllegalArgumentException("Create fluid ingredient tag cannot be empty");
             }
@@ -364,12 +358,12 @@ public final class CreateRecipeFactory {
         throw new IllegalArgumentException("Create " + kind.typeId() + " recipe must have at least one output");
     }
 
-    private static ItemStack normalizeOutputStack(CreateProcessingOutputData outputData) {
+    private static ItemStack normalizeOutputStack(RecipeOutputData outputData) {
         if (outputData == null || outputData.getItem() == null || outputData.getItem().isEmpty() || outputData.getItem().is(Items.AIR)) {
             return ItemStack.EMPTY;
         }
         var stack = outputData.getItem().copy();
-        stack.setCount(Math.max(1, Math.min(99, stack.getCount())));
+        stack.setCount(Clamp.clamp(stack.getCount(), 1, 99));
         return stack;
     }
 
@@ -383,7 +377,7 @@ public final class CreateRecipeFactory {
     }
 
     private static float clampChance(float chance) {
-        return Math.max(0, Math.min(1, chance));
+        return Clamp.clamp(chance, 0, 1);
     }
 
     private static FluidStack copyFluid(FluidStack stack) {

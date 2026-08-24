@@ -1,8 +1,8 @@
 package com.viscript_recipe.recipe.importer;
 
 import com.viscript_recipe.compat.RecipeCompatModules;
+import com.viscript_recipe.compat.create.data.CreateMechanicalCraftingRecipeData;
 import com.viscript_recipe.data.*;
-import com.viscript_recipe.data.create.CreateMechanicalCraftingRecipeData;
 import com.viscript_recipe.data.vanilla.*;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.HolderLookup;
@@ -12,7 +12,6 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.inventory.RecipeHolder;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
 import net.minecraft.world.item.crafting.*;
 import net.minecraftforge.common.crafting.AbstractIngredient;
 import net.minecraftforge.common.crafting.CompoundIngredient;
@@ -116,7 +115,17 @@ public final class RecipeImporter {
     }
 
     public static RecipeImportResult success(RecipeEntry entry) {
-        return RecipeImportResult.success(entry, ComponentHelper.imported(entry));
+        return RecipeImportResult.success(entry, imported(entry));
+    }
+
+    private static Component imported(RecipeEntry entry) {
+        return Component.translatable(
+                "viscript_recipe.editor.import_recipe.success",
+                String.valueOf(entry.getRecipeId()),
+                RecipeEditorTypes.get(entry.getType())
+                        .map(type -> type.displayName().getString())
+                        .orElse(entry.getType().toString())
+        );
     }
 
     private static RecipeEntry importShaped(ResourceLocation id, ShapedRecipe recipe, HolderLookup.Provider provider) throws RecipeImportException {
@@ -130,7 +139,7 @@ public final class RecipeImporter {
                 .setKey(shapedPattern.key())
                 .setRemainders(defaultRemainders(recipe.getWidth() * recipe.getHeight()))
                 .setResult(copyResult(recipe, provider));
-        return baseEntry(id, RecipeEditorTypes.CRAFTING_SHAPED).setShaped(data);
+        return baseEntry(id, RecipeEditorTypes.CRAFTING_SHAPED).setData(data);
     }
 
     private static RecipeEntry importShapeless(ResourceLocation id, ShapelessRecipe recipe, HolderLookup.Provider provider) throws RecipeImportException {
@@ -147,7 +156,7 @@ public final class RecipeImporter {
                 .setShowNotification(recipe.showNotification())
                 .setIngredients(ingredients)
                 .setResult(copyResult(recipe, provider));
-        return baseEntry(id, RecipeEditorTypes.CRAFTING_SHAPELESS).setShapeless(data);
+        return baseEntry(id, RecipeEditorTypes.CRAFTING_SHAPELESS).setData(data);
     }
 
     private static RecipeEntry importCooking(ResourceLocation id, AbstractCookingRecipe recipe, HolderLookup.Provider provider) throws RecipeImportException {
@@ -164,7 +173,7 @@ public final class RecipeImporter {
                 .setResult(copyResult(recipe, provider))
                 .setExperience(recipe.getExperience())
                 .setCookingTime(Math.max(1, recipe.getCookingTime()));
-        return baseEntry(id, type).setCooking(data);
+        return baseEntry(id, type).setData(data);
     }
 
     @Nullable
@@ -193,7 +202,7 @@ public final class RecipeImporter {
                 .setShowNotification(recipe.showNotification())
                 .setIngredient(importIngredient(ingredients.get(0)))
                 .setResult(copyResult(recipe, provider));
-        return baseEntry(id, RecipeEditorTypes.STONECUTTING).setStonecutting(data);
+        return baseEntry(id, RecipeEditorTypes.STONECUTTING).setData(data);
     }
 
     private static RecipeEntry importSmithingTransform(ResourceLocation id, SmithingTransformRecipe recipe) throws RecipeImportException {
@@ -203,11 +212,11 @@ public final class RecipeImporter {
                 .setBase(importIngredient(recipe.base))
                 .setAddition(importIngredient(recipe.addition))
                 .setResult(copyStack(recipe.result));
-        return baseEntry(id, RecipeEditorTypes.SMITHING_TRANSFORM).setSmithingTransform(data);
+        return baseEntry(id, RecipeEditorTypes.SMITHING_TRANSFORM).setData(data);
     }
 
     public static RecipeEntry importMechanicalCrafting(ResourceLocation id, ShapedRecipe recipe, boolean acceptMirrored, HolderLookup.Provider provider) throws RecipeImportException {
-        if (recipe.getWidth() > CreateMechanicalCraftingRecipeData.MAX_SIZE || recipe.getHeight() > CreateMechanicalCraftingRecipeData.MAX_SIZE) {
+        if (recipe.getWidth() > CreateMechanicalCraftingRecipeData.maxSize() || recipe.getHeight() > CreateMechanicalCraftingRecipeData.maxSize()) {
             throw new RecipeImportException("viscript_recipe.editor.import_recipe.error.shaped_too_large", recipe.getWidth(), recipe.getHeight());
         }
         var shapedPattern = importShapedPattern(recipe.getIngredients(), recipe.getWidth(), recipe.getHeight());
@@ -218,7 +227,7 @@ public final class RecipeImporter {
                 .setPattern(shapedPattern.pattern())
                 .setKey(shapedPattern.key())
                 .setResult(copyResult(recipe, provider));
-        return baseEntry(id, RecipeEditorTypes.CREATE_MECHANICAL_CRAFTING).setCreateMechanicalCrafting(data);
+        return baseEntry(id, RecipeEditorTypes.CREATE_MECHANICAL_CRAFTING).setData(data);
     }
 
     public static ImportedShapedPattern importShapedPattern(List<Ingredient> ingredients, int width, int height) throws RecipeImportException {
@@ -243,7 +252,7 @@ public final class RecipeImporter {
                     }
                     symbol = SHAPED_SYMBOLS[symbolIndex++];
                     ingredientSymbols.put(keyString, symbol);
-                    key.add(ShapedKeyEntry.of(String.valueOf(symbol), imported));
+                    key.add(ShapedKeyEntry.of(symbol, imported));
                 }
                 builder.append(symbol);
             }
@@ -261,9 +270,9 @@ public final class RecipeImporter {
     }
 
     public static RecipeIngredient importIngredient(Ingredient ingredient) throws RecipeImportException {
-        var imported = new RecipeIngredient();
+        var imported = RecipeIngredient.empty();
         appendIngredientValues(imported, ingredient);
-        if (imported.getValues().isEmpty()) {
+        if (imported.isEmpty()) {
             throw new RecipeImportException("viscript_recipe.editor.import_recipe.error.empty_ingredient");
         }
         return imported;
@@ -286,13 +295,13 @@ public final class RecipeImporter {
     }
 
     public static RecipeIngredient importItemStacks(List<ItemStack> stacks) throws RecipeImportException {
-        var imported = new RecipeIngredient();
+        var imported = RecipeIngredient.empty();
         if (stacks != null) {
             for (var stack : stacks) {
                 appendItemValue(imported, stack);
             }
         }
-        if (imported.getValues().isEmpty()) {
+        if (imported.isEmpty()) {
             throw new RecipeImportException("viscript_recipe.editor.import_recipe.error.empty_ingredient");
         }
         return imported;
@@ -308,13 +317,14 @@ public final class RecipeImporter {
         }
         for (var value : ingredient.values) {
             if (value instanceof Ingredient.ItemValue itemValue) {
-                imported.getValues().add(RecipeIngredientValue.item(itemValue.getItems().iterator().next().copyWithCount(1)));
+                imported.setKind(IngredientValueKind.ITEM).setItem(itemValue.getItems().iterator().next().copyWithCount(1));
+                return;
             } else if (value instanceof Ingredient.TagValue tagValue) {
-                imported.getValues().add(RecipeIngredientValue.tag(tagValue.tag.location()));
-            } else {
-                throw new RecipeImportException("viscript_recipe.editor.import_recipe.error.unsupported_ingredient");
+                imported.setKind(IngredientValueKind.TAG).setTag(tagValue.tag.location());
+                return;
             }
         }
+        throw new RecipeImportException("viscript_recipe.editor.import_recipe.error.unsupported_ingredient");
     }
 
     private static void appendCustomIngredientValues(RecipeIngredient imported, AbstractIngredient custom) throws RecipeImportException {
@@ -340,8 +350,8 @@ public final class RecipeImporter {
     }
 
     private static void appendItemValue(RecipeIngredient imported, ItemStack stack) {
-        if (stack != null && !stack.isEmpty() && !stack.is(Items.AIR)) {
-            imported.getValues().add(RecipeIngredientValue.item(stack.copyWithCount(1)));
+        if (stack != null && !stack.isEmpty()) {
+            imported.setKind(IngredientValueKind.ITEM).setItem(stack.copyWithCount(1));
         }
     }
 
@@ -369,22 +379,19 @@ public final class RecipeImporter {
         return remainders;
     }
 
-    private static String ingredientKey(RecipeIngredient ingredient) {
-        var parts = new ArrayList<String>();
-        for (var value : ingredient.getValues()) {
-            var kind = value.getKind() == null ? IngredientValueKind.ITEM : value.getKind();
-            parts.add(switch (kind) {
-                case ITEM -> {
-                    var item = value.getItem();
-                    yield item == null || item.isEmpty()
-                            ? "item:empty"
-                            : "item:" + item.hashCode();
-                }
-                case TAG -> "tag:" + value.getTag();
-                case ITEM_ABILITY -> "item_ability:" + value.getItemAbility();
-            });
-        }
-        return String.join("|", parts);
+    public static String ingredientKey(RecipeIngredient ingredient) {
+        if (ingredient.isEmpty()) return "empty";
+        return switch (ingredient.getKind()) {
+            case ITEM -> "item:" + hashItemStack(ingredient.getItem());
+            case TAG -> "tag:" + ingredient.getTag();
+            case ITEM_ABILITY -> "item_ability:" + ingredient.getItemAbility();
+        };
+    }
+
+    private static int hashItemStack(ItemStack stack) {
+        int i = stack.getItem().hashCode();
+        i ^= stack.getCount();
+        return stack.getTag() == null ? i : i ^ stack.getTag().hashCode();
     }
 
     private static String recipeTypeName(Recipe<?> recipe) {
@@ -397,20 +404,5 @@ public final class RecipeImporter {
     }
 
     public record ImportedShapedPattern(List<String> pattern, List<ShapedKeyEntry> key) {
-    }
-
-    private static final class ComponentHelper {
-        private ComponentHelper() {
-        }
-
-        private static Component imported(RecipeEntry entry) {
-            return Component.translatable(
-                    "viscript_recipe.editor.import_recipe.success",
-                    String.valueOf(entry.getRecipeId()),
-                    RecipeEditorTypes.get(entry.getType())
-                            .map(type -> type.displayName().getString())
-                            .orElse(entry.getType().toString())
-            );
-        }
     }
 }

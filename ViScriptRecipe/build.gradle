@@ -93,7 +93,7 @@ dependencies {
 //    runtimeOnly "curse.maven:uranus-1010827:8008516"
 //    runtimeOnly "curse.maven:jupiter-1072905:7738312"
     //农夫乐事
-//    implementation "maven.modrinth:farmers-delight:${farmers_delight_version}"
+    modImplementation "maven.modrinth:farmers-delight:${farmers_delight_version}"
     //机械动力
     modImplementation "maven.modrinth:create:${create_version}"
     modImplementation "net.createmod.ponder:Ponder-Forge-${minecraft_version}:${ponder_version}"

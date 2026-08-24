@@ -4,7 +4,9 @@ import com.lowdragmc.lowdraglib2.gui.factory.PlayerUIMenuType;
 import com.lowdragmc.lowdraglib2.gui.ui.ModularUI;
 import com.lowdragmc.lowdraglib2.gui.ui.UI;
 import com.mojang.logging.LogUtils;
+import com.viscript_recipe.client.RecipeDeltaClientEvents;
 import com.viscript_recipe.gui.editor.RecipeEditor;
+import com.viscript_recipe.recipe.RecipeDeltaServerEvents;
 import net.minecraft.client.Minecraft;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.fml.ModList;
@@ -23,6 +25,7 @@ public class ViScriptRecipe {
     public static final ResourceLocation placeholder = id("placeholder");
 
     public ViScriptRecipe() {
+        RecipeDeltaServerEvents.register();
         PlayerUIMenuType.register(RecipeEditor.WINDOW_ID, ignored -> player -> {
             if (player.level().isClientSide) {
                 return RecipeEditor.createUI();
@@ -30,9 +33,10 @@ public class ViScriptRecipe {
             return new ModularUI(UI.empty());
         });
         ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, Config.CONFIG_SPEC, Config.CONFIG_FILE_NAME);
-        /*if (isClient()) {
-            ModLoadingContext.get().registerExtensionPoint(ConfigScreenHandler.ConfigScreenFactory.class, ConfigurationScreen::new);
-        }*/
+        if (isClient()) {
+            RecipeDeltaClientEvents.register();
+            //ModLoadingContext.get().registerExtensionPoint(ConfigScreenHandler.ConfigScreenFactory.class, ConfigurationScreen::new);
+        }
     }
 
     public static ResourceLocation id(String path) {

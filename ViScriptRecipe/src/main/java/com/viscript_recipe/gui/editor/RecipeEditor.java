@@ -9,7 +9,9 @@ import com.lowdragmc.lowdraglib2.gui.ui.UI;
 import com.viscript_lib.gui.editor.EditorServerUploads;
 import com.viscript_lib.gui.editor.EditorUploadAction;
 import com.viscript_lib.gui.editor.FunctionFileEditor;
+import com.viscript_lib.mixin.EditorWindowAccessor;
 import com.viscript_recipe.ViScriptRecipe;
+import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 
@@ -17,6 +19,7 @@ import javax.annotation.Nonnull;
 
 public class RecipeEditor extends FunctionFileEditor {
     public static final ResourceLocation WINDOW_ID = ViScriptRecipe.id("recipe_editor");
+    private static final float RESTORED_WIDTH_PERCENT = 69;
 
     public RecipeEditor() {
         registerProjectType(RecipeProjectType.TYPE);
@@ -24,9 +27,26 @@ public class RecipeEditor extends FunctionFileEditor {
     }
 
     public static ModularUI createUI() {
-        return new ModularUI(UI.of(EditorWindow.open(WINDOW_ID, RecipeEditor::new)))
+        var root = EditorWindow.open(WINDOW_ID, RecipeEditor::new);
+        configureRestoredBounds(root);
+        return new ModularUI(UI.of(root))
                 .shouldCloseOnEsc(false)
                 .shouldCloseOnKeyInventory(false);
+    }
+
+    private static void configureRestoredBounds(EditorWindow window) {
+        var minecraftWindow = Minecraft.getInstance().getWindow();
+        var screenWidth = minecraftWindow.getGuiScaledWidth();
+        var screenHeight = minecraftWindow.getGuiScaledHeight();
+        var accessor = (EditorWindowAccessor) window;
+        accessor.viscript_lib$setWindowLeft(-centeredRootOrigin(screenWidth));
+        accessor.viscript_lib$setWindowTop(-centeredRootOrigin(screenHeight));
+        accessor.viscript_lib$setWindowWidth(screenWidth * RESTORED_WIDTH_PERCENT / 100f);
+        accessor.viscript_lib$setWindowHeight(screenHeight);
+    }
+
+    private static float centeredRootOrigin(float screenSize) {
+        return Math.round((screenSize - 1f) / 2f);
     }
 
     @Override

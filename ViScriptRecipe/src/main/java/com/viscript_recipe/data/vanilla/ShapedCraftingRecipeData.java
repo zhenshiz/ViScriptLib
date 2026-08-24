@@ -1,16 +1,15 @@
 package com.viscript_recipe.data.vanilla;
 
-import com.lowdragmc.lowdraglib2.configurator.IConfigurable;
-import com.lowdragmc.lowdraglib2.configurator.annotation.ConfigList;
-import com.lowdragmc.lowdraglib2.configurator.annotation.Configurable;
-import com.lowdragmc.lowdraglib2.syncdata.IPersistedSerializable;
+import com.lowdragmc.lowdraglib2.syncdata.annotation.Persisted;
 import com.viscript_recipe.ViScriptRecipe;
+import com.viscript_recipe.data.IVSRecipeData;
 import com.viscript_recipe.data.RecipeIngredient;
 import com.viscript_recipe.recipe.vanilla.ShapedRecipePattern;
 import com.viscript_recipe.recipe.vanilla.ViscriptShapedRecipe;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.crafting.CraftingBookCategory;
@@ -24,40 +23,25 @@ import java.util.List;
 @Getter
 @Setter
 @Accessors(chain = true)
-public class ShapedCraftingRecipeData implements IPersistedSerializable, IConfigurable {
-    @Configurable(name = "viscript_recipe.config.recipe.show_notification")
-    private boolean showNotification = true;
-
-    @Configurable(name = "viscript_recipe.config.shaped.pattern")
-    @ConfigList(addDefaultMethod = "createDefaultPatternRow")
+public class ShapedCraftingRecipeData implements IVSRecipeData {
+    @Persisted
+    private Boolean showNotification = true;
+    @Persisted
     private List<String> pattern = new ArrayList<>(List.of("A"));
-
-    @Configurable(name = "viscript_recipe.config.shaped.key")
-    @ConfigList(addDefaultMethod = "createDefaultKey")
+    @Persisted
     private List<ShapedKeyEntry> key = new ArrayList<>(List.of(
-            ShapedKeyEntry.of("A", RecipeIngredient.item(Items.OAK_PLANKS))
+            ShapedKeyEntry.of('A', RecipeIngredient.item(Items.OAK_PLANKS))
     ));
-
-    @Configurable(name = "viscript_recipe.config.shaped.remainders")
-    @ConfigList(addDefaultMethod = "createDefaultRemainder")
+    @Persisted
     private List<CraftingRemainderRule> remainders = new ArrayList<>(List.of(CraftingRemainderRule.defaultRule()));
-
-    @Configurable(name = "viscript_recipe.config.recipe.result")
+    @Persisted
     private ItemStack result = new ItemStack(Items.CRAFTING_TABLE);
 
-    public String createDefaultPatternRow() {
-        return "A";
-    }
+    @Override
+    public String getDataName() {return "shaped";}
 
-    public ShapedKeyEntry createDefaultKey() {
-        return new ShapedKeyEntry();
-    }
-
-    public CraftingRemainderRule createDefaultRemainder() {
-        return CraftingRemainderRule.defaultRule();
-    }
-
-    public Recipe<?> compile() {
+    @Override
+    public Recipe<?> compile(ResourceLocation typeId) {
         if (pattern.isEmpty()) {
             throw new IllegalArgumentException("Shaped recipe pattern cannot be empty");
         }

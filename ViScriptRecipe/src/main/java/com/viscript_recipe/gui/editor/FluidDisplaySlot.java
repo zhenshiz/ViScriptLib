@@ -1,14 +1,23 @@
 package com.viscript_recipe.gui.editor;
 
 import com.lowdragmc.lowdraglib2.gui.ui.elements.FluidSlot;
+import com.viscript_recipe.data.FluidIngredientData;
+import lombok.Getter;
 import net.minecraftforge.fluids.FluidStack;
 
 import java.util.Arrays;
 
-class FluidDisplaySlot extends FluidSlot {
+public class FluidDisplaySlot extends FluidSlot {
+    @Getter
+    private FluidIngredientData ingredient = FluidIngredientData.empty();
     private FluidStack[] tagDisplayStacks = new FluidStack[0];
     private int tagDisplayIndex;
     private int tagDisplayTicks;
+
+    public void setFluidIngredient(FluidIngredientData ingredient) {
+        this.ingredient = ingredient;
+        setTagDisplayStacks(ingredient.getFluidStacks());
+    }
 
     void setTagDisplayStacks(FluidStack[] stacks) {
         if (stacks == null || stacks.length == 0) {
@@ -29,6 +38,7 @@ class FluidDisplaySlot extends FluidSlot {
     }
 
     void clearTagDisplayStacks() {
+        setFluid(FluidStack.EMPTY, false);
         if (tagDisplayStacks.length == 0) {
             return;
         }

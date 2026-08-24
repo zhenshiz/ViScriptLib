@@ -1,8 +1,10 @@
 package com.viscript_recipe.compat;
 
 import com.viscript_recipe.ViScriptRecipe;
+import com.viscript_recipe.compat.create.CreateRecipeEditorTypes;
 import com.viscript_recipe.compat.create.CreateRecipeImporter;
-import com.viscript_recipe.data.create.CreateRecipeEditorTypes;
+import com.viscript_recipe.compat.farmersdelight.FarmersDelightRecipeEditorTypes;
+import com.viscript_recipe.compat.farmersdelight.FarmersDelightRecipeImporter;
 import com.viscript_recipe.data.vanilla.VanillaRecipeEditorTypes;
 import com.viscript_recipe.recipe.importer.RecipeImportHandler;
 
@@ -12,8 +14,8 @@ import java.util.function.Supplier;
 public final class RecipeCompatModules {
     private static final List<Module> MODULES = List.of(
             /*new Module(IronSpellbooksRecipeEditorTypes.MOD_ID, IronSpellbooksRecipeEditorTypes::registerAll, () -> IronSpellbooksRecipeImporter.INSTANCE),
-            new Module(IceAndFireRecipeEditorTypes.MOD_ID, IceAndFireRecipeEditorTypes::registerAll, () -> IceAndFireRecipeImporter.INSTANCE),
-            new Module(FarmersDelightRecipeEditorTypes.MOD_ID, FarmersDelightRecipeEditorTypes::registerAll, () -> FarmersDelightRecipeImporter.INSTANCE),*/
+            new Module(IceAndFireRecipeEditorTypes.MOD_ID, IceAndFireRecipeEditorTypes::registerAll, () -> IceAndFireRecipeImporter.INSTANCE),*/
+            new Module(FarmersDelightRecipeEditorTypes.MOD_ID, FarmersDelightRecipeEditorTypes::registerAll, () -> FarmersDelightRecipeImporter.INSTANCE),
             new Module(CreateRecipeEditorTypes.MOD_ID, CreateRecipeEditorTypes::registerAll, () -> CreateRecipeImporter.INSTANCE)/*,
             new Module(ExtendedCraftingRecipeEditorTypes.MOD_ID, ExtendedCraftingRecipeEditorTypes::registerAll, () -> ExtendedCraftingRecipeImporter.INSTANCE),
             new Module(ArsNouveauRecipeEditorTypes.MOD_ID, ArsNouveauRecipeEditorTypes::registerAll, () -> ArsNouveauRecipeImporter.INSTANCE),

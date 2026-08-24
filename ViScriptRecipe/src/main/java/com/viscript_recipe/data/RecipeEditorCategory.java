@@ -15,12 +15,21 @@ public record RecipeEditorCategory(
         String ownerModId,
         List<String> requiredMods,
         ResourceLocation defaultType,
-        RecipeEditorLayout layout,
         ResourceLocation workstationItemId
 ) {
     public RecipeEditorCategory(ResourceLocation id, String translationKey, String ownerModId, List<String> requiredMods,
-                                ResourceLocation defaultType, RecipeEditorLayout layout) {
-        this(id, translationKey, ownerModId, requiredMods, defaultType, layout, id);
+                                ResourceLocation defaultType) {
+        this(id, translationKey, ownerModId, requiredMods, defaultType, id);
+    }
+
+    public static RecipeEditorCategory of(ResourceLocation id, String translationKey,
+                                          String ownerModId, ResourceLocation defaultType) {
+        return new RecipeEditorCategory(id, translationKey, ownerModId, List.of(ownerModId), defaultType);
+    }
+
+    public static RecipeEditorCategory of(ResourceLocation id, String translationKey, String ownerModId,
+                                          ResourceLocation defaultType, ResourceLocation workstationItemId) {
+        return new RecipeEditorCategory(id, translationKey, ownerModId, List.of(ownerModId), defaultType, workstationItemId);
     }
 
     public RecipeEditorCategory {

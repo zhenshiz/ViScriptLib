@@ -1,40 +1,38 @@
 package com.viscript_recipe.data.vanilla;
 
-import com.lowdragmc.lowdraglib2.configurator.IConfigurable;
-import com.lowdragmc.lowdraglib2.configurator.annotation.Configurable;
-import com.lowdragmc.lowdraglib2.syncdata.IPersistedSerializable;
+import com.lowdragmc.lowdraglib2.syncdata.annotation.Persisted;
+import com.viscript_recipe.data.IVSRecipeData;
 import com.viscript_recipe.data.RecipeIngredient;
 import com.viscript_recipe.recipe.vanilla.ViscriptSmithingTransformRecipe;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.crafting.Recipe;
 
 @Getter
 @Setter
 @Accessors(chain = true)
-public class SmithingTransformRecipeData implements IPersistedSerializable, IConfigurable {
-    @Configurable(name = "viscript_recipe.config.recipe.show_notification")
-    private boolean showNotification = true;
-
-    @Configurable(name = "viscript_recipe.config.smithing_transform.template", subConfigurable = true)
+public class SmithingTransformRecipeData implements IVSRecipeData {
+    @Persisted
+    private Boolean showNotification = true;
+    @Persisted
     private RecipeIngredient template = RecipeIngredient.item(Items.NETHERITE_UPGRADE_SMITHING_TEMPLATE);
-
-    @Configurable(name = "viscript_recipe.config.smithing_transform.base", subConfigurable = true)
+    @Persisted
     private RecipeIngredient base = RecipeIngredient.item(Items.DIAMOND_SWORD);
-
-    @Configurable(name = "viscript_recipe.config.smithing_transform.addition", subConfigurable = true)
+    @Persisted
     private RecipeIngredient addition = RecipeIngredient.item(Items.NETHERITE_INGOT);
-
-    @Configurable(name = "viscript_recipe.config.recipe.result")
+    @Persisted
     private ItemStack result = new ItemStack(Items.NETHERITE_SWORD);
 
-    public Recipe<?> compile() {
-        var compiledTemplate = template == null ? net.minecraft.world.item.crafting.Ingredient.EMPTY : template.compile();
-        var compiledBase = base == null ? net.minecraft.world.item.crafting.Ingredient.EMPTY : base.compile();
-        var compiledAddition = addition == null ? net.minecraft.world.item.crafting.Ingredient.EMPTY : addition.compile();
+    @Override
+    public Recipe<?> compile(ResourceLocation typeId) {
+        var compiledTemplate = template == null ? Ingredient.EMPTY : template.compile();
+        var compiledBase = base == null ? Ingredient.EMPTY : base.compile();
+        var compiledAddition = addition == null ? Ingredient.EMPTY : addition.compile();
         if (compiledTemplate.isEmpty()) {
             throw new IllegalArgumentException("Smithing transform template cannot be empty");
         }

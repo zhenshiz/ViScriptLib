@@ -9,6 +9,8 @@ import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Mutable;
 import org.spongepowered.asm.mixin.Shadow;
+import vectorwing.farmersdelight.common.crafting.CookingPotRecipe;
+import vectorwing.farmersdelight.common.crafting.CuttingBoardRecipe;
 
 @Mixin(CustomRecipe.class)
 public class CustomRecipeMixin implements RecipeIdSetter {
@@ -16,9 +18,7 @@ public class CustomRecipeMixin implements RecipeIdSetter {
     private ResourceLocation id;
 
     @Override
-    public void setId(ResourceLocation id) {
-        this.id = id;
-    }
+    public void setId(ResourceLocation id) {this.id = id;}
 }
 
 @Mixin(ShapedRecipe.class)
@@ -27,9 +27,7 @@ class ShapedRecipeMixin implements RecipeIdSetter {
     private ResourceLocation id;
 
     @Override
-    public void setId(ResourceLocation id) {
-        this.id = id;
-    }
+    public void setId(ResourceLocation id) {this.id = id;}
 }
 
 @Mixin(ShapelessRecipe.class)
@@ -38,9 +36,7 @@ class ShapelessRecipeMixin implements RecipeIdSetter {
     private ResourceLocation id;
 
     @Override
-    public void setId(ResourceLocation id) {
-        this.id = id;
-    }
+    public void setId(ResourceLocation id) {this.id = id;}
 }
 
 @Mixin(AbstractCookingRecipe.class)
@@ -49,9 +45,7 @@ class AbstractCookingRecipeMixin implements RecipeIdSetter {
     protected ResourceLocation id;
 
     @Override
-    public void setId(ResourceLocation id) {
-        this.id = id;
-    }
+    public void setId(ResourceLocation id) {this.id = id;}
 }
 
 @Mixin(SmithingTrimRecipe.class)
@@ -60,9 +54,7 @@ class SmithingTrimRecipeMixin implements RecipeIdSetter {
     private ResourceLocation id;
 
     @Override
-    public void setId(ResourceLocation id) {
-        this.id = id;
-    }
+    public void setId(ResourceLocation id) {this.id = id;}
 }
 
 @Mixin(SmithingTransformRecipe.class)
@@ -71,9 +63,7 @@ class SmithingTransformRecipeMixin implements RecipeIdSetter {
     private ResourceLocation id;
 
     @Override
-    public void setId(ResourceLocation id) {
-        this.id = id;
-    }
+    public void setId(ResourceLocation id) {this.id = id;}
 }
 
 @Mixin(SingleItemRecipe.class)
@@ -82,9 +72,7 @@ class SingleItemRecipeMixin implements RecipeIdSetter {
     protected ResourceLocation id;
 
     @Override
-    public void setId(ResourceLocation id) {
-        this.id = id;
-    }
+    public void setId(ResourceLocation id) {this.id = id;}
 }
 
 @Mixin(value = ProcessingRecipe.class, remap = false)
@@ -93,9 +81,7 @@ class ProcessingRecipeMixin implements RecipeIdSetter {
     protected ResourceLocation id;
 
     @Override
-    public void setId(ResourceLocation id) {
-        this.id = id;
-    }
+    public void setId(ResourceLocation id) {this.id = id;}
 }
 
 @Mixin(value = SequencedAssemblyRecipe.class, remap = false)
@@ -104,7 +90,23 @@ class SequencedAssemblyRecipeMixin implements RecipeIdSetter {
     protected ResourceLocation id;
 
     @Override
-    public void setId(ResourceLocation id) {
-        this.id = id;
-    }
+    public void setId(ResourceLocation id) {this.id = id;}
+}
+
+@Mixin(value = CookingPotRecipe.class, remap = false)
+class CookingPotRecipeMixin implements RecipeIdSetter {
+    @Final @Mutable @Shadow
+    private ResourceLocation id;
+
+    @Override
+    public void setId(ResourceLocation id) {this.id = id;}
+}
+
+@Mixin(value = CuttingBoardRecipe.class, remap = false)
+class CuttingBoardRecipeMixin implements RecipeIdSetter {
+    @Final @Mutable @Shadow
+    private ResourceLocation id;
+
+    @Override
+    public void setId(ResourceLocation id) {this.id = id;}
 }
