@@ -9,8 +9,10 @@ import com.viscript_lib.util.CodecUtil;
 import com.viscriptshop.ViscriptShop;
 import com.viscriptshop.command.ShopCommand;
 import com.viscriptshop.gui.data.ShopInfo;
+import com.viscriptshop.gui.util.ShopEditorUploads;
 import com.viscriptshop.network.s2c.S2CPayload;
 import com.viscriptshop.util.ViScriptShopServerUtil;
+import net.minecraft.nbt.CompoundTag;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -19,6 +21,7 @@ public class C2SPayload {
     public static final String MOD_ID = ViscriptShop.MOD_ID + ":";
     public static final String GET_SHOP_INFO_C2S = MOD_ID + "get_shop_info_c2s";
     public static final String OPEN_SHOP_UI_C2S = MOD_ID + "open_shop_ui_c2s";
+    public static final String UPLOAD_SHOP_FILE_C2S = MOD_ID + "upload_shop_file_c2s";
 
     @RPCPacket(GET_SHOP_INFO_C2S)
     public static void getShopInfo(RPCSender sender) {
@@ -37,5 +40,10 @@ public class C2SPayload {
     @RPCPacket(OPEN_SHOP_UI_C2S)
     public static void openShopUI(RPCSender sender, String shopFileName, String categoryId, String merchantId) {
         ViScriptShopServerUtil.serverOpenShop(sender.asPlayer(), shopFileName, categoryId, merchantId);
+    }
+
+    @RPCPacket(UPLOAD_SHOP_FILE_C2S)
+    public static void uploadShopFile(RPCSender sender, CompoundTag request) {
+        ShopEditorUploads.receiveShopUpload(sender, request);
     }
 }

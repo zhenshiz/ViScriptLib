@@ -33,6 +33,10 @@ public class MarketListing implements IPersistedSerializable {
     @Persisted
     private int stock;
     @Persisted
+    private boolean purchaseOrder;
+    @Persisted
+    private int collectedStock;
+    @Persisted
     private long createdTime;
     @Persisted
     private long updatedTime;
@@ -61,6 +65,11 @@ public class MarketListing implements IPersistedSerializable {
 
     public MarketListing setBundleSize(int bundleSize) {
         this.bundleSize = Math.max(1, bundleSize);
+        return this;
+    }
+
+    public MarketListing setCollectedStock(int collectedStock) {
+        this.collectedStock = Math.max(0, collectedStock);
         return this;
     }
 }

@@ -30,6 +30,11 @@ public class ViScriptShopServerUtil {
         if (shopInfo != null) RPCPacketDistributor.rpcToPlayer(player, S2CPayload.OPEN_SHOP_EDITOR, shopInfo);
     }
 
+    @Info("服务端为玩家打开快捷商店选择界面")
+    public static void serverOpenShopSelector(ServerPlayer player) {
+        RPCPacketDistributor.rpcToPlayer(player, S2CPayload.OPEN_SHOP_SELECTOR);
+    }
+
     @Info("服务端打开商店")
     public static void serverOpenShop(ServerPlayer player, String shopLocation) {
         serverOpenShop(player, shopLocation, null, null);
@@ -52,6 +57,7 @@ public class ViScriptShopServerUtil {
     public static void reloadOpenShop(String shop) {
         ShopSavedData shopSavedData = ViscriptShop.getShopSavedData();
         shopSavedData.resetShopInfo(shop);
+        ShopHelper.clearCache();
     }
 
     @Nullable
@@ -97,7 +103,7 @@ public class ViScriptShopServerUtil {
         setShopInfo(shop, shopInfo);
     }
 
-    @Info("设置FtbLibrary是否显示该商店，可以用于上锁和解锁商店来推进进度，当然只有FtbLibrary的时候这个设置才有意义")
+    @Info("设置商店是否显示在快捷商店选择界面中，可用于按进度锁定或解锁商店")
     public static void setQuickOpening(String shop, boolean quickOpening) {
         ShopInfo shopInfo = getOrInitSavedShopInfo(shop);
         if (shopInfo == null) return;

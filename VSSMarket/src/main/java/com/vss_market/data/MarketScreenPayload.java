@@ -48,7 +48,11 @@ public class MarketScreenPayload implements IPersistedSerializable {
     @Persisted
     private int uploadStock = 1;
     @Persisted
+    private boolean uploadPurchaseOrder;
+    @Persisted
     private float shopListScroll;
+    @Persisted
+    private float manageListingScroll;
 
     public Message.Type parsedMessageType() {
         try {

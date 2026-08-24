@@ -1,0 +1,108 @@
+package com.viscriptshop.gui.data;
+
+import com.lowdragmc.lowdraglib2.configurator.ConfiguratorParser;
+import com.lowdragmc.lowdraglib2.configurator.IConfigurable;
+import com.lowdragmc.lowdraglib2.configurator.annotation.Configurable;
+import com.lowdragmc.lowdraglib2.configurator.ui.Configurator;
+import com.lowdragmc.lowdraglib2.configurator.ui.ConfiguratorGroup;
+import com.lowdragmc.lowdraglib2.syncdata.IPersistedSerializable;
+import com.lowdragmc.lowdraglib2.utils.PersistedParser;
+import com.lowdragmc.lowdraglib2.utils.codec.StreamCodec;
+import com.mojang.serialization.Codec;
+import io.netty.buffer.ByteBuf;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import net.minecraft.world.item.ItemStack;
+
+import java.lang.reflect.Field;
+import java.util.HashMap;
+
+/**
+ * 保存商品的实际物品及其独立图标配置。
+ *
+ * <p>实际物品参与交易、校验和库存处理，图标配置只决定客户端如何展示该物品。
+ * 此类型用于不需要物品组件匹配规则的商品位置，例如 {@code itemResult}。
+ */
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+public class MerchantItemInfo implements IConfigurable, IPersistedSerializable {
+    public static final StreamCodec<ByteBuf, MerchantItemInfo> STREAM_CODEC;
+    public static final Codec<MerchantItemInfo> CODEC;
+
+    @Configurable(name = "viscript_shop.data.merchant.item.actual")
+    private ItemStack item = ItemStack.EMPTY;
+
+    @Configurable(showName = false, subConfigurable = true, subFlattenConfigurable = true)
+    private MerchantItemDisplay display = new MerchantItemDisplay();
+
+    static {
+        CODEC = PersistedParser.createCodec(MerchantItemInfo::new);
+        STREAM_CODEC = PersistedParser.createStreamCodec(MerchantItemInfo::new);
+    }
+
+    @Override
+    public void buildConfigurator(ConfiguratorGroup father) {
+        getItem();
+        getDisplay();
+        addFieldConfigurator(father, MerchantItemInfo.class, "item")
+                .addClass("merchant-item-actual");
+        addFieldConfigurator(father, MerchantItemInfo.class, "display")
+                .addClass("merchant-item-display-settings");
+    }
+
+    /**
+     * 获取参与交易的实际物品。
+     *
+     * @return 非 {@code null} 的实际物品堆
+     */
+    public ItemStack getItem() {
+        if (item == null) {
+            item = ItemStack.EMPTY;
+        }
+        return item;
+    }
+
+    /**
+     * 获取只影响客户端图标的展示配置。
+     *
+     * @return 非 {@code null} 的图标展示配置
+     */
+    public MerchantItemDisplay getDisplay() {
+        if (display == null) {
+            display = new MerchantItemDisplay();
+        }
+        return display;
+    }
+
+    /**
+     * 为指定字段创建一个配置组件。
+     *
+     * @param father 配置组件的父分组
+     * @param declaringClass 声明目标字段的类
+     * @param fieldName 目标字段名称
+     * @return 新增到父分组的配置组件
+     */
+    protected Configurator addFieldConfigurator(ConfiguratorGroup father,
+                                                Class<?> declaringClass,
+                                                String fieldName) {
+        try {
+            Field field = declaringClass.getDeclaredField(fieldName);
+            int previousSize = father.getConfigurators().size();
+            ConfiguratorParser.createFieldConfigurator(
+                    field,
+                    father,
+                    declaringClass,
+                    new HashMap<>(),
+                    this
+            );
+            if (father.getConfigurators().size() <= previousSize) {
+                throw new IllegalStateException("No configurator created for merchant item field: " + fieldName);
+            }
+            return father.getConfigurators().get(father.getConfigurators().size() - 1);
+        } catch (NoSuchFieldException exception) {
+            throw new IllegalStateException("Missing merchant item field: " + fieldName, exception);
+        }
+    }
+}

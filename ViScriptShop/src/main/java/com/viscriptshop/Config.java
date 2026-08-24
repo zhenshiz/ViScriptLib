@@ -4,6 +4,7 @@ import net.minecraftforge.common.ForgeConfigSpec;
 
 public class Config {
     public static final ForgeConfigSpec CONFIG_SPEC;
+    public static final ForgeConfigSpec CLIENT_CONFIG_SPEC;
 
     //是否打开FTB Library的按钮来允许打开商店
     public static ForgeConfigSpec.BooleanValue showFtbLibraryButton = null;
@@ -20,6 +21,9 @@ public class Config {
     // false 表示所有玩家共享库存，true 表示每个玩家单独消耗库存
     public static ForgeConfigSpec.BooleanValue isPersonalStock;
 
+    // 商店 UI 的客户端主题
+    public static ForgeConfigSpec.EnumValue<ShopUiTheme> shopUiTheme;
+
     static {
         ForgeConfigSpec.Builder CONFIG_BUILDER = new ForgeConfigSpec.Builder();
         CONFIG_BUILDER.push("config");
@@ -31,5 +35,18 @@ public class Config {
         isPersonalStock = CONFIG_BUILDER.define("isPersonalStock", false);
         CONFIG_BUILDER.pop();
         CONFIG_SPEC = CONFIG_BUILDER.build();
+
+        ForgeConfigSpec.Builder CLIENT_CONFIG_BUILDER = new ForgeConfigSpec.Builder();
+        CLIENT_CONFIG_BUILDER.push("client");
+        shopUiTheme = CLIENT_CONFIG_BUILDER
+                .translation("viscript_shop.configuration.shopUiTheme")
+                .defineEnum("shopUiTheme", ShopUiTheme.GLASS_DARK);
+        CLIENT_CONFIG_BUILDER.pop();
+        CLIENT_CONFIG_SPEC = CLIENT_CONFIG_BUILDER.build();
+    }
+
+    public enum ShopUiTheme {
+        CLASSIC,
+        GLASS_DARK
     }
 }

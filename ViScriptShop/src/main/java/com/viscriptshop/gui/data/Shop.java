@@ -29,7 +29,7 @@ public class Shop implements IRuntimeFileProject {
     public static final String SUFFIX = ".shop";
     public static final EditorFileFormat FORMAT = EditorFileFormat.compressed(ViscriptShop.MOD_ID, "shop", SUFFIX);
     public static final ProjectType PROVIDER = new ShopFunctionFileProjectType();
-    public static final int VERSION = 3;
+    public static final int VERSION = 4;
     public static final String VERSION_TAG = "version_num";
     public ShopInfo shopInfo;
 
@@ -197,6 +197,7 @@ public class Shop implements IRuntimeFileProject {
         return switch (fromVersion) {
             case 1 -> migrateV1ToV2(shopTag);
             case 2 -> migrateV2ToV3(shopTag);
+            case 3 -> migrateV3ToV4(shopTag);
             default -> shopTag;
         };
     }
@@ -246,6 +247,80 @@ public class Shop implements IRuntimeFileProject {
         }
 
         return migratedTag;
+    }
+
+    private static CompoundTag migrateV3ToV4(CompoundTag shopTag) {
+        CompoundTag migratedTag = shopTag.copy();
+        var categoryInfosTag = migratedTag.get("categoryInfos");
+        if (!(categoryInfosTag instanceof ListTag categoryList)) {
+            return migratedTag;
+        }
+
+        for (var category : categoryList) {
+            if (!(category instanceof CompoundTag categoryCompound)
+                    || !(categoryCompound.get("merchants") instanceof ListTag merchants)) {
+                continue;
+            }
+            for (var merchant : merchants) {
+                if (merchant instanceof CompoundTag merchantCompound) {
+                    migrateCostItemInfo(merchantCompound, "itemA", "itemAMatchRule", "itemADisplay");
+                    migrateCostItemInfo(merchantCompound, "itemB", "itemBMatchRule", "itemBDisplay");
+                    migrateResultItemInfo(merchantCompound, "itemResult", "itemResultDisplay");
+                }
+            }
+        }
+        return migratedTag;
+    }
+
+    private static void migrateCostItemInfo(CompoundTag merchant,
+                                            String itemKey,
+                                            String matchRuleKey,
+                                            String displayKey) {
+        CompoundTag itemInfo = nestedItemInfo(merchant, itemKey);
+        copyIfPresent(merchant, matchRuleKey, itemInfo, "matchRule");
+        copyIfPresent(merchant, displayKey, itemInfo, "display");
+        merchant.remove(matchRuleKey);
+        merchant.remove(displayKey);
+        if (!itemInfo.isEmpty()) {
+            merchant.put(itemKey, itemInfo);
+        }
+    }
+
+    private static void migrateResultItemInfo(CompoundTag merchant,
+                                              String itemKey,
+                                              String displayKey) {
+        CompoundTag itemInfo = nestedItemInfo(merchant, itemKey);
+        copyIfPresent(merchant, displayKey, itemInfo, "display");
+        merchant.remove(displayKey);
+        if (!itemInfo.isEmpty()) {
+            merchant.put(itemKey, itemInfo);
+        }
+    }
+
+    private static CompoundTag nestedItemInfo(CompoundTag merchant, String itemKey) {
+        Tag existing = merchant.get(itemKey);
+        if (existing instanceof CompoundTag existingCompound
+                && (existingCompound.contains("item")
+                || existingCompound.contains("display")
+                || existingCompound.contains("matchRule"))) {
+            return existingCompound.copy();
+        }
+
+        CompoundTag itemInfo = new CompoundTag();
+        if (existing != null) {
+            itemInfo.put("item", existing.copy());
+        }
+        return itemInfo;
+    }
+
+    private static void copyIfPresent(CompoundTag source,
+                                      String sourceKey,
+                                      CompoundTag target,
+                                      String targetKey) {
+        Tag value = source.get(sourceKey);
+        if (value != null && !target.contains(targetKey)) {
+            target.put(targetKey, value.copy());
+        }
     }
 
     private static void migrateCategoryMerchants(CompoundTag categoryCompound) {

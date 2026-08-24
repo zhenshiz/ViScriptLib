@@ -42,19 +42,24 @@ public class S2CPayload {
     }
 
     public static void open(ServerPlayer player, String selectedShopId, String selectedListingId, String view, float shopListScroll, MarketResult result) {
-        RPCPacketDistributor.rpcToPlayer(player, OPEN_MARKET_SCREEN, createPayload(player, selectedShopId, selectedListingId, view, shopListScroll, result));
+        open(player, selectedShopId, selectedListingId, view, shopListScroll, 0f, result);
     }
 
-    public static void openUpload(ServerPlayer player, MarketResult result, ItemStack stack, int price, int bundleSize, int stock) {
-        var payload = createPayload(player, player.getUUID().toString(), "", "UPLOAD", 0f, result);
+    public static void open(ServerPlayer player, String selectedShopId, String selectedListingId, String view, float shopListScroll, float manageListingScroll, MarketResult result) {
+        RPCPacketDistributor.rpcToPlayer(player, OPEN_MARKET_SCREEN, createPayload(player, selectedShopId, selectedListingId, view, shopListScroll, manageListingScroll, result));
+    }
+
+    public static void openUpload(ServerPlayer player, MarketResult result, ItemStack stack, int price, int bundleSize, int stock, boolean purchaseOrder) {
+        var payload = createPayload(player, player.getUUID().toString(), "", "UPLOAD", 0f, 0f, result);
         payload.setUploadStack(stack)
                 .setUploadPrice(price)
                 .setUploadBundleSize(bundleSize)
-                .setUploadStock(stock);
+                .setUploadStock(stock)
+                .setUploadPurchaseOrder(purchaseOrder);
         RPCPacketDistributor.rpcToPlayer(player, OPEN_MARKET_SCREEN, payload);
     }
 
-    private static MarketScreenPayload createPayload(ServerPlayer player, String selectedShopId, String selectedListingId, String view, float shopListScroll, MarketResult result) {
+    private static MarketScreenPayload createPayload(ServerPlayer player, String selectedShopId, String selectedListingId, String view, float shopListScroll, float manageListingScroll, MarketResult result) {
         var marketData = MarketServerUtil.data(player);
         for (var onlinePlayer : player.server.getPlayerList().getPlayers()) {
             marketData.refreshShopOwnerProfile(onlinePlayer.getGameProfile());
@@ -66,7 +71,8 @@ public class S2CPayload {
                 .setSelectedListing(selectedListingId)
                 .setView(view)
                 .setMoney(ViScriptShopServerUtil.getMoney(player))
-                .setShopListScroll(shopListScroll);
+                .setShopListScroll(shopListScroll)
+                .setManageListingScroll(manageListingScroll);
         if (result != null) {
             payload.setMessageKey(result.messageKey())
                     .setMessageType(result.type().name());

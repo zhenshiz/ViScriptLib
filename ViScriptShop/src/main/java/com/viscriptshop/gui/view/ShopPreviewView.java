@@ -5,7 +5,10 @@ import com.lowdragmc.lowdraglib2.gui.texture.Icons;
 import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
 import com.lowdragmc.lowdraglib2.gui.ui.data.Horizontal;
 import com.lowdragmc.lowdraglib2.gui.ui.data.TextWrap;
-import com.lowdragmc.lowdraglib2.gui.ui.elements.*;
+import com.lowdragmc.lowdraglib2.gui.ui.elements.Button;
+import com.lowdragmc.lowdraglib2.gui.ui.elements.Dialog;
+import com.lowdragmc.lowdraglib2.gui.ui.elements.Label;
+import com.lowdragmc.lowdraglib2.gui.ui.elements.ScrollerView;
 import com.lowdragmc.lowdraglib2.gui.ui.event.UIEvent;
 import com.lowdragmc.lowdraglib2.gui.ui.event.UIEvents;
 import com.lowdragmc.lowdraglib2.gui.ui.styletemplate.Sprites;
@@ -165,11 +168,20 @@ public class ShopPreviewView extends View {
 
                 dragHandle = createDragHandle();
 
-                ItemSlot itemASlot = (ItemSlot) UIElementUtil.createItemSlot(merchantInfo.getItemA(), false, true)
+                UIElement itemASlot = UIElementUtil.createMerchantItemDisplay(
+                                merchantInfo.getItemAInfo(),
+                                true
+                        )
                         .addEventListener(UIEvents.MOUSE_DOWN, event -> handleMerchantMouseDown(event, merchantInfo));
-                ItemSlot itemBSlot = (ItemSlot) UIElementUtil.createItemSlot(merchantInfo.getItemB(), false, true)
+                UIElement itemBSlot = UIElementUtil.createMerchantItemDisplay(
+                                merchantInfo.getItemBInfo(),
+                                true
+                        )
                         .addEventListener(UIEvents.MOUSE_DOWN, event -> handleMerchantMouseDown(event, merchantInfo));
-                ItemSlot resultItemSlot = (ItemSlot) UIElementUtil.createItemSlot(merchantInfo.getItemResult(), false, true)
+                UIElement resultItemSlot = UIElementUtil.createMerchantItemDisplay(
+                                merchantInfo.getItemResultInfo(),
+                                true
+                        )
                         .addEventListener(UIEvents.MOUSE_DOWN, event -> handleMerchantMouseDown(event, merchantInfo));
 
                 merchant.addChildren(dragHandle, itemASlot, itemBSlot,
@@ -192,7 +204,10 @@ public class ShopPreviewView extends View {
                 });
                 merchant.getStyle().backgroundTexture(Sprites.RECT_SOLID);
 
-                ItemSlot itemSlot = (ItemSlot) UIElementUtil.createItemSlot(merchantInfo.getItemResult(), false, true)
+                UIElement itemSlot = UIElementUtil.createMerchantItemDisplay(
+                                merchantInfo.getItemResultInfo(),
+                                true
+                        )
                         .layout(layout -> {
                             layout.width(30);
                             layout.height(30);

@@ -1,6 +1,7 @@
 package com.viscriptshop.gui.data;
 
 import com.lowdragmc.lowdraglib2.Platform;
+import com.lowdragmc.lowdraglib2.configurator.ConfiguratorParser;
 import com.lowdragmc.lowdraglib2.configurator.IConfigurable;
 import com.lowdragmc.lowdraglib2.configurator.annotation.ConfigNumber;
 import com.lowdragmc.lowdraglib2.configurator.annotation.Configurable;
@@ -25,6 +26,7 @@ import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
 
@@ -36,14 +38,10 @@ public class MerchantInfo implements IConfigurable, IPersistedSerializable {
     public static final Codec<MerchantInfo> CODEC;
 
     //以物换物商店
-    @Configurable(name = "viscript_shop.data.merchant.itemA")
-    private ItemStack itemA = ItemStack.EMPTY;
-    @Configurable(name = "viscript_shop.data.merchant.itemA.matchRule", subConfigurable = true)
-    private ItemMatchRule itemAMatchRule = new ItemMatchRule();
-    @Configurable(name = "viscript_shop.data.merchant.itemB")
-    private ItemStack itemB = ItemStack.EMPTY;
-    @Configurable(name = "viscript_shop.data.merchant.itemB.matchRule", subConfigurable = true)
-    private ItemMatchRule itemBMatchRule = new ItemMatchRule();
+    @Configurable(name = "viscript_shop.data.merchant.itemA", key = "itemA", subConfigurable = true)
+    private MerchantCostItemInfo itemAInfo = new MerchantCostItemInfo();
+    @Configurable(name = "viscript_shop.data.merchant.itemB", key = "itemB", subConfigurable = true)
+    private MerchantCostItemInfo itemBInfo = new MerchantCostItemInfo();
     //通用货币商店
     @Configurable(name = "viscript_shop.data.merchant.money")
     @ConfigNumber(range = {0, Integer.MAX_VALUE})
@@ -53,8 +51,8 @@ public class MerchantInfo implements IConfigurable, IPersistedSerializable {
     //通用参数
     @Configurable(name = "viscript_shop.data.merchant.id")
     private String id = UUID.randomUUID().toString();
-    @Configurable(name = "viscript_shop.data.merchant.itemResult")
-    private ItemStack itemResult = ItemStack.EMPTY;
+    @Configurable(name = "viscript_shop.data.merchant.itemResult", key = "itemResult", subConfigurable = true)
+    private MerchantItemInfo itemResultInfo = new MerchantItemInfo();
     @Configurable(name = "viscript_shop.data.merchant.stock", tips = "viscript_shop.data.merchant.stock.tips")
     @ConfigNumber(range = {-1, Integer.MAX_VALUE}, wheel = 1)
     private int stock = -1;
@@ -80,25 +78,46 @@ public class MerchantInfo implements IConfigurable, IPersistedSerializable {
         group.setCanCollapse(false);
         group.setCollapse(false);
         group.lineContainer.setDisplay(TaffyDisplay.NONE);
-        buildConfigurator(group);
-        List<Configurator> configurators = new ArrayList<>(group.getConfigurators());
-        group.removeAllConfigurators();
-        //以物换物商店
-        List<Configurator> barterConfigurators = configurators.subList(0, 4);
-        //通用货币商店
-        List<Configurator> currencyConfigurators = configurators.subList(4, 6);
-        //商品唯一标识
-        Configurator idConfigurator = configurators.get(6);
-        //通用参数
-        List<Configurator> commonConfigurators = configurators.subList(7, configurators.size());
-        group.addConfigurator(idConfigurator);
-        switch (shopType) {
-            case ITEM_FOR_ITEM -> barterConfigurators.forEach(group::addConfigurator);
-            case CURRENCY -> currencyConfigurators.forEach(group::addConfigurator);
+        getItemAInfo();
+        getItemBInfo();
+        getItemResultInfo();
+        // 显式指定字段分组，避免字段顺序变化后把无关配置显示到另一种商店类型中。
+        if (shopType == CategoryInfo.ShopType.ITEM_FOR_ITEM) {
+            addFieldConfigurator(group, "itemAInfo")
+                    .addClass("merchant-cost-item-info");
+            addFieldConfigurator(group, "itemBInfo")
+                    .addClass("merchant-cost-item-info");
+        } else if (shopType == CategoryInfo.ShopType.CURRENCY) {
+            addFieldConfigurator(group, "money");
+            addFieldConfigurator(group, "tradeType");
         }
-        commonConfigurators.forEach(group::addConfigurator);
+        addFieldConfigurator(group, "id");
+        addFieldConfigurator(group, "itemResultInfo")
+                .addClass("merchant-result-item-info");
+        addFieldConfigurator(group, "stock");
+        addFieldConfigurator(group, "xp");
+        addFieldConfigurator(group, "command");
         group.addConfigurator(new MerchantFlagGroupsConfigurator(this));
         return group;
+    }
+
+    private Configurator addFieldConfigurator(ConfiguratorGroup group, String fieldName) {
+        try {
+            int previousSize = group.getConfigurators().size();
+            ConfiguratorParser.createFieldConfigurator(
+                    getClass().getDeclaredField(fieldName),
+                    group,
+                    getClass(),
+                    new HashMap<>(),
+                    this
+            );
+            if (group.getConfigurators().size() <= previousSize) {
+                throw new IllegalStateException("No configurator created for merchant field: " + fieldName);
+            }
+            return group.getConfigurators().get(group.getConfigurators().size() - 1);
+        } catch (NoSuchFieldException exception) {
+            throw new IllegalStateException("Missing merchant field: " + fieldName, exception);
+        }
     }
 
     @Deprecated
@@ -129,18 +148,157 @@ public class MerchantInfo implements IConfigurable, IPersistedSerializable {
         return copy;
     }
 
-    public ItemMatchRule getItemAMatchRule() {
-        if (itemAMatchRule == null) {
-            itemAMatchRule = new ItemMatchRule();
+    /**
+     * 获取交易物品 A 的完整信息。
+     *
+     * @return 非 {@code null} 的交易物品 A 信息
+     */
+    public MerchantCostItemInfo getItemAInfo() {
+        if (itemAInfo == null) {
+            itemAInfo = new MerchantCostItemInfo();
         }
-        return itemAMatchRule;
+        return itemAInfo;
     }
 
-    public ItemMatchRule getItemBMatchRule() {
-        if (itemBMatchRule == null) {
-            itemBMatchRule = new ItemMatchRule();
+    /**
+     * 获取交易物品 B 的完整信息。
+     *
+     * @return 非 {@code null} 的交易物品 B 信息
+     */
+    public MerchantCostItemInfo getItemBInfo() {
+        if (itemBInfo == null) {
+            itemBInfo = new MerchantCostItemInfo();
         }
-        return itemBMatchRule;
+        return itemBInfo;
+    }
+
+    /**
+     * 获取返回物品的完整信息。
+     *
+     * @return 不包含组件匹配规则的返回物品信息
+     */
+    public MerchantItemInfo getItemResultInfo() {
+        if (itemResultInfo == null) {
+            itemResultInfo = new MerchantItemInfo();
+        }
+        return itemResultInfo;
+    }
+
+    /**
+     * 获取参与交易的物品 A。
+     *
+     * @return 物品 A 的实际物品堆
+     */
+    public ItemStack getItemA() {
+        return getItemAInfo().getItem();
+    }
+
+    /**
+     * 设置参与交易的物品 A，但不修改其匹配规则或图标配置。
+     *
+     * @param itemA 物品 A 的实际物品堆；传入 {@code null} 时使用空物品堆
+     */
+    public void setItemA(ItemStack itemA) {
+        getItemAInfo().setItem(itemA == null ? ItemStack.EMPTY : itemA);
+    }
+
+    /**
+     * 获取参与交易的物品 B。
+     *
+     * @return 物品 B 的实际物品堆
+     */
+    public ItemStack getItemB() {
+        return getItemBInfo().getItem();
+    }
+
+    /**
+     * 设置参与交易的物品 B，但不修改其匹配规则或图标配置。
+     *
+     * @param itemB 物品 B 的实际物品堆；传入 {@code null} 时使用空物品堆
+     */
+    public void setItemB(ItemStack itemB) {
+        getItemBInfo().setItem(itemB == null ? ItemStack.EMPTY : itemB);
+    }
+
+    /**
+     * 获取返回物品的实际物品堆。
+     *
+     * @return 返回物品的实际物品堆
+     */
+    public ItemStack getItemResult() {
+        return getItemResultInfo().getItem();
+    }
+
+    /**
+     * 设置返回物品，但不修改其图标配置。
+     *
+     * @param itemResult 返回物品堆；传入 {@code null} 时使用空物品堆
+     */
+    public void setItemResult(ItemStack itemResult) {
+        getItemResultInfo().setItem(itemResult == null ? ItemStack.EMPTY : itemResult);
+    }
+
+    /**
+     * 获取物品 A 的组件匹配规则。
+     *
+     * @return 物品 A 的组件匹配规则
+     */
+    public ItemMatchRule getItemAMatchRule() {
+        return getItemAInfo().getMatchRule();
+    }
+
+    /**
+     * 设置物品 A 的组件匹配规则。
+     *
+     * @param matchRule 组件匹配规则；传入 {@code null} 时使用默认规则
+     */
+    public void setItemAMatchRule(ItemMatchRule matchRule) {
+        getItemAInfo().setMatchRule(matchRule == null ? new ItemMatchRule() : matchRule);
+    }
+
+    /**
+     * 获取物品 B 的组件匹配规则。
+     *
+     * @return 物品 B 的组件匹配规则
+     */
+    public ItemMatchRule getItemBMatchRule() {
+        return getItemBInfo().getMatchRule();
+    }
+
+    /**
+     * 设置物品 B 的组件匹配规则。
+     *
+     * @param matchRule 组件匹配规则；传入 {@code null} 时使用默认规则
+     */
+    public void setItemBMatchRule(ItemMatchRule matchRule) {
+        getItemBInfo().setMatchRule(matchRule == null ? new ItemMatchRule() : matchRule);
+    }
+
+    /**
+     * 获取物品 A 的图标配置。
+     *
+     * @return 物品 A 的图标配置
+     */
+    public MerchantItemDisplay getItemADisplay() {
+        return getItemAInfo().getDisplay();
+    }
+
+    /**
+     * 获取物品 B 的图标配置。
+     *
+     * @return 物品 B 的图标配置
+     */
+    public MerchantItemDisplay getItemBDisplay() {
+        return getItemBInfo().getDisplay();
+    }
+
+    /**
+     * 获取返回物品的图标配置。
+     *
+     * @return 返回物品的图标配置
+     */
+    public MerchantItemDisplay getItemResultDisplay() {
+        return getItemResultInfo().getDisplay();
     }
 
     @Getter

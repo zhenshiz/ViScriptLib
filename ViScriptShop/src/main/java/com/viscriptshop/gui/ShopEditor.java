@@ -4,13 +4,14 @@ import com.lowdragmc.lowdraglib2.Platform;
 import com.lowdragmc.lowdraglib2.editor.project.IProject;
 import com.lowdragmc.lowdraglib2.editor.ui.Editor;
 import com.mojang.blaze3d.MethodsReturnNonnullByDefault;
-import com.viscript_lib.gui.editor.EditorServerUploads;
 import com.viscript_lib.gui.editor.EditorUploadAction;
 import com.viscript_lib.gui.editor.FunctionFileEditor;
 import com.viscriptshop.ViscriptShop;
 import com.viscriptshop.gui.data.CategoryInfo;
 import com.viscriptshop.gui.data.MerchantInfo;
 import com.viscriptshop.gui.data.Shop;
+import com.viscriptshop.gui.settings.ShopEditorSettings;
+import com.viscriptshop.gui.util.ShopEditorUploads;
 import com.viscriptshop.gui.view.CategoryView;
 import com.viscriptshop.gui.view.ShopInspectorView;
 import com.viscriptshop.gui.view.ShopPreviewView;
@@ -42,6 +43,12 @@ public class ShopEditor extends FunctionFileEditor {
     @Override
     protected Editor createNewEditorInstance() {
         return new ShopEditor();
+    }
+
+    @Override
+    protected void initEditorSettings() {
+        super.initEditorSettings();
+        editorSettings.registerSettings(new ShopEditorSettings(), ShopEditorSettings.CODEC);
     }
 
     @Override
@@ -92,6 +99,14 @@ public class ShopEditor extends FunctionFileEditor {
         container.selectView(shopInspectorView);
     }
 
+    private boolean shouldReloadShopAfterUpload() {
+        return editorSettings.getSettings(ShopEditorSettings.ID)
+                .filter(ShopEditorSettings.class::isInstance)
+                .map(ShopEditorSettings.class::cast)
+                .map(ShopEditorSettings::isReloadShopAfterUpload)
+                .orElse(true);
+    }
+
     private record ShopServerUploadAction(Shop shop, ShopEditor editor) implements EditorUploadAction {
         @Override
         public Component getDisplayName() {
@@ -124,10 +139,10 @@ public class ShopEditor extends FunctionFileEditor {
             if (!shop.isTrueFormat(editor)) {
                 return;
             }
-            EditorServerUploads.uploadToServer(
-                    Shop.FORMAT,
+            ShopEditorUploads.uploadShopToServer(
                     fileName,
-                    shop.serializeRuntimeFile(Platform.getFrozenRegistry())
+                    shop.serializeRuntimeFile(Platform.getFrozenRegistry()),
+                    editor.shouldReloadShopAfterUpload()
             );
             ShopHelper.clearCache();
         }

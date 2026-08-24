@@ -35,13 +35,15 @@ public class PlayerShopData implements IPersistedSerializable {
     @Persisted
     private String name = "";
     @Persisted
-    private int balance;
+    private long balance;
     @Persisted
     private long createdTime;
     @Persisted
     private long updatedTime;
     @Persisted
     private final List<MarketListing> listings = new ArrayList<>();
+    @Persisted
+    private final List<MarketPurchaseRecord> purchaseRecords = new ArrayList<>();
 
     public Optional<MarketListing> findListing(String listingId) {
         return listings.stream().filter(listing -> listing.getId().equals(listingId)).findFirst();
@@ -59,5 +61,15 @@ public class PlayerShopData implements IPersistedSerializable {
             }
         }
         return count;
+    }
+
+    public void addPurchaseRecord(MarketPurchaseRecord record, int limit) {
+        if (record == null || limit <= 0) {
+            return;
+        }
+        purchaseRecords.add(0, record);
+        while (purchaseRecords.size() > limit) {
+            purchaseRecords.remove(purchaseRecords.size() - 1);
+        }
     }
 }

@@ -6,6 +6,7 @@ import com.lowdragmc.lowdraglib2.gui.ui.UI;
 import com.viscriptshop.ShopRegistries;
 import com.viscriptshop.ViscriptShop;
 import com.viscriptshop.gui.ShopUI;
+import com.viscriptshop.gui.components.DialogSelect;
 import com.viscriptshop.gui.data.ShopInfo;
 import dev.latvian.mods.kubejs.typings.Info;
 import net.minecraft.client.Minecraft;
@@ -15,6 +16,13 @@ import net.minecraft.network.chat.Component;
 import java.util.List;
 
 public class ViScriptShopClientUtil {
+    @Info("客户端打开快捷商店选择界面")
+    public static void clientOpenShopSelector() {
+        DialogSelect dialogSelect = new DialogSelect();
+        ModularUI modularUI = new ModularUI(UI.of(dialogSelect));
+        Minecraft.getInstance().setScreen(new ModularUIScreen(modularUI, Component.empty()));
+    }
+
     @Info("客户端打开商店（带分类和商品参数）")
     public static void clientOpenShop(String shopLocation, ShopInfo shopInfo, String categoryId, String merchantId) {
         Minecraft minecraft = Minecraft.getInstance();

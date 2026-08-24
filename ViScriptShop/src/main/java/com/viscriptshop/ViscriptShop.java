@@ -44,9 +44,11 @@ public class ViscriptShop {
             }
             return new ModularUI(UI.empty());
         });
-        ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, Config.CONFIG_SPEC, String.format("%s_config.toml", MOD_ID));
+        ModLoadingContext context = ModLoadingContext.get();
+        context.registerConfig(ModConfig.Type.COMMON, Config.CONFIG_SPEC, String.format("%s_config.toml", MOD_ID));
+        context.registerConfig(ModConfig.Type.CLIENT, Config.CLIENT_CONFIG_SPEC, String.format("%s_client.toml", MOD_ID));
         /*if (dist.isClient()) {
-            ModLoadingContext.get().registerExtensionPoint(ConfigScreenHandler.ConfigScreenFactory.class, ConfigurationScreen::new);
+            context.registerExtensionPoint(ConfigScreenHandler.ConfigScreenFactory.class, ConfigurationScreen::new);
         }*/
     }
 

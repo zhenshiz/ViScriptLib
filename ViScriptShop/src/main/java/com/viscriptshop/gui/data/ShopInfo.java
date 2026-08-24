@@ -6,11 +6,9 @@ import com.lowdragmc.lowdraglib2.configurator.ui.BooleanConfigurator;
 import com.lowdragmc.lowdraglib2.configurator.ui.ConfiguratorGroup;
 import com.lowdragmc.lowdraglib2.syncdata.IPersistedSerializable;
 import com.lowdragmc.lowdraglib2.syncdata.annotation.Persisted;
-import com.lowdragmc.lowdraglib2.syncdata.annotation.SkipPersistedValue;
 import com.lowdragmc.lowdraglib2.utils.PersistedParser;
 import com.lowdragmc.lowdraglib2.utils.codec.StreamCodec;
 import com.mojang.serialization.Codec;
-import com.viscriptshop.ViscriptShop;
 import io.netty.buffer.ByteBuf;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -44,16 +42,9 @@ public class ShopInfo implements IConfigurable, IPersistedSerializable {
     @Override
     public void buildConfigurator(ConfiguratorGroup father) {
         IConfigurable.super.buildConfigurator(father);
-        if (ViscriptShop.isFtbLibraryLoaded()) {
-            BooleanConfigurator isQuickOpeningConfigurator = new BooleanConfigurator("viscript_shop.data.shop.isQuickOpening", this::isQuickOpening, this::setQuickOpening, isQuickOpening, true);
-            isQuickOpeningConfigurator.setTips("viscript_shop.data.shop.isQuickOpening.tip");
-            father.addConfigurators(isQuickOpeningConfigurator);
-        }
-    }
-
-    @SkipPersistedValue(field = "isQuickOpening")
-    public boolean skipIsQuickOpening(boolean value) {
-        return !ViscriptShop.isFtbLibraryLoaded();
+        BooleanConfigurator isQuickOpeningConfigurator = new BooleanConfigurator("viscript_shop.data.shop.isQuickOpening", this::isQuickOpening, this::setQuickOpening, isQuickOpening, true);
+        isQuickOpeningConfigurator.setTips("viscript_shop.data.shop.isQuickOpening.tip");
+        father.addConfigurators(isQuickOpeningConfigurator);
     }
 
     @Getter

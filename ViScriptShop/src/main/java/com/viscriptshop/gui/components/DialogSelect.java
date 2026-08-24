@@ -18,7 +18,7 @@ public class DialogSelect extends Dialog {
 
     public DialogSelect() {
         super();
-        this.setTitle("sidebar_button.viscript_shop.shop.tooltip");
+        this.setTitle("viscript_shop.ui.quick_open.title");
         RPCPacketDistributor.rpcToServer(C2SPayload.GET_SHOP_INFO_C2S);
     }
 

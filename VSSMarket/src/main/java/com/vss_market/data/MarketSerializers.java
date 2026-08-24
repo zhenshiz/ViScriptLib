@@ -16,6 +16,7 @@ public class MarketSerializers {
             return;
         }
         register(MarketListing.class, MarketListing.CODEC, MarketListing.STREAM_CODEC);
+        register(MarketPurchaseRecord.class, MarketPurchaseRecord.CODEC, MarketPurchaseRecord.STREAM_CODEC);
         register(PlayerShopData.class, PlayerShopData.CODEC, PlayerShopData.STREAM_CODEC);
         register(MarketSavedData.class, MarketSavedData.CODEC, MarketSavedData.STREAM_CODEC);
         register(MarketScreenPayload.class, MarketScreenPayload.CODEC, MarketScreenPayload.STREAM_CODEC);

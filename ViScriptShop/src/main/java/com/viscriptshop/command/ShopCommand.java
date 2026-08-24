@@ -31,7 +31,6 @@ import java.util.concurrent.CompletableFuture;
 
 @LDLRegister(name = "shop", registry = ICommand.COMMAND_ID)
 public class ShopCommand implements ICommand {
-
     @Override
     public void register(CommandDispatcher<CommandSourceStack> dispatcher, CommandBuildContext buildContext, Commands.CommandSelection commandSelection) {
         var root = Commands.literal(ViscriptShop.MOD_ID).requires(commandSourceStack -> commandSourceStack.hasPermission(Commands.LEVEL_GAMEMASTERS))
@@ -44,9 +43,16 @@ public class ShopCommand implements ICommand {
                         )
                 )
                 .then(Commands.literal("open")
+                        .executes(this::openShopSelector)
                         .then(Commands.argument("target", StringArgumentType.greedyString())
                                 .suggests(ShopCommand::suggestOpenTarget)
                                 .executes(this::openShopTarget)
+                        )
+                )
+                .then(Commands.literal("setQuickOpening")
+                        .then(Commands.argument("target", StringArgumentType.greedyString())
+                                .suggests(ShopCommand::suggestQuickOpeningTarget)
+                                .executes(this::setQuickOpeningTarget)
                         )
                 )
                 .then(Commands.literal("reload")
@@ -137,15 +143,6 @@ public class ShopCommand implements ICommand {
                         )
                 );
 
-        if (ViscriptShop.isFtbLibraryLoaded()) {
-            root.then(Commands.literal("setQuickOpening")
-                    .then(Commands.argument("target", StringArgumentType.greedyString())
-                            .suggests(ShopCommand::suggestQuickOpeningTarget)
-                            .executes(this::setQuickOpeningTarget)
-                    )
-            );
-        }
-
         dispatcher.register(root);
     }
 
@@ -175,6 +172,17 @@ public class ShopCommand implements ICommand {
         } else {
             throw playerOnlyException();
         }
+    }
+
+    @SneakyThrows
+    private int openShopSelector(CommandContext<CommandSourceStack> context) {
+        ServerPlayer player = context.getSource().getPlayer();
+        if (player == null) {
+            throw playerOnlyException();
+        }
+
+        ViScriptShopServerUtil.serverOpenShopSelector(player);
+        return 1;
     }
 
     @SneakyThrows

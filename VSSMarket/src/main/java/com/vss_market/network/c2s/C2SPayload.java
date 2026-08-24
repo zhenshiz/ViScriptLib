@@ -30,10 +30,10 @@ public class C2SPayload {
     }
 
     @RPCPacket(REQUEST_MARKET_STATE)
-    public static void requestMarketState(RPCSender sender, String selectedShopId, String view, float shopListScroll) {
+    public static void requestMarketState(RPCSender sender, String selectedShopId, String view, float shopListScroll, float manageListingScroll) {
         var player = sender.asPlayer();
         if (player != null) {
-            S2CPayload.open(player, selectedShopId, "", view, shopListScroll, null);
+            S2CPayload.open(player, selectedShopId, "", view, shopListScroll, manageListingScroll, null);
         }
     }
 
@@ -54,14 +54,14 @@ public class C2SPayload {
     }
 
     @RPCPacket(UPLOAD_LISTING)
-    public static void uploadListing(RPCSender sender, ItemStack stack, int price, int bundleSize, int stock) {
+    public static void uploadListing(RPCSender sender, ItemStack stack, int price, int bundleSize, int stock, boolean purchaseOrder) {
         var player = sender.asPlayer();
         if (player != null) {
-            var result = MarketServerUtil.uploadListing(player, stack, price, bundleSize, stock);
+            var result = MarketServerUtil.uploadListing(player, stack, price, bundleSize, stock, purchaseOrder);
             if (result.success()) {
                 S2CPayload.open(player, player.getUUID().toString(), "MANAGE", result);
             } else {
-                S2CPayload.openUpload(player, result, stack, price, bundleSize, stock);
+                S2CPayload.openUpload(player, result, stack, price, bundleSize, stock, purchaseOrder);
             }
         }
     }
@@ -75,26 +75,26 @@ public class C2SPayload {
     }
 
     @RPCPacket(RESTOCK_LISTING)
-    public static void restockListing(RPCSender sender, String listingId, int count) {
+    public static void restockListing(RPCSender sender, String listingId, int count, float shopListScroll, float manageListingScroll) {
         var player = sender.asPlayer();
         if (player != null) {
-            S2CPayload.open(player, player.getUUID().toString(), listingId, "DETAIL", MarketServerUtil.restockListing(player, listingId, count));
+            S2CPayload.open(player, player.getUUID().toString(), listingId, "DETAIL", shopListScroll, manageListingScroll, MarketServerUtil.restockListing(player, listingId, count));
         }
     }
 
     @RPCPacket(UPDATE_PRICE)
-    public static void updatePrice(RPCSender sender, String listingId, int price) {
+    public static void updatePrice(RPCSender sender, String listingId, int price, float shopListScroll, float manageListingScroll) {
         var player = sender.asPlayer();
         if (player != null) {
-            S2CPayload.open(player, player.getUUID().toString(), listingId, "DETAIL", MarketServerUtil.updatePrice(player, listingId, price));
+            S2CPayload.open(player, player.getUUID().toString(), listingId, "DETAIL", shopListScroll, manageListingScroll, MarketServerUtil.updatePrice(player, listingId, price));
         }
     }
 
     @RPCPacket(REMOVE_LISTING)
-    public static void removeListing(RPCSender sender, String listingId) {
+    public static void removeListing(RPCSender sender, String listingId, float shopListScroll, float manageListingScroll) {
         var player = sender.asPlayer();
         if (player != null) {
-            S2CPayload.open(player, player.getUUID().toString(), "MANAGE", MarketServerUtil.removeListing(player, listingId));
+            S2CPayload.open(player, player.getUUID().toString(), "", "MANAGE", shopListScroll, manageListingScroll, MarketServerUtil.removeListing(player, listingId));
         }
     }
 
