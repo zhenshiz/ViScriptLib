@@ -1,0 +1,34 @@
+package com.viscriptquests.event;
+
+import com.viscriptquests.ViScriptQuests;
+import com.viscriptquests.quest.runtime.QuestRewardService;
+import com.viscriptquests.quest.runtime.QuestTrackingService;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraftforge.event.entity.player.PlayerEvent;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.common.Mod;
+
+@Mod.EventBusSubscriber(modid = ViScriptQuests.MOD_ID)
+public class HudEvents {
+    @SubscribeEvent
+    public static void onPlayerLoggedIn(PlayerEvent.PlayerLoggedInEvent event) {
+        if (event.getEntity() instanceof ServerPlayer player) {
+            QuestRewardService.grantPendingRewards(player);
+            QuestTrackingService.refresh(player);
+        }
+    }
+
+    @SubscribeEvent
+    public static void onPlayerRespawn(PlayerEvent.PlayerRespawnEvent event) {
+        if (event.getEntity() instanceof ServerPlayer player) {
+            QuestTrackingService.refresh(player);
+        }
+    }
+
+    @SubscribeEvent
+    public static void onPlayerChangedDimension(PlayerEvent.PlayerChangedDimensionEvent event) {
+        if (event.getEntity() instanceof ServerPlayer player) {
+            QuestTrackingService.refresh(player);
+        }
+    }
+}
