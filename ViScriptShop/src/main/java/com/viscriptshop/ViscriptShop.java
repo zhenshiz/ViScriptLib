@@ -13,12 +13,10 @@ import lombok.Getter;
 import lombok.Setter;
 import net.minecraft.client.Minecraft;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.fml.ModList;
 import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.config.ModConfig;
-import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.minecraftforge.fml.loading.FMLEnvironment;
 import org.slf4j.Logger;
 
@@ -30,7 +28,6 @@ public class ViscriptShop {
     private static ShopSavedData shopSavedData;
 
     public ViscriptShop() {
-        IEventBus modEventBus = FMLJavaModLoadingContext.get().getModEventBus();
         var dist = FMLEnvironment.dist;
         ModComPat.init(dist);
         PlayerUIMenuType.register(ShopEditor.SHOP_ID, ignored -> player -> {

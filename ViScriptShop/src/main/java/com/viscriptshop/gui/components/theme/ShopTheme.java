@@ -1,9 +1,9 @@
 package com.viscriptshop.gui.components.theme;
 
-import com.lowdragmc.lowdraglib2.gui.texture.ColorRectTexture;
 import com.lowdragmc.lowdraglib2.gui.texture.IGuiTexture;
 import com.lowdragmc.lowdraglib2.gui.texture.SDFRectTexture;
 import com.lowdragmc.lowdraglib2.gui.texture.SpriteTexture;
+import com.lowdragmc.lowdraglib2.gui.ui.styletemplate.Sprites;
 import com.viscriptshop.Config;
 import com.viscriptshop.ViscriptShop;
 
@@ -12,7 +12,24 @@ import com.viscriptshop.ViscriptShop;
  */
 public record ShopTheme(
         String styleClass,
+        float shellWidthPercent,
+        float shellHeightPercent,
         float centerPanelGap,
+        float searchIconWidth,
+        float searchIconHeight,
+        float searchIconScale,
+        float balanceIconSize,
+        float balanceIconScale,
+        float balanceFieldMarginRight,
+        float categoryEntryHeight,
+        float merchantRowHeight,
+        float merchantGridWidth,
+        float merchantGridHeight,
+        float scrollWidth,
+        IGuiTexture shellBackground,
+        IGuiTexture categoryColumnBackground,
+        IGuiTexture merchantColumnBackground,
+        IGuiTexture summaryColumnBackground,
         IGuiTexture categoryHeader,
         IGuiTexture categoryPanel,
         IGuiTexture topBar,
@@ -21,8 +38,13 @@ public record ShopTheme(
         IGuiTexture summaryPanel,
         IGuiTexture shoppingCartPanel,
         IGuiTexture consumptionPanel,
+        IGuiTexture searchIcon,
         IGuiTexture searchIconBackground,
         IGuiTexture searchField,
+        IGuiTexture toggleBase,
+        IGuiTexture toggleHover,
+        IGuiTexture balanceIconBackground,
+        IGuiTexture balanceField,
         IGuiTexture merchantList,
         IGuiTexture merchantGrid,
         IGuiTexture actionButtonBase,
@@ -32,39 +54,81 @@ public record ShopTheme(
         IGuiTexture secondaryButtonHover,
         IGuiTexture secondaryButtonPressed,
         IGuiTexture categoryDefault,
-        IGuiTexture categorySelected
+        IGuiTexture categorySelected,
+        IGuiTexture scrollHead,
+        IGuiTexture scrollHeadPressed,
+        IGuiTexture scrollTail,
+        IGuiTexture scrollTailPressed,
+        IGuiTexture scrollTrack,
+        IGuiTexture scrollBarBase,
+        IGuiTexture scrollBarHover,
+        IGuiTexture scrollBarPressed
 ) {
     public static ShopTheme current() {
         return switch (Config.shopUiTheme.get()) {
-            case CLASSIC -> classic();
+            case GRAY_CAT_WORKSHOP -> grayCatWorkshop();
             case GLASS_DARK -> glassDark();
         };
     }
 
-    private static ShopTheme classic() {
+    public boolean isGrayCatWorkshop() {
+        return styleClass.equals("shop-theme-gray-cat-workshop");
+    }
+
+    private static ShopTheme grayCatWorkshop() {
         return new ShopTheme(
-                "shop-theme-classic",
+                "shop-theme-gray-cat-workshop",
+                90,
+                84.5f,
                 0,
-                sprite("shop_ui_1.png"),
-                sprite("shop_ui_2.png"),
-                sprite("shop_top_bar.png"),
-                sprite("shop_ui_bottom.png"),
-                sprite("shop_ui_4.png"),
-                sprite("shop_ui_5.png"),
-                sprite("shopping_cart_background.png"),
-                sprite("consumption_background.png"),
-                new ColorRectTexture(0xFF454049),
-                sprite("search_bar.png"),
-                sprite("trade_bar.png"),
-                sprite("verticle_trade_bar.png"),
-                sprite("button/buying_botton.png"),
-                sprite("button/buying_botton_hover.png"),
-                sprite("button/buying_botton_hold.png"),
-                sprite("button/other_button.png"),
-                sprite("button/other_button_hover.png"),
-                sprite("button/other_button_hold.png"),
-                rounded(0x50505070, 0x00000000, 0, 3),
-                rounded(0xC05A5362, 0xD0988EA2, 1, 3)
+                20,
+                25,
+                1,
+                19,
+                0.72f,
+                4,
+                25,
+                22,
+                47,
+                76,
+                7,
+                sprite("gray_cat_workshop", "shell.png"),
+                IGuiTexture.EMPTY,
+                IGuiTexture.EMPTY,
+                IGuiTexture.EMPTY,
+                IGuiTexture.EMPTY,
+                IGuiTexture.EMPTY,
+                IGuiTexture.EMPTY,
+                IGuiTexture.EMPTY,
+                IGuiTexture.EMPTY,
+                IGuiTexture.EMPTY,
+                IGuiTexture.EMPTY,
+                IGuiTexture.EMPTY,
+                IGuiTexture.EMPTY,
+                IGuiTexture.EMPTY,
+                sprite("gray_cat_workshop", "controls/input.png"),
+                sprite("gray_cat_workshop", "controls/toggle.png"),
+                sprite("gray_cat_workshop", "controls/toggle.png"),
+                IGuiTexture.EMPTY,
+                IGuiTexture.EMPTY,
+                sprite("gray_cat_workshop", "panels/merchant_row.png"),
+                sprite("gray_cat_workshop", "panels/merchant_grid.png"),
+                sprite("gray_cat_workshop", "controls/primary_button.png"),
+                sprite("gray_cat_workshop", "controls/primary_button_hover.png"),
+                sprite("gray_cat_workshop", "controls/primary_button_pressed.png"),
+                sprite("gray_cat_workshop", "controls/secondary_button.png"),
+                sprite("gray_cat_workshop", "controls/secondary_button_hover.png"),
+                sprite("gray_cat_workshop", "controls/secondary_button_pressed.png"),
+                IGuiTexture.EMPTY,
+                sprite("gray_cat_workshop", "controls/category_selected.png").setColor(0xFF6D6D6D),
+                sprite("gray_cat_workshop", "scroll/up.png"),
+                sprite("gray_cat_workshop", "scroll/up_pressed.png"),
+                sprite("gray_cat_workshop", "scroll/down.png"),
+                sprite("gray_cat_workshop", "scroll/down_pressed.png"),
+                sprite("gray_cat_workshop", "scroll/track.png"),
+                sprite("gray_cat_workshop", "scroll/thumb.png"),
+                sprite("gray_cat_workshop", "scroll/thumb.png"),
+                sprite("gray_cat_workshop", "scroll/thumb_pressed.png")
         );
     }
 
@@ -84,7 +148,24 @@ public record ShopTheme(
                                    int card, int selected, int border) {
         return new ShopTheme(
                 styleClass,
+                90,
+                91,
                 3,
+                18,
+                18,
+                0.8f,
+                14,
+                1,
+                0,
+                18,
+                20,
+                50,
+                0,
+                5,
+                IGuiTexture.EMPTY,
+                IGuiTexture.EMPTY,
+                IGuiTexture.EMPTY,
+                IGuiTexture.EMPTY,
                 rounded(header, border, 1, 4),
                 rounded(panel, border, 1, 4),
                 rounded(header, border, 1, 5),
@@ -93,8 +174,13 @@ public record ShopTheme(
                 rounded(panel, border, 1, 4),
                 rounded(inset, border, 1, 4),
                 rounded(inset, border, 1, 4),
+                commonIcon("search.png"),
                 IGuiTexture.EMPTY,
                 rounded(inset, border, 1, 5),
+                Sprites.BORDER1_RT1_DARK,
+                Sprites.BORDER1_RT1,
+                IGuiTexture.EMPTY,
+                IGuiTexture.EMPTY,
                 rounded(card, border, 1, 4),
                 rounded(card, border, 1, 4),
                 rounded(0xA83B4652, 0x70D6E5F2, 1, 3),
@@ -104,12 +190,24 @@ public record ShopTheme(
                 rounded(0xC0506270, 0x90EAF7FF, 1, 3),
                 rounded(0xB02A333E, 0x70D6E5F2, 1, 3),
                 rounded(0x50333F4B, border, 1, 3),
-                rounded(selected, 0xC0F2FAFF, 1, 3)
+                rounded(selected, 0xC0F2FAFF, 1, 3),
+                sprite("glass_dark", "scroll/scroll_top.png"),
+                sprite("glass_dark", "scroll/scroll_top.png"),
+                sprite("glass_dark", "scroll/scroll_bottom.png"),
+                sprite("glass_dark", "scroll/scroll_bottom.png"),
+                sprite("glass_dark", "scroll/scroll_bar_background.png"),
+                sprite("glass_dark", "scroll/scroll_bar.png"),
+                sprite("glass_dark", "scroll/scroll_bar_hover.png"),
+                sprite("glass_dark", "scroll/scroll_bar_hold.png")
         );
     }
 
-    private static SpriteTexture sprite(String fileName) {
-        return SpriteTexture.of(ViscriptShop.formattedMod("textures/gui/" + fileName));
+    private static SpriteTexture sprite(String themeName, String fileName) {
+        return SpriteTexture.of(ViscriptShop.formattedMod("textures/themes/" + themeName + "/" + fileName));
+    }
+
+    private static SpriteTexture commonIcon(String fileName) {
+        return SpriteTexture.of(ViscriptShop.formattedMod("textures/icons/" + fileName));
     }
 
     private static SDFRectTexture rounded(int fill, int border, float stroke, float radius) {

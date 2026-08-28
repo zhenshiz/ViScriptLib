@@ -29,7 +29,7 @@
   "viscript_shop.configuration.maxShopUiGiveItemsPerPurchase": "商店UI单次购买最多给予玩家的物品数量（-1为不限制）",
   "viscript_shop.configuration.isPersonalStock": "是否使用玩家独立库存。关闭时所有玩家共享商品库存，开启时每个玩家单独消耗库存",
   "viscript_shop.configuration.shopUiTheme": "商店界面主题",
-  "viscript_shop.configuration.shopUiTheme.classic": "经典贴图",
+  "viscript_shop.configuration.shopUiTheme.gray_cat_workshop": "灰猫工坊",
   "viscript_shop.configuration.shopUiTheme.glass_dark": "深色玻璃",
 
   "viscript_shop.data.shop.name": "商店名",

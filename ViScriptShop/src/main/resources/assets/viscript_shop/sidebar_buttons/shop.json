@@ -1,5 +1,5 @@
 {
-  "icon": "viscript_shop:textures/shop.png",
+  "icon": "viscript_shop:textures/icons/shop.png",
   "sort_index": 1000,
   "click": [
     "static_method:com.viscriptshop.compat.FtbLibraryComPat:click"

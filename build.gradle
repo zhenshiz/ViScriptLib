@@ -135,9 +135,9 @@ allprojects {
             modCompileOnly "curse.maven:ftb-teams-forge-404468:7499810"
             modCompileOnly "curse.maven:architectury-api-419699:5137938"
             //tacz
-            modCompileOnly "maven.modrinth:timeless-and-classics-zero:${tacz_version}"
+            // modCompileOnly "maven.modrinth:timeless-and-classics-zero:${tacz_version}"
             //拔刀剑
-            modCompileOnly "maven.modrinth:slashblade-resharped:${slashblade_resharped_version}"
+            // modCompileOnly "maven.modrinth:slashblade-resharped:${slashblade_resharped_version}"
 
             //must
             runtimeOnly "maven.modrinth:embeddium:${sodium_version}"

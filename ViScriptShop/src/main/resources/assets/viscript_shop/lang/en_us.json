@@ -29,7 +29,7 @@
   "viscript_shop.configuration.maxShopUiGiveItemsPerPurchase": "Maximum items granted in one shop UI purchase (-1 = unlimited)",
   "viscript_shop.configuration.isPersonalStock": "Use per-player stock. Disabled means all players share stock; enabled means each player consumes stock independently",
   "viscript_shop.configuration.shopUiTheme": "Shop UI Theme",
-  "viscript_shop.configuration.shopUiTheme.classic": "Classic Textures",
+  "viscript_shop.configuration.shopUiTheme.gray_cat_workshop": "Gray Cat Workshop",
   "viscript_shop.configuration.shopUiTheme.glass_dark": "Dark Glass",
 
   "viscript_shop.data.shop.name": "Shop Name",

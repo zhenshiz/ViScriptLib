@@ -46,7 +46,7 @@ public class Config {
     }
 
     public enum ShopUiTheme {
-        CLASSIC,
+        GRAY_CAT_WORKSHOP,
         GLASS_DARK
     }
 }

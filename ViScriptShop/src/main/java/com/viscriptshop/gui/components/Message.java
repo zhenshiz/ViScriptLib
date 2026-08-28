@@ -20,10 +20,10 @@ public class Message extends UIElement {
     public final Label label;
 
     private final static int DEFAULT_TIME = 60;
-    public final static SpriteTexture ERROR_ICON = SpriteTexture.of(ViscriptShop.formattedMod("textures/error.png"));
-    public final static SpriteTexture INFO_ICON = SpriteTexture.of(ViscriptShop.formattedMod("textures/info.png"));
-    public final static SpriteTexture SUCCESS_ICON = SpriteTexture.of(ViscriptShop.formattedMod("textures/success.png"));
-    public final static SpriteTexture WARN_ICON = SpriteTexture.of(ViscriptShop.formattedMod("textures/warn.png"));
+    public final static SpriteTexture ERROR_ICON = SpriteTexture.of(ViscriptShop.formattedMod("textures/icons/error.png"));
+    public final static SpriteTexture INFO_ICON = SpriteTexture.of(ViscriptShop.formattedMod("textures/icons/info.png"));
+    public final static SpriteTexture SUCCESS_ICON = SpriteTexture.of(ViscriptShop.formattedMod("textures/icons/success.png"));
+    public final static SpriteTexture WARN_ICON = SpriteTexture.of(ViscriptShop.formattedMod("textures/icons/warn.png"));
 
     public Message(UIElement parent) {
         this.parent = parent;
@@ -119,4 +119,3 @@ public class Message extends UIElement {
         WARN
     }
 }
-
