@@ -7,6 +7,8 @@ import com.viscript_lib.util.item.ItemUtil;
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.neoforged.neoforge.items.ItemHandlerHelper;
 
 import java.util.List;
 
@@ -60,5 +62,26 @@ public class InventoryHelper implements IContainerHelper {
         count = ItemUtil.removeItemByContainer(player.getEnderChestInventory(), item, count, compareMode, components);
 
         return count;
+    }
+
+    @Override
+    public boolean supportsItemOutput() {
+        return true;
+    }
+
+    @Override
+    public ItemStack getItemOutputIcon() {
+        return new ItemStack(Items.CHEST);
+    }
+
+    @Override
+    public String getItemOutputTranslationKey() {
+        return "viscript_lib.item_output_target.player_inventory";
+    }
+
+    @Override
+    public ItemStack insertItemForPlayer(ServerPlayer player, ItemStack stack) {
+        ItemHandlerHelper.giveItemToPlayer(player, stack);
+        return ItemStack.EMPTY;
     }
 }

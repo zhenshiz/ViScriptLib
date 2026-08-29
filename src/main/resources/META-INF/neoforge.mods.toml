@@ -33,5 +33,12 @@ versionRange = "[${ldlib2_version},)"
 ordering = "NONE"
 side = "BOTH"
 
+[[dependencies."${mod_id}"]]
+modId = "beyonddimensions"
+type = "optional"
+versionRange = "[0.7.0,)"
+ordering = "NONE"
+side = "BOTH"
+
 [features."${mod_id}"]
 openGLVersion = "[3.2,)"

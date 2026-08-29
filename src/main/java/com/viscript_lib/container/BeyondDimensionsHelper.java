@@ -6,9 +6,12 @@ import com.viscript_lib.util.item.ItemStackCompareMode;
 import com.viscript_lib.util.item.ItemUtil;
 import com.wintercogs.beyonddimensions.api.dimensionnet.DimensionsNet;
 import com.wintercogs.beyonddimensions.api.dimensionnet.UnifiedStorage;
+import com.wintercogs.beyonddimensions.api.capability.helper.unordered.ItemUnifiedStorageHandler;
 import com.wintercogs.beyonddimensions.api.ids.BDConstants;
 import com.wintercogs.beyonddimensions.api.storage.key.KeyAmount;
+import com.wintercogs.beyonddimensions.common.init.BDItems;
 import net.minecraft.core.component.DataComponentType;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
 
@@ -83,5 +86,37 @@ public class BeyondDimensionsHelper implements IContainerHelper {
             }
         }
         return remain;
+    }
+
+    @Override
+    public boolean supportsItemOutput() {
+        return true;
+    }
+
+    @Override
+    public ItemStack getItemOutputIcon() {
+        return new ItemStack(BDItems.NET_TERMINAL_ITEM.get());
+    }
+
+    @Override
+    public String getItemOutputTranslationKey() {
+        return "viscript_lib.item_output_target.dimension_network";
+    }
+
+    @Override
+    public boolean isItemOutputAvailable(ServerPlayer player) {
+        return DimensionsNet.hasPrimaryNet(player);
+    }
+
+    @Override
+    public Component getItemOutputUnavailableReason(ServerPlayer player) {
+        return Component.translatable("viscript_lib.item_output_target.dimension_network_unavailable");
+    }
+
+    @Override
+    public ItemStack insertItemForPlayer(ServerPlayer player, ItemStack stack) {
+        DimensionsNet network = DimensionsNet.getPrimaryNetFromPlayer(player);
+        if (network == null) return stack;
+        return new ItemUnifiedStorageHandler(network.getUnifiedStorage()).insertItem(0, stack, false);
     }
 }
