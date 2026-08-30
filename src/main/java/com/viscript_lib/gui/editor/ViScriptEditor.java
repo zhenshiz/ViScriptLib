@@ -16,8 +16,6 @@ import com.lowdragmc.lowdraglib2.gui.util.TreeBuilder;
 import com.viscript_lib.util.NbtHelper;
 import com.viscript_lib.util.item.ViScriptItemStack;
 import net.minecraft.client.Minecraft;
-import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
 
 import javax.annotation.Nullable;
 import java.io.File;
@@ -60,47 +58,54 @@ public abstract class ViScriptEditor extends Editor {
     }
 
     /**
-     * 从文件反序列化项目，并在发现缺失物品时请求玩家确认打开。
+     * 从文件反序列化项目，并在发现无法完整解析的物品时请求玩家确认打开。
      *
-     * <p>项目中的持久化物品字段必须声明为 {@link ViScriptItemStack}。此类型会把未注册物品
-     * 显示为屏障占位符，同时无损保留原始 ID、数量和组件。
+     * <p>项目中的持久化物品字段必须声明为 {@link ViScriptItemStack}。此类型会把未注册
+     * 物品或组件解码失败的物品显示为屏障占位符，同时无损保留原始 ID、数量和组件。
      *
-     * <p>项目会先在监听作用域中载入到内存。没有缺失物品时立即打开；存在缺失物品时，
-     * 玩家确认后会先复制原文件作为备份，再打开包含占位符的项目。取消操作不会载入项目，
-     * 也不会修改或备份文件。备份用于防止玩家在后续编辑中主动替换占位符并覆盖原始数据。
+     * <p>项目会先在监听作用域中载入到内存。所有物品均可解析时立即打开；存在不可解析
+     * 物品时，玩家确认后会先复制原文件作为备份，再打开包含占位符的项目。取消操作不会
+     * 载入项目，也不会修改或备份文件。备份用于防止玩家在后续编辑中主动替换占位符并
+     * 覆盖原始数据。
      *
      * @param projectType 与文件后缀匹配的项目类型
      * @param file 需要打开的项目文件
      */
-    protected final void loadProjectFileWithMissingItemWarning(ProjectType projectType, File file) {
-        var missingItemIds = new LinkedHashSet<ResourceLocation>();
+    protected final void loadProjectFileWithUnavailableItemWarning(ProjectType projectType, File file) {
+        var unavailableItems = new LinkedHashSet<ViScriptItemStack.UnavailableItem>();
         try {
-            var project = ViScriptItemStack.withMissingItemListener(
-                    missingItemIds::add,
+            var project = ViScriptItemStack.withUnavailableItemListener(
+                    unavailableItems::add,
                     () -> projectType.loadProjectFromFile(file)
             );
 
-            if (missingItemIds.isEmpty()) {
+            if (unavailableItems.isEmpty()) {
                 loadProject(project, file);
             } else {
-                showMissingItemsDialog(project, file, missingItemIds);
+                showUnavailableItemsDialog(project, file);
             }
         } catch (Exception e) {
             Dialog.showNotification("editor.error", "editor.loading_failed", null).show(getModularUI());
         }
     }
 
-    private void showMissingItemsDialog(IProject project, File file, Set<ResourceLocation> missingItemIds) {
+    /**
+     * @deprecated 使用 {@link #loadProjectFileWithUnavailableItemWarning(ProjectType, File)}。
+     *
+     * @param projectType 与文件后缀匹配的项目类型
+     * @param file 需要打开的项目文件
+     */
+    @Deprecated(forRemoval = false)
+    protected final void loadProjectFileWithMissingItemWarning(ProjectType projectType, File file) {
+        loadProjectFileWithUnavailableItemWarning(projectType, file);
+    }
+
+    private void showUnavailableItemsDialog(IProject project, File file) {
         var backupFile = findAvailableBackupFile(file);
-        var itemList = String.join("\n", missingItemIds.stream().map(ResourceLocation::toString).toList());
         var dialog = new Dialog().setTitle("viscript_lib.editor.missing_items.title");
         dialog.overlay.layout(layout -> layout.width(230));
         dialog.addContent(new Label()
-                .setText(Component.translatable(
-                        "viscript_lib.editor.missing_items.warning",
-                        itemList,
-                        backupFile.getAbsolutePath()
-                ))
+                .setText("viscript_lib.editor.missing_items.warning")
                 .textStyle(style -> style
                         .textWrap(TextWrap.WRAP)
                         .adaptiveWidth(false)

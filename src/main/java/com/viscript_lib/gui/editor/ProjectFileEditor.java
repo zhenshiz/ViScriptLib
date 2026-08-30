@@ -159,7 +159,7 @@ public abstract class ProjectFileEditor extends ViScriptEditor {
         projectTypes.stream()
                 .filter(type -> fileName.endsWith(type.getSuffix()))
                 .findFirst()
-                .ifPresent(type -> loadProjectFileWithMissingItemWarning(type, file));
+                .ifPresent(type -> loadProjectFileWithUnavailableItemWarning(type, file));
     }
 
     private void exportRuntimeFile(EditorFileContext context, File file) {

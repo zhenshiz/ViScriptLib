@@ -44,7 +44,7 @@ public class ViScriptItemStackAccessor extends TypesAccessor<ViScriptItemStack> 
                 itemStack -> {
                     var current = supplier.get();
                     if (current != null
-                            && current.isMissingItem()
+                            && current.isUnavailable()
                             && ItemStack.isSameItemSameComponents(current.toItemStack(), itemStack)) {
                         consumer.accept(current.copyWithCount(itemStack.getCount()));
                     } else {
