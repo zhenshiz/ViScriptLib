@@ -58,6 +58,6 @@ public abstract class FunctionFileEditor extends ViScriptEditor {
         projectTypes.stream()
                 .filter(type -> fileName.endsWith(type.getSuffix()))
                 .findFirst()
-                .ifPresent(type -> loadProjectFileWithMissingItemRecovery(type, file));
+                .ifPresent(type -> loadProjectFileWithMissingItemWarning(type, file));
     }
 }

@@ -14,11 +14,10 @@ import com.lowdragmc.lowdraglib2.gui.ui.elements.Dialog;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.Label;
 import com.lowdragmc.lowdraglib2.gui.util.TreeBuilder;
 import com.viscript_lib.util.NbtHelper;
-import com.viscript_lib.util.item.MissingItemStackRecovery;
+import com.viscript_lib.util.item.ViScriptItemStack;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.item.ItemStack;
 
 import javax.annotation.Nullable;
 import java.io.File;
@@ -61,25 +60,25 @@ public abstract class ViScriptEditor extends Editor {
     }
 
     /**
-     * 从文件反序列化项目，并在发现缺失物品时请求玩家确认恢复。
+     * 从文件反序列化项目，并在发现缺失物品时请求玩家确认打开。
      *
-     * <p>项目会先在回调作用域中载入到内存。没有缺失物品时立即打开；存在缺失物品时，
-     * 玩家确认后会先复制原文件作为备份，再打开包含替代物品栈的项目。取消操作不会载入项目，
-     * 也不会修改或备份文件。通过 LDLib2 默认访问器反序列化的物品栈会自动触发该回调；直接调用
-     * Mojang Codec 或使用自定义序列化器的数据应显式使用 {@link MissingItemStackRecovery#CODEC}
-     * 或调用 {@link MissingItemStackRecovery#recover(MissingItemStackRecovery.MissingItemContext)}。
-     * 本编辑器不会替换 LDLib2 的全局物品栈访问器。
+     * <p>项目中的持久化物品字段必须声明为 {@link ViScriptItemStack}。此类型会把未注册物品
+     * 显示为屏障占位符，同时无损保留原始 ID、数量和组件。
+     *
+     * <p>项目会先在监听作用域中载入到内存。没有缺失物品时立即打开；存在缺失物品时，
+     * 玩家确认后会先复制原文件作为备份，再打开包含占位符的项目。取消操作不会载入项目，
+     * 也不会修改或备份文件。备份用于防止玩家在后续编辑中主动替换占位符并覆盖原始数据。
      *
      * @param projectType 与文件后缀匹配的项目类型
      * @param file 需要打开的项目文件
      */
-    protected final void loadProjectFileWithMissingItemRecovery(ProjectType projectType, File file) {
+    protected final void loadProjectFileWithMissingItemWarning(ProjectType projectType, File file) {
         var missingItemIds = new LinkedHashSet<ResourceLocation>();
         try {
-            var project = MissingItemStackRecovery.withHandler(context -> {
-                missingItemIds.add(context.itemId());
-                return onMissingItemStack(context);
-            }, () -> projectType.loadProjectFromFile(file));
+            var project = ViScriptItemStack.withMissingItemListener(
+                    missingItemIds::add,
+                    () -> projectType.loadProjectFromFile(file)
+            );
 
             if (missingItemIds.isEmpty()) {
                 loadProject(project, file);
@@ -89,21 +88,6 @@ public abstract class ViScriptEditor extends Editor {
         } catch (Exception e) {
             Dialog.showNotification("editor.error", "editor.loading_failed", null).show(getModularUI());
         }
-    }
-
-    /**
-     * 处理项目反序列化期间发现的缺失物品。
-     *
-     * <p>默认实现返回名称为原物品 ID 的屏障占位符。编辑器子类可以重写本方法以适配自己的
-     * 数据模型；返回 {@code null} 会拒绝恢复，并让本次项目载入按反序列化失败处理。
-     * 本方法执行时只应转换数据，不应直接显示弹窗或修改原文件。
-     *
-     * @param context 缺失物品 ID 和原始物品栈 NBT
-     * @return 用于继续反序列化的替代物品栈；返回 {@code null} 表示拒绝恢复
-     */
-    @Nullable
-    protected ItemStack onMissingItemStack(MissingItemStackRecovery.MissingItemContext context) {
-        return MissingItemStackRecovery.createBarrierPlaceholder(context);
     }
 
     private void showMissingItemsDialog(IProject project, File file, Set<ResourceLocation> missingItemIds) {

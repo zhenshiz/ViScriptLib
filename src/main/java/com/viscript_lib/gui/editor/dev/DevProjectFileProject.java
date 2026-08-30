@@ -15,6 +15,7 @@ import com.lowdragmc.lowdraglib2.syncdata.IPersistedSerializable;
 import com.lowdragmc.lowdraglib2.syncdata.annotation.Persisted;
 import com.lowdragmc.lowdraglib2.utils.TagBuilder;
 import com.viscript_lib.gui.editor.IRuntimeFileProject;
+import com.viscript_lib.util.item.ViScriptItemStack;
 import dev.vfyjxf.taffy.style.FlexDirection;
 import lombok.Getter;
 import net.minecraft.core.HolderLookup;
@@ -154,9 +155,9 @@ public class DevProjectFileProject implements IRuntimeFileProject {
                 .addChildren(
                         new Label().setText("viscript_lib.dev_editor.project_file.item_section")
                                 .layout(layout -> layout.height(18)),
-                        new ItemSlot().setItem(missingItemTestData.directItem),
+                        new ItemSlot().setItem(missingItemTestData.directItem.toItemStack()),
                         new ItemSlot().setItem(missingItemTestData.firstCollectionItem()),
-                        new ItemSlot().setItem(missingItemTestData.nested.item),
+                        new ItemSlot().setItem(missingItemTestData.nested.item.toItemStack()),
                         armButton
                 );
     }
@@ -191,26 +192,26 @@ public class DevProjectFileProject implements IRuntimeFileProject {
 
     private static final class MissingItemTestData implements IPersistedSerializable {
         @Persisted
-        private ItemStack directItem = ItemStack.EMPTY;
+        private ViScriptItemStack directItem = new ViScriptItemStack();
         @Persisted
-        private final List<ItemStack> collectionItems = new ArrayList<>();
+        private final List<ViScriptItemStack> collectionItems = new ArrayList<>();
         @Persisted(subPersisted = true)
         private final NestedItemData nested = new NestedItemData();
 
         private void reset() {
-            directItem = new ItemStack(Items.DIAMOND);
+            directItem = new ViScriptItemStack(new ItemStack(Items.DIAMOND));
             collectionItems.clear();
-            collectionItems.add(new ItemStack(Items.EMERALD));
-            nested.item = new ItemStack(Items.GOLD_INGOT);
+            collectionItems.add(new ViScriptItemStack(new ItemStack(Items.EMERALD)));
+            nested.item = new ViScriptItemStack(new ItemStack(Items.GOLD_INGOT));
         }
 
         private ItemStack firstCollectionItem() {
-            return collectionItems.isEmpty() ? ItemStack.EMPTY : collectionItems.getFirst();
+            return collectionItems.isEmpty() ? ItemStack.EMPTY : collectionItems.getFirst().toItemStack();
         }
     }
 
     private static final class NestedItemData {
         @Persisted
-        private ItemStack item = ItemStack.EMPTY;
+        private ViScriptItemStack item = new ViScriptItemStack();
     }
 }
