@@ -21,7 +21,7 @@ public interface IContainerHelper extends ILDLRegister<IContainerHelper, Supplie
      * @param item   物品
      * @return 该物品的数量
      */
-    int getItemStackCount(ServerPlayer player, ItemStack item);
+    long getItemStackCount(ServerPlayer player, ItemStack item);
 
     /**
      * 按指定物品组件比较模式获取物品数量。
@@ -32,9 +32,9 @@ public interface IContainerHelper extends ILDLRegister<IContainerHelper, Supplie
      * @param components 参与或排除比较的组件列表，语义由 compareMode 决定
      * @return 该物品的数量
      */
-    default int getItemStackCount(ServerPlayer player, ItemStack item,
-                                  ItemStackCompareMode compareMode,
-                                  List<DataComponentType<?>> components) {
+    default long getItemStackCount(ServerPlayer player, ItemStack item,
+                                   ItemStackCompareMode compareMode,
+                                   List<DataComponentType<?>> components) {
         return getItemStackCount(player, item);
     }
 
@@ -46,7 +46,7 @@ public interface IContainerHelper extends ILDLRegister<IContainerHelper, Supplie
      * @param count  要删除的物品数量
      * @return 删除后剩余的数量
      */
-    int removeItemStackByCount(ServerPlayer player, ItemStack item, int count);
+    long removeItemStackByCount(ServerPlayer player, ItemStack item, long count);
 
     /**
      * 按指定物品组件比较模式删除物品。
@@ -58,9 +58,9 @@ public interface IContainerHelper extends ILDLRegister<IContainerHelper, Supplie
      * @param components 参与或排除比较的组件列表，语义由 compareMode 决定
      * @return 删除后剩余的数量
      */
-    default int removeItemStackByCount(ServerPlayer player, ItemStack item, int count,
-                                       ItemStackCompareMode compareMode,
-                                       List<DataComponentType<?>> components) {
+    default long removeItemStackByCount(ServerPlayer player, ItemStack item, long count,
+                                        ItemStackCompareMode compareMode,
+                                        List<DataComponentType<?>> components) {
         return removeItemStackByCount(player, item, count);
     }
 
@@ -120,16 +120,18 @@ public interface IContainerHelper extends ILDLRegister<IContainerHelper, Supplie
     }
 
     /**
-     * 尝试将物品插入此输出目标。
+     * 尝试将指定总量的物品插入此输出目标。
      *
-     * <p>实现不得静默丢弃未插入的部分。全部插入时返回空物品堆，否则返回剩余物品。
-     * 默认实现不执行插入并原样返回输入物品。
+     * <p><code>template</code> 只提供物品及组件信息，其堆叠数量不作为请求数量。实现可以按底层
+     * 库存能力分批插入，但不得生成世界掉落物，也不得静默丢弃未插入的部分。默认实现不执行
+     * 插入并返回完整请求数量。
      *
      * @param player 接收物品的服务器玩家
-     * @param stack 待插入的物品堆
-     * @return 未能插入的剩余物品
+     * @param template 待插入物品的模板
+     * @param count 待插入的总数量；小于或等于零时视为零
+     * @return 未能插入的剩余数量
      */
-    default ItemStack insertItemForPlayer(ServerPlayer player, ItemStack stack) {
-        return stack;
+    default long insertItemForPlayer(ServerPlayer player, ItemStack template, long count) {
+        return Math.max(0L, count);
     }
 }

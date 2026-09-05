@@ -30,18 +30,18 @@ import java.util.function.Consumer;
 @LDLRegister(name = SophisticatedBackpacks.MOD_ID, registry = IContainerHelper.CONTAINER_HELPER_ID, modID = SophisticatedBackpacks.MOD_ID)
 public class SophisticatedBackpacksHelper implements IContainerHelper {
     @Override
-    public int getItemStackCount(ServerPlayer player, ItemStack item) {
+    public long getItemStackCount(ServerPlayer player, ItemStack item) {
         return getItemStackCount(player, item, ItemStackCompareMode.ALL_COMPONENTS, List.of());
     }
 
     @Override
-    public int getItemStackCount(ServerPlayer player, ItemStack item,
-                                 ItemStackCompareMode compareMode,
-                                 List<DataComponentType<?>> components) {
-        int count = 0;
+    public long getItemStackCount(ServerPlayer player, ItemStack item,
+                                  ItemStackCompareMode compareMode,
+                                  List<DataComponentType<?>> components) {
+        long count = 0L;
         for (ItemStack itemStack : getItemsFromInventoryBackpack(player)) {
             if (ItemUtil.isSameItem(itemStack, item, compareMode, components)) {
-                count += itemStack.getCount();
+                count = ItemUtil.saturatedAdd(count, itemStack.getCount());
             }
         }
         return count;
@@ -49,17 +49,17 @@ public class SophisticatedBackpacksHelper implements IContainerHelper {
 
     //从精妙背包中扣除指定物品
     @Override
-    public int removeItemStackByCount(ServerPlayer player, ItemStack item, int count) {
+    public long removeItemStackByCount(ServerPlayer player, ItemStack item, long count) {
         return removeItemStackByCount(player, item, count, ItemStackCompareMode.ALL_COMPONENTS, List.of());
     }
 
     @Override
-    public int removeItemStackByCount(ServerPlayer player, ItemStack item, int count,
-                                      ItemStackCompareMode compareMode,
-                                      List<DataComponentType<?>> components) {
-        if (count <= 0) return 0;
+    public long removeItemStackByCount(ServerPlayer player, ItemStack item, long count,
+                                       ItemStackCompareMode compareMode,
+                                       List<DataComponentType<?>> components) {
+        if (count <= 0L) return 0L;
 
-        final int[] remain = {count};
+        final long[] remain = {count};
         PlayerInventoryProvider.get().runOnBackpacks(player, (backpack, inventoryName, identifier, index) -> {
             final boolean[] changed = {false};
             IBackpackWrapper wrapper = BackpackWrapper.fromStack(backpack);
@@ -68,7 +68,7 @@ public class SophisticatedBackpacksHelper implements IContainerHelper {
                 if (remain[0] <= 0) break;
                 ItemStack stackInSlot = inventoryHandler.getStackInSlot(i);
                 if (ItemUtil.isSameItem(stackInSlot, item, compareMode, components)) {
-                    int canRemove = Math.min(stackInSlot.getCount(), remain[0]);
+                    int canRemove = (int) Math.min((long) stackInSlot.getCount(), remain[0]);
                     ItemStack removed = inventoryHandler.extractItem(i, canRemove, false);
                     remain[0] -= removed.getCount();
                     changed[0] |= !removed.isEmpty();

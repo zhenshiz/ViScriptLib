@@ -22,36 +22,37 @@ import java.util.List;
 @LDLRegister(name = LightmansCurrency.MODID, registry = IContainerHelper.CONTAINER_HELPER_ID, modID = LightmansCurrency.MODID)
 public class LightmansCurrencyHelper implements IContainerHelper {
     @Override
-    public int getItemStackCount(ServerPlayer player, ItemStack item) {
+    public long getItemStackCount(ServerPlayer player, ItemStack item) {
         return getItemStackCount(player, item, ItemStackCompareMode.ALL_COMPONENTS, List.of());
     }
 
     @Override
-    public int getItemStackCount(ServerPlayer player, ItemStack item,
-                                 ItemStackCompareMode compareMode,
-                                 List<DataComponentType<?>> components) {
+    public long getItemStackCount(ServerPlayer player, ItemStack item,
+                                  ItemStackCompareMode compareMode,
+                                  List<DataComponentType<?>> components) {
         if (!CoinAPI.getApi().IsCoin(item, false)) {
-            return 0;
+            return 0L;
         }
 
         WalletHandler walletHandler = WalletHandler.get(player);
         ItemStack wallet = walletHandler.getWallet();
         if (!WalletItem.isWallet(wallet)) {
-            return 0;
+            return 0L;
         }
 
         return ItemUtil.getItemCountByContainer(WalletItem.getDataWrapper(wallet).getContents(), item, compareMode, components);
     }
 
     @Override
-    public int removeItemStackByCount(ServerPlayer player, ItemStack item, int count) {
+    public long removeItemStackByCount(ServerPlayer player, ItemStack item, long count) {
         return removeItemStackByCount(player, item, count, ItemStackCompareMode.ALL_COMPONENTS, List.of());
     }
 
     @Override
-    public int removeItemStackByCount(ServerPlayer player, ItemStack item, int count,
-                                      ItemStackCompareMode compareMode,
-                                      List<DataComponentType<?>> components) {
+    public long removeItemStackByCount(ServerPlayer player, ItemStack item, long count,
+                                       ItemStackCompareMode compareMode,
+                                       List<DataComponentType<?>> components) {
+        count = Math.max(0L, count);
         if (!CoinAPI.getApi().IsCoin(item, false)) {
             return count;
         }

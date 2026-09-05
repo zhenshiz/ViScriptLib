@@ -20,34 +20,41 @@ import java.util.List;
 public class ConfluenceHelper implements IContainerHelper {
 
     @Override
-    public int getItemStackCount(ServerPlayer player, ItemStack item) {
+    public long getItemStackCount(ServerPlayer player, ItemStack item) {
         return getItemStackCount(player, item, ItemStackCompareMode.ALL_COMPONENTS, List.of());
     }
 
     @Override
-    public int getItemStackCount(ServerPlayer player, ItemStack item,
-                                 ItemStackCompareMode compareMode,
-                                 List<DataComponentType<?>> components) {
-        int count = 0;
+    public long getItemStackCount(ServerPlayer player, ItemStack item,
+                                  ItemStackCompareMode compareMode,
+                                  List<DataComponentType<?>> components) {
+        long count = 0L;
 
         //额外物品栏（硬币槽、弹药槽等）
-        count += ItemUtil.getItemCountByContainer(ExtraInventory.of(player), item, compareMode, components);
+        count = ItemUtil.saturatedAdd(
+                count,
+                ItemUtil.getItemCountByContainer(ExtraInventory.of(player), item, compareMode, components)
+        );
 
         // 存钱罐
-        count += ItemUtil.getItemCountByContainer(PlayerPiggyBankContainer.of(player), item, compareMode, components);
+        count = ItemUtil.saturatedAdd(
+                count,
+                ItemUtil.getItemCountByContainer(PlayerPiggyBankContainer.of(player), item, compareMode, components)
+        );
 
         return count;
     }
 
     @Override
-    public int removeItemStackByCount(ServerPlayer player, ItemStack item, int count) {
+    public long removeItemStackByCount(ServerPlayer player, ItemStack item, long count) {
         return removeItemStackByCount(player, item, count, ItemStackCompareMode.ALL_COMPONENTS, List.of());
     }
 
     @Override
-    public int removeItemStackByCount(ServerPlayer player, ItemStack item, int count,
-                                      ItemStackCompareMode compareMode,
-                                      List<DataComponentType<?>> components) {
+    public long removeItemStackByCount(ServerPlayer player, ItemStack item, long count,
+                                       ItemStackCompareMode compareMode,
+                                       List<DataComponentType<?>> components) {
+        count = Math.max(0L, count);
 
         //额外物品栏（硬币槽、弹药槽等）
         count = ItemUtil.removeItemByContainer(ExtraInventory.of(player), item, count, compareMode, components);

@@ -98,27 +98,53 @@ public final class ItemOutputTargets {
     }
 
     /**
-     * 把物品发送到指定输出目标，并将发放阶段未插入的部分交给玩家背包处理。
+     * 把一个物品堆发送到指定输出目标。
      *
-     * <p>调用方若要求“目标不可用时整个操作失败”，必须在改变业务状态前先调用
-     * {@link IContainerHelper#isItemOutputAvailable(ServerPlayer)} 完成校验。这里的背包回退只用于处理
-     * 校验后目标失效或目标容量变化等发放阶段竞态，避免已经生成的物品丢失。
+     * <p>物品堆的当前数量作为请求总量。未能插入指定目标的部分会继续尝试插入玩家背包，
+     * 背包也无法接收的部分通过返回值交还调用方，不会生成为世界掉落物。
      *
      * @param player 接收物品的服务器玩家
      * @param targetId 请求的输出目标注册名
      * @param stack 待输出的物品堆
+     * @return 未能插入任何输出目标的剩余数量
      */
-    public static void giveItem(ServerPlayer player, String targetId, ItemStack stack) {
-        if (player == null || stack == null || stack.isEmpty()) return;
+    public static long giveItem(ServerPlayer player, String targetId, ItemStack stack) {
+        if (stack == null) return 0L;
+        return giveItem(player, targetId, stack, stack.getCount());
+    }
+
+    /**
+     * 把指定总量的物品发送到输出目标，并把目标未接收的部分交给玩家背包处理。
+     *
+     * <p><code>template</code> 只提供物品和组件信息，其当前堆叠数量不会改变请求数量。调用方若要求
+     * “目标不可用时整个操作失败”，必须在改变业务状态前先调用
+     * {@link IContainerHelper#isItemOutputAvailable(ServerPlayer)} 完成校验。这里的背包回退只用于处理
+     * 校验后的目标失效或容量变化；玩家背包也无法接收的数量会直接返回，不会静默丢失或生成
+     * 世界掉落物。
+     *
+     * @param player 接收物品的服务器玩家
+     * @param targetId 请求的输出目标注册名
+     * @param template 提供物品及组件信息的模板
+     * @param count 待输出的总数量；小于或等于零时视为零
+     * @return 未能插入任何输出目标的剩余数量
+     */
+    public static long giveItem(ServerPlayer player, String targetId, ItemStack template, long count) {
+        count = Math.max(0L, count);
+        if (player == null || template == null || template.isEmpty() || count == 0L) return count;
 
         IContainerHelper fallback = playerInventory();
         IContainerHelper target = resolve(targetId);
-        ItemStack remaining = stack.copy();
+        long remaining = count;
         if (target.isItemOutputAvailable(player)) {
-            remaining = Objects.requireNonNullElse(target.insertItemForPlayer(player, remaining), remaining);
+            remaining = clampRemaining(target.insertItemForPlayer(player, template, remaining), remaining);
         }
-        if (!remaining.isEmpty() && !Objects.equals(target.name(), fallback.name())) {
-            fallback.insertItemForPlayer(player, remaining);
+        if (remaining > 0L && !Objects.equals(target.name(), fallback.name())) {
+            remaining = clampRemaining(fallback.insertItemForPlayer(player, template, remaining), remaining);
         }
+        return remaining;
+    }
+
+    private static long clampRemaining(long remaining, long requested) {
+        return Math.clamp(remaining, 0L, requested);
     }
 }

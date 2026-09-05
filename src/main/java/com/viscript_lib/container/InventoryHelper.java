@@ -8,7 +8,7 @@ import net.minecraft.core.component.DataComponentType;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
-import net.neoforged.neoforge.items.ItemHandlerHelper;
+import net.neoforged.neoforge.items.wrapper.PlayerMainInvWrapper;
 
 import java.util.List;
 
@@ -18,47 +18,72 @@ import java.util.List;
 @LDLRegister(name = "inventory", registry = IContainerHelper.CONTAINER_HELPER_ID, priority = 99)
 public class InventoryHelper implements IContainerHelper {
     @Override
-    public int getItemStackCount(ServerPlayer player, ItemStack item) {
+    public long getItemStackCount(ServerPlayer player, ItemStack item) {
         return getItemStackCount(player, item, ItemStackCompareMode.ALL_COMPONENTS, List.of());
     }
 
     @Override
-    public int getItemStackCount(ServerPlayer player, ItemStack item,
-                                 ItemStackCompareMode compareMode,
-                                 List<DataComponentType<?>> components) {
-        int count = 0;
-
-        //背包
-        count += player.getInventory().clearOrCountMatchingItems(
-                itemStack -> ItemUtil.isSameItem(itemStack, item, compareMode, components),
-                0,
-                player.inventoryMenu.getCraftSlots()
+    public long getItemStackCount(ServerPlayer player, ItemStack item,
+                                  ItemStackCompareMode compareMode,
+                                  List<DataComponentType<?>> components) {
+        long count = ItemUtil.getItemCountByContainer(
+                player.getInventory(),
+                item,
+                compareMode,
+                components
         );
-
-        //末影箱
-        count += ItemUtil.getItemCountByContainer(player.getEnderChestInventory(), item, compareMode, components);
+        count = ItemUtil.saturatedAdd(count, ItemUtil.getItemCountByContainer(
+                player.inventoryMenu.getCraftSlots(),
+                item,
+                compareMode,
+                components
+        ));
+        ItemStack carried = player.containerMenu.getCarried();
+        if (ItemUtil.isSameItem(carried, item, compareMode, components)) {
+            count = ItemUtil.saturatedAdd(count, carried.getCount());
+        }
+        count = ItemUtil.saturatedAdd(count, ItemUtil.getItemCountByContainer(
+                player.getEnderChestInventory(),
+                item,
+                compareMode,
+                components
+        ));
 
         return count;
     }
 
     @Override
-    public int removeItemStackByCount(ServerPlayer player, ItemStack item, int count) {
+    public long removeItemStackByCount(ServerPlayer player, ItemStack item, long count) {
         return removeItemStackByCount(player, item, count, ItemStackCompareMode.ALL_COMPONENTS, List.of());
     }
 
     @Override
-    public int removeItemStackByCount(ServerPlayer player, ItemStack item, int count,
-                                      ItemStackCompareMode compareMode,
-                                      List<DataComponentType<?>> components) {
-
-        //背包
-        count -= player.getInventory().clearOrCountMatchingItems(
-                itemStack -> ItemUtil.isSameItem(itemStack, item, compareMode, components),
+    public long removeItemStackByCount(ServerPlayer player, ItemStack item, long count,
+                                       ItemStackCompareMode compareMode,
+                                       List<DataComponentType<?>> components) {
+        count = ItemUtil.removeItemByContainer(
+                player.getInventory(),
+                item,
                 count,
-                player.inventoryMenu.getCraftSlots()
+                compareMode,
+                components
         );
-
-        //末影箱
+        count = ItemUtil.removeItemByContainer(
+                player.inventoryMenu.getCraftSlots(),
+                item,
+                count,
+                compareMode,
+                components
+        );
+        ItemStack carried = player.containerMenu.getCarried();
+        if (count > 0L && ItemUtil.isSameItem(carried, item, compareMode, components)) {
+            int removed = (int) Math.min(count, (long) carried.getCount());
+            carried.shrink(removed);
+            count -= removed;
+            if (carried.isEmpty()) {
+                player.containerMenu.setCarried(ItemStack.EMPTY);
+            }
+        }
         count = ItemUtil.removeItemByContainer(player.getEnderChestInventory(), item, count, compareMode, components);
 
         return count;
@@ -80,8 +105,7 @@ public class InventoryHelper implements IContainerHelper {
     }
 
     @Override
-    public ItemStack insertItemForPlayer(ServerPlayer player, ItemStack stack) {
-        ItemHandlerHelper.giveItemToPlayer(player, stack);
-        return ItemStack.EMPTY;
+    public long insertItemForPlayer(ServerPlayer player, ItemStack template, long count) {
+        return ItemUtil.insertItemByHandler(new PlayerMainInvWrapper(player.getInventory()), template, count);
     }
 }

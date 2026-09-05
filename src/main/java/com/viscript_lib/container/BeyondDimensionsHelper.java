@@ -6,9 +6,9 @@ import com.viscript_lib.util.item.ItemStackCompareMode;
 import com.viscript_lib.util.item.ItemUtil;
 import com.wintercogs.beyonddimensions.api.dimensionnet.DimensionsNet;
 import com.wintercogs.beyonddimensions.api.dimensionnet.UnifiedStorage;
-import com.wintercogs.beyonddimensions.api.capability.helper.unordered.ItemUnifiedStorageHandler;
 import com.wintercogs.beyonddimensions.api.ids.BDConstants;
 import com.wintercogs.beyonddimensions.api.storage.key.KeyAmount;
+import com.wintercogs.beyonddimensions.api.storage.key.impl.ItemStackKey;
 import com.wintercogs.beyonddimensions.common.init.BDItems;
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.network.chat.Component;
@@ -24,57 +24,58 @@ import java.util.List;
 @LDLRegister(name = BDConstants.MODID, registry = IContainerHelper.CONTAINER_HELPER_ID, modID = BDConstants.MODID)
 public class BeyondDimensionsHelper implements IContainerHelper {
     @Override
-    public int getItemStackCount(ServerPlayer player, ItemStack item) {
+    public long getItemStackCount(ServerPlayer player, ItemStack item) {
         return getItemStackCount(player, item, ItemStackCompareMode.ALL_COMPONENTS, List.of());
     }
 
     @Override
-    public int getItemStackCount(ServerPlayer player, ItemStack item,
-                                 ItemStackCompareMode compareMode,
-                                 List<DataComponentType<?>> components) {
+    public long getItemStackCount(ServerPlayer player, ItemStack item,
+                                  ItemStackCompareMode compareMode,
+                                  List<DataComponentType<?>> components) {
         DimensionsNet net = DimensionsNet.getPrimaryNetFromPlayer(player);
         if (net != null) {
             UnifiedStorage storage = net.getUnifiedStorage();
             return getMatchingItemCount(storage, item, compareMode, components);
         }
-        return 0;
+        return 0L;
     }
 
     @Override
-    public int removeItemStackByCount(ServerPlayer player, ItemStack item, int count) {
+    public long removeItemStackByCount(ServerPlayer player, ItemStack item, long count) {
         return removeItemStackByCount(player, item, count, ItemStackCompareMode.ALL_COMPONENTS, List.of());
     }
 
     @Override
-    public int removeItemStackByCount(ServerPlayer player, ItemStack item, int count,
-                                      ItemStackCompareMode compareMode,
-                                      List<DataComponentType<?>> components) {
+    public long removeItemStackByCount(ServerPlayer player, ItemStack item, long count,
+                                       ItemStackCompareMode compareMode,
+                                       List<DataComponentType<?>> components) {
+        count = Math.max(0L, count);
         DimensionsNet net = DimensionsNet.getPrimaryNetFromPlayer(player);
         if (net == null) return count;
-        if (count <= 0) return 0;
+        if (count == 0L) return 0L;
 
         var storage = net.getUnifiedStorage();
 
         return removeMatchingItems(storage, item, count, compareMode, components);
     }
 
-    private static int getMatchingItemCount(UnifiedStorage storage, ItemStack item,
-                                            ItemStackCompareMode compareMode,
-                                            List<DataComponentType<?>> components) {
-        int count = 0;
+    private static long getMatchingItemCount(UnifiedStorage storage, ItemStack item,
+                                             ItemStackCompareMode compareMode,
+                                             List<DataComponentType<?>> components) {
+        long count = 0L;
         for (KeyAmount keyAmount : storage.getStorage()) {
             Object stack = keyAmount.toStack();
             if (stack instanceof ItemStack itemStack && ItemUtil.isSameItem(itemStack, item, compareMode, components)) {
-                count += Math.clamp(keyAmount.amount(), 0, Integer.MAX_VALUE);
+                count = ItemUtil.saturatedAdd(count, keyAmount.amount());
             }
         }
         return count;
     }
 
-    private static int removeMatchingItems(UnifiedStorage storage, ItemStack item, int count,
-                                           ItemStackCompareMode compareMode,
-                                           List<DataComponentType<?>> components) {
-        int remain = count;
+    private static long removeMatchingItems(UnifiedStorage storage, ItemStack item, long count,
+                                            ItemStackCompareMode compareMode,
+                                            List<DataComponentType<?>> components) {
+        long remain = count;
         // UnifiedStorage#getStorage 是基于内部 slotIndex 的视图，扣除时会改变它；先复制一份避免遍历中跳项。
         for (KeyAmount keyAmount : new ArrayList<>(storage.getStorage())) {
             if (remain <= 0) break;
@@ -82,7 +83,7 @@ public class BeyondDimensionsHelper implements IContainerHelper {
             Object stack = keyAmount.toStack();
             if (stack instanceof ItemStack itemStack && ItemUtil.isSameItem(itemStack, item, compareMode, components)) {
                 KeyAmount extracted = storage.extract(keyAmount.key(), remain, false, false);
-                remain -= Math.clamp(extracted.amount(), 0, Integer.MAX_VALUE);
+                remain -= Math.clamp(extracted.amount(), 0L, remain);
             }
         }
         return remain;
@@ -114,9 +115,17 @@ public class BeyondDimensionsHelper implements IContainerHelper {
     }
 
     @Override
-    public ItemStack insertItemForPlayer(ServerPlayer player, ItemStack stack) {
+    public long insertItemForPlayer(ServerPlayer player, ItemStack template, long count) {
+        count = Math.max(0L, count);
+        if (template == null || template.isEmpty() || count == 0L) return count;
+
         DimensionsNet network = DimensionsNet.getPrimaryNetFromPlayer(player);
-        if (network == null) return stack;
-        return new ItemUnifiedStorageHandler(network.getUnifiedStorage()).insertItem(0, stack, false);
+        if (network == null) return count;
+        KeyAmount remaining = network.getUnifiedStorage().insert(
+                new ItemStackKey(template.copyWithCount(1)),
+                count,
+                false
+        );
+        return Math.clamp(remaining.amount(), 0L, count);
     }
 }
