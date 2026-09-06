@@ -103,7 +103,7 @@ dependencies {
     //新生魔艺
 //    implementation "curse.maven:ars-nouveau-401955:${ars_nouveau_file}"
     //无尽贪婪：重生
-//    implementation "curse.maven:re-avaritia-623969:${re_avaritia_file}"
+    modCompileOnly "curse.maven:re-avaritia-623969:${re_avaritia_file}"
     //合成拓展
 //    implementation "curse.maven:cucumber-272335:${cucumber_file}"
 //    implementation "curse.maven:extended-crafting-268387:${extended_crafting_file}"
@@ -115,7 +115,7 @@ dependencies {
     //菌类感染：孢子
 //    implementation "curse.maven:fungal-infection-spore-678295:${fungal_infection_spore_file}"
     //诡厄巫法：Goety
-//    implementation "curse.maven:goety-586095:${goety_file}"
+    modCompileOnly "curse.maven:goety-586095:${goety_file}"
     //东方女仆：Touhou Little Maid
 //    implementation "curse.maven:touhou-little-maid-355044:${touhou_little_maid_file}"
 

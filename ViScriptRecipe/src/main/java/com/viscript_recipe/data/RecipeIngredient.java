@@ -8,7 +8,6 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
 import net.minecraft.core.HolderLookup;
-import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
@@ -92,11 +91,7 @@ public class RecipeIngredient implements ISkipDefaultedSerialize, IConfigurable 
                 if (tag == null) {
                     throw new IllegalArgumentException("Ingredient tag cannot be empty");
                 }
-                var tagKey = TagKey.create(Registries.ITEM, tag);
-                if (BuiltInRegistries.ITEM.getTag(tagKey).isEmpty()) {
-                    throw new IllegalArgumentException("Unknown item tag: " + tag);
-                }
-                yield Ingredient.of(tagKey);
+                yield Ingredient.of(TagKey.create(Registries.ITEM, tag));
             }
             case ITEM_ABILITY -> FarmersDelightRecipeFactory.compileItemAbilityIngredient(itemAbility);
         };

@@ -1,5 +1,7 @@
 package com.viscript_recipe.compat.create;
 
+import com.lowdragmc.lowdraglib2.registry.annotation.LDLRegister;
+import com.viscript_recipe.IModModule;
 import com.viscript_recipe.compat.create.canvas.CreateProcessingCanvas;
 import com.viscript_recipe.compat.create.canvas.MechanicalCraftingCanvas;
 import com.viscript_recipe.compat.create.canvas.SequencedAssemblyCanvas;
@@ -10,9 +12,11 @@ import com.viscript_recipe.compat.create.data.CreateSequencedAssemblyRecipeData;
 import com.viscript_recipe.data.RecipeEditorCategory;
 import com.viscript_recipe.data.RecipeEditorType;
 import com.viscript_recipe.data.RecipeEditorTypes;
+import com.viscript_recipe.recipe.importer.RecipeImportHandler;
 import net.minecraft.resources.ResourceLocation;
 
-public final class CreateRecipeEditorTypes {
+@LDLRegister(registry = IModModule.ID, name = CreateRecipeEditorTypes.MOD_ID, modID = CreateRecipeEditorTypes.MOD_ID)
+public final class CreateRecipeEditorTypes implements IModModule {
     public static final String MOD_ID = "create";
     public static final ResourceLocation MECHANICAL_CRAFTER = create("mechanical_crafter");
     public static final ResourceLocation MECHANICAL_CRAFTING = create("mechanical_crafting");
@@ -20,25 +24,24 @@ public final class CreateRecipeEditorTypes {
 
     private static boolean registered;
 
-    private CreateRecipeEditorTypes() {
-    }
+    @Override
+    public RecipeImportHandler importHandler() {return CreateRecipeImporter.INSTANCE;}
 
-    public static synchronized void registerAll() {
-        if (registered) {
-            return;
-        }
+    @Override
+    public void registerEditorTypes() {
+        if (registered) return;
         registered = true;
         registerCategories();
         registerTypes();
     }
 
-    private static void registerCategories() {
-        RecipeEditorTypes.registerCategory(RecipeEditorCategory.of(
+    private void registerCategories() {
+        registerCategory(RecipeEditorCategory.of(
                 MECHANICAL_CRAFTER,
                 "viscript_recipe.editor.category.create.mechanical_crafter",
                 MOD_ID, MECHANICAL_CRAFTING, MECHANICAL_CRAFTER
         ));
-        RecipeEditorTypes.registerCategory(RecipeEditorCategory.of(
+        registerCategory(RecipeEditorCategory.of(
                 SEQUENCED_ASSEMBLY,
                 "create.recipe.sequenced_assembly",
                 MOD_ID, SEQUENCED_ASSEMBLY, null
@@ -47,7 +50,7 @@ public final class CreateRecipeEditorTypes {
             if (RecipeEditorTypes.getCategory(kind.categoryId()).isPresent()) {
                 continue;
             }
-            RecipeEditorTypes.registerCategory(RecipeEditorCategory.of(
+            registerCategory(RecipeEditorCategory.of(
                     kind.categoryId(),
                     categoryFallbackTranslationKey(kind),
                     MOD_ID, kind.typeId(), categoryWorkstationItem(kind)
@@ -65,21 +68,21 @@ public final class CreateRecipeEditorTypes {
         return kind == CreateProcessingKind.ITEM_APPLICATION ? null : kind.machineItemLocation();
     }
 
-    private static void registerTypes() {
-        RecipeEditorTypes.register(RecipeEditorType.of(
+    private void registerTypes() {
+        registerEditorType(RecipeEditorType.of(
                 MECHANICAL_CRAFTING, MECHANICAL_CRAFTER,
                 "viscript_recipe.editor.type.create.mechanical_crafting",
                 CreateMechanicalCraftingRecipeData.class, CreateMechanicalCraftingRecipeData::new,
                 MechanicalCraftingCanvas::new, MOD_ID
         ));
-        RecipeEditorTypes.register(RecipeEditorType.of(
+        registerEditorType(RecipeEditorType.of(
                 SEQUENCED_ASSEMBLY, SEQUENCED_ASSEMBLY,
                 "viscript_recipe.editor.type.create.sequenced_assembly",
                 CreateSequencedAssemblyRecipeData.class, CreateSequencedAssemblyRecipeData::new,
                 SequencedAssemblyCanvas::new, MOD_ID
         ));
         for (var kind : CreateProcessingKind.values()) {
-            RecipeEditorTypes.register(RecipeEditorType.of(
+            registerEditorType(RecipeEditorType.of(
                     kind.typeId(), kind.categoryId(),
                     "viscript_recipe.editor.type.create." + kind.translationPath(),
                     CreateProcessingRecipeData.class, CreateProcessingRecipeData::new,

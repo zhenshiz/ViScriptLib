@@ -1,6 +1,5 @@
 package com.viscript_recipe.data;
 
-import com.viscript_recipe.compat.RecipeCompatModules;
 import com.viscript_recipe.compat.create.CreateRecipeEditorTypes;
 import com.viscript_recipe.compat.farmersdelight.FarmersDelightRecipeEditorTypes;
 import com.viscript_recipe.data.vanilla.VanillaRecipeEditorTypes;
@@ -112,10 +111,6 @@ public final class RecipeEditorTypes {
 
     private static final LinkedHashMap<ResourceLocation, RecipeEditorCategory> CATEGORIES = new LinkedHashMap<>();
     private static final LinkedHashMap<ResourceLocation, RecipeEditorType> TYPES = new LinkedHashMap<>();
-
-    static {
-        RecipeCompatModules.registerEditorTypes();
-    }
 
     private RecipeEditorTypes() {
     }
