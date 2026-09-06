@@ -6,6 +6,7 @@ import com.lowdragmc.lowdraglib2.utils.search.IResultHandler;
 import net.minecraft.core.Registry;
 import net.minecraft.resources.ResourceLocation;
 
+import net.minecraftforge.registries.IForgeRegistry;
 import org.jetbrains.annotations.Nullable;
 import java.util.Locale;
 import java.util.Objects;
@@ -20,12 +21,12 @@ import java.util.function.Supplier;
  * {@link BlockSearchBox}、{@link DimensionSearchBox}。
  */
 public abstract class RegistrySearchBox<T> extends SearchComponent<T> {
-    private final Supplier<Registry<?>> valueRegistry;
+    private final Supplier<Iterable<?>> valueRegistry;
     private final Function<T, ResourceLocation> idGetter;
     private Predicate<? super T> candidateFilter = value -> true;
 
     protected RegistrySearchBox(@Nullable T defaultValue,
-                                Supplier<Registry<?>> valueRegistry,
+                                Supplier<Iterable<?>> valueRegistry,
                                 Function<T, ResourceLocation> idGetter,
                                 Function<T, String> resultText,
                                 SearchAction<T> searchAction,
@@ -64,7 +65,11 @@ public abstract class RegistrySearchBox<T> extends SearchComponent<T> {
 
     @Nullable
     public Registry<?> getValueRegistry() {
-        return valueRegistry.get();
+        return (Registry<?>) valueRegistry.get();
+    }
+
+    public IForgeRegistry<?> getForgeRegistry() {
+        return (IForgeRegistry<?>) valueRegistry.get();
     }
 
     public RegistrySearchBox<T> setCandidateFilter(Predicate<? super T> candidateFilter) {

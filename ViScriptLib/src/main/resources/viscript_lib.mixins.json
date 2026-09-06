@@ -4,7 +4,6 @@
   "package": "com.viscript_lib.mixin",
   "compatibilityLevel": "JAVA_17",
   "mixins": [
-    "CustomDirectAccessorMixin",
     "EditorWindowAccessor",
     "ItemStackAccessorClientMixin",
     "LDLibCommonProxyMixin",

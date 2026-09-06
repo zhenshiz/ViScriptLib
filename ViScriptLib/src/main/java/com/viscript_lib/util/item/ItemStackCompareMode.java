@@ -32,4 +32,11 @@ public enum ItemStackCompareMode implements StringRepresentable {
     public @NotNull String getSerializedName() {
         return translationKey;
     }
+
+    public static ItemStackCompareMode fromSerializedName(String name) {
+        for (ItemStackCompareMode mode : values()) {
+            if (mode.getSerializedName().equals(name)) return mode;
+        }
+        return ALL_COMPONENTS;
+    }
 }

@@ -1,11 +1,19 @@
 package com.viscript_lib.mixin;
 
 import com.lowdragmc.lowdraglib2.editor.ui.EditorWindow;
+import net.minecraft.resources.ResourceLocation;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Accessor;
 
+import java.util.Map;
+
 @Mixin(value = EditorWindow.class, remap = false)
 public interface EditorWindowAccessor {
+    @Accessor("MINIMIZED_WINDOWS")
+    static Map<ResourceLocation, EditorWindow> viscript_lib$getMinimizedWindows() {
+        throw new AssertionError();
+    }
+
     @Accessor("windowWidth")
     void viscript_lib$setWindowWidth(float windowWidth);
 

@@ -20,12 +20,12 @@ import java.util.List;
 @LDLRegister(name = LightmansCurrency.MODID, registry = IContainerHelper.CONTAINER_HELPER_ID, modID = LightmansCurrency.MODID)
 public class LightmansCurrencyHelper implements IContainerHelper {
     @Override
-    public int getItemStackCount(ServerPlayer player, ItemStack item) {
+    public long getItemStackCount(ServerPlayer player, ItemStack item) {
         return getItemStackCount(player, item, ItemStackCompareMode.ALL_COMPONENTS, List.of());
     }
 
     @Override
-    public int getItemStackCount(ServerPlayer player, ItemStack item,
+    public long getItemStackCount(ServerPlayer player, ItemStack item,
                                  ItemStackCompareMode compareMode,
                                  List<String> components) {
         if (!CoinAPI.getApi().IsCoin(item, false)) {
@@ -42,14 +42,15 @@ public class LightmansCurrencyHelper implements IContainerHelper {
     }
 
     @Override
-    public int removeItemStackByCount(ServerPlayer player, ItemStack item, int count) {
+    public long removeItemStackByCount(ServerPlayer player, ItemStack item, long count) {
         return removeItemStackByCount(player, item, count, ItemStackCompareMode.ALL_COMPONENTS, List.of());
     }
 
     @Override
-    public int removeItemStackByCount(ServerPlayer player, ItemStack item, int count,
+    public long removeItemStackByCount(ServerPlayer player, ItemStack item, long count,
                                       ItemStackCompareMode compareMode,
                                       List<String> components) {
+        count = Math.max(0L, count);
         if (!CoinAPI.getApi().IsCoin(item, false)) {
             return count;
         }

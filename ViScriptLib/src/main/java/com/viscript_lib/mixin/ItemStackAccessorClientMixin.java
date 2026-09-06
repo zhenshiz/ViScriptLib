@@ -1,6 +1,8 @@
 package com.viscript_lib.mixin;
 
+import com.llamalad7.mixinextras.sugar.Local;
 import com.lowdragmc.lowdraglib2.configurator.accessors.ItemStackAccessor;
+import com.lowdragmc.lowdraglib2.configurator.ui.Configurator;
 import com.lowdragmc.lowdraglib2.gui.ColorPattern;
 import com.lowdragmc.lowdraglib2.gui.texture.IGuiTexture;
 import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
@@ -10,6 +12,7 @@ import com.lowdragmc.lowdraglib2.gui.ui.elements.ItemSlot;
 import com.lowdragmc.lowdraglib2.gui.ui.event.UIEvent;
 import com.lowdragmc.lowdraglib2.gui.ui.event.UIEventDispatcher;
 import com.lowdragmc.lowdraglib2.gui.ui.event.UIEvents;
+import com.viscript_lib.configurator.accessor.NbtKey;
 import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
@@ -17,6 +20,10 @@ import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+
+import java.lang.reflect.Field;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 @Mixin(value = ItemStackAccessor.class, remap = false)
 public class ItemStackAccessorClientMixin {
@@ -52,6 +59,11 @@ public class ItemStackAccessorClientMixin {
             confirmEvent.target = confirmButton;
             UIEventDispatcher.dispatchEvent(confirmEvent, true, true, false);
         });
+    }
+
+    @Inject(method = "create", at = @At(value = "INVOKE", target = "Lcom/lowdragmc/lowdraglib2/gui/ui/elements/ItemSlot;bindDataSource(Lcom/lowdragmc/lowdraglib2/gui/sync/bindings/IDataProvider;)Lcom/lowdragmc/lowdraglib2/gui/ui/elements/BindableUIElement;"))
+    public void create(String name, Supplier<ItemStack> supplier, Consumer<ItemStack> consumer, boolean forceUpdate, @Nullable Field field, @Nullable Object owner, CallbackInfoReturnable<Configurator> cir, @Local(name = "slot") ItemSlot slot) {
+        slot.registerValueListener(NbtKey::recordItemKey);
     }
 
     @Unique

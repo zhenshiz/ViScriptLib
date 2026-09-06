@@ -158,7 +158,7 @@ public class ItemTask extends ITask {
             return 0;
         }
         ItemStack identity = itemIdentityStack();
-        return itemMatchRule.getItemForPlayerCount(player, identity);
+        return (int) itemMatchRule.getItemForPlayerCount(player, identity);
     }
 
     private boolean removePlayerItems(ServerPlayer player, int count) {
@@ -166,7 +166,7 @@ public class ItemTask extends ITask {
             return true;
         }
         ItemStack identity = itemIdentityStack();
-        int remaining = itemMatchRule.removeItemForPlayer(player, identity, count);
+        long remaining = itemMatchRule.removeItemForPlayer(player, identity, count);
         player.containerMenu.broadcastChanges();
         return remaining <= 0;
     }

@@ -2,10 +2,13 @@ package com.viscript_lib.util.item;
 
 import com.viscript_lib.ViScriptLibRegistries;
 import com.viscript_lib.register.IContainerHelper;
+import com.viscript_lib.util.math.Clamp;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.Container;
 import net.minecraft.world.item.ItemStack;
+import net.minecraftforge.items.IItemHandler;
+import net.minecraftforge.items.ItemHandlerHelper;
 
 import java.util.HashSet;
 import java.util.List;
@@ -14,7 +17,7 @@ import java.util.Set;
 
 public class ItemUtil {
     //删除玩家物品，兼容背包，精妙背包，超越维度等库存模组
-    public static int removeItemForPlayer(ServerPlayer player, ItemStack itemStack, int count) {
+    public static long removeItemForPlayer(ServerPlayer player, ItemStack itemStack, int count) {
         return removeItemForPlayer(player, itemStack, count, ItemStackCompareMode.ALL_COMPONENTS, List.of());
     }
 
@@ -26,15 +29,19 @@ public class ItemUtil {
      * @param count 要删除的数量
      * @param compareMode 物品比较模式
      * @param components 参与或排除比较的组件列表，语义由 compareMode 决定
+     * @return 未能删除的剩余数量
      */
-    public static int removeItemForPlayer(ServerPlayer player, ItemStack itemStack, int count,
+    public static long removeItemForPlayer(ServerPlayer player, ItemStack itemStack, long count,
                                            ItemStackCompareMode compareMode,
                                            List<String> components) {
+        count = Math.max(0L, count);
+        if (player == null) return count;
         for (var containerHelperSupplierHolder : ViScriptLibRegistries.ContainerHelper) {
             IContainerHelper iContainerHelper = containerHelperSupplierHolder.value().get();
             if (count > 0) {
                 try {
-                    count = iContainerHelper.removeItemStackByCount(player, itemStack, count, compareMode, components);
+                    long remaining = iContainerHelper.removeItemStackByCount(player, itemStack, count, compareMode, components);
+                    count = clampRemaining(remaining, count);
                 } catch (Throwable ignored) {
                 }
             }
@@ -43,7 +50,7 @@ public class ItemUtil {
     }
 
     //获取玩家物品，兼容背包，精妙背包，超越维度等库存模组
-    public static int getItemForPlayerCount(ServerPlayer player, ItemStack item) {
+    public static long getItemForPlayerCount(ServerPlayer player, ItemStack item) {
         return getItemForPlayerCount(player, item, ItemStackCompareMode.ALL_COMPONENTS, List.of());
     }
 
@@ -56,15 +63,15 @@ public class ItemUtil {
      * @param components 参与或排除比较的组件列表，语义由 compareMode 决定
      * @return 玩家持有的匹配物品数量
      */
-    public static int getItemForPlayerCount(ServerPlayer player, ItemStack item,
+    public static long getItemForPlayerCount(ServerPlayer player, ItemStack item,
                                             ItemStackCompareMode compareMode,
                                             List<String> components) {
-        int count = 0;
+        long count = 0L;
         if (player != null) {
             for (var containerHelperSupplierHolder : ViScriptLibRegistries.ContainerHelper) {
                 IContainerHelper iContainerHelper = containerHelperSupplierHolder.value().get();
                 try {
-                    count += iContainerHelper.getItemStackCount(player, item, compareMode, components);
+                    count = saturatedAdd(count, iContainerHelper.getItemStackCount(player, item, compareMode, components));
                 } catch (Throwable ignored) {
                 }
             }
@@ -79,7 +86,7 @@ public class ItemUtil {
      * @param item      物品
      * @return 该物品在背包里的数量
      */
-    public static int getItemCountByContainer(Container container, ItemStack item) {
+    public static long getItemCountByContainer(Container container, ItemStack item) {
         return getItemCountByContainer(container, item, ItemStackCompareMode.ALL_COMPONENTS, List.of());
     }
 
@@ -92,14 +99,14 @@ public class ItemUtil {
      * @param components 参与或排除比较的组件列表，语义由 compareMode 决定
      * @return 该物品在背包里的数量
      */
-    public static int getItemCountByContainer(Container container, ItemStack item,
+    public static long getItemCountByContainer(Container container, ItemStack item,
                                               ItemStackCompareMode compareMode,
                                               List<String> components) {
-        int count = 0;
+        long count = 0L;
         for (int i = 0; i < container.getContainerSize(); i++) {
             ItemStack stack = container.getItem(i);
             if (isSameItem(stack, item, compareMode, components)) {
-                count += stack.getCount();
+                count = saturatedAdd(count, stack.getCount());
             }
         }
 
@@ -114,7 +121,7 @@ public class ItemUtil {
      * @param count     要求数量
      * @return 删了后还有的数量
      */
-    public static int removeItemByContainer(Container container, ItemStack item, int count) {
+    public static long removeItemByContainer(Container container, ItemStack item, long count) {
         return removeItemByContainer(container, item, count, ItemStackCompareMode.ALL_COMPONENTS, List.of());
     }
 
@@ -128,18 +135,83 @@ public class ItemUtil {
      * @param components 参与或排除比较的组件列表，语义由 compareMode 决定
      * @return 删了后还有的数量
      */
-    public static int removeItemByContainer(Container container, ItemStack item, int count,
-                                            ItemStackCompareMode compareMode,
-                                            List<String> components) {
+    public static long removeItemByContainer(Container container, ItemStack item, long count,
+                                             ItemStackCompareMode compareMode,
+                                             List<String> components) {
+        count = Math.max(0L, count);
+        boolean changed = false;
         for (int i = 0; i < container.getContainerSize(); i++) {
+            if (count == 0L) break;
+
             ItemStack stack = container.getItem(i);
             if (isSameItem(stack, item, compareMode, components)) {
-                int toRemove = Math.min(count, stack.getCount());
+                int toRemove = (int) Math.min(count, stack.getCount());
                 stack.shrink(toRemove);
                 count -= toRemove;
+                changed |= toRemove > 0;
+                if (stack.isEmpty()) {
+                    container.setItem(i, ItemStack.EMPTY);
+                }
             }
         }
+        if (changed) {
+            container.setChanged();
+        }
         return count;
+    }
+
+    /**
+     * 把指定总量的物品分批插入 NeoForge 物品处理器。
+     *
+     * <p>每批物品均不超过模板物品的最大堆叠数量。处理器没有继续接收物品时立即停止，
+     * 不会把剩余物品生成为世界掉落物。
+     *
+     * @param handler 接收物品的处理器
+     * @param template 提供物品及组件信息的模板
+     * @param count 待插入的总数量；小于或等于零时视为零
+     * @return 未能插入的剩余数量
+     */
+    public static long insertItemByHandler(IItemHandler handler, ItemStack template, long count) {
+        count = Math.max(0L, count);
+        if (handler == null || template == null || template.isEmpty() || count == 0L) {
+            return count;
+        }
+
+        int batchLimit = Math.max(1, template.getMaxStackSize());
+        long remaining = count;
+        while (remaining > 0L) {
+            int batch = (int) Math.min(remaining, batchLimit);
+            ItemStack remainder = ItemHandlerHelper.insertItemStacked(
+                    handler,
+                    template.copyWithCount(batch),
+                    false
+            );
+            int rejected = Clamp.clamp(remainder.getCount(), 0, batch);
+            int inserted = batch - rejected;
+            if (inserted <= 0) break;
+            remaining -= inserted;
+        }
+        return remaining;
+    }
+
+    /**
+     * 对两个非负物品数量执行饱和加法。
+     *
+     * <p>负数输入按零处理；结果超过 <code>Long.MAX_VALUE</code> 时返回
+     * <code>Long.MAX_VALUE</code>，避免库存总量回绕为负数。
+     *
+     * @param current 当前累计数量
+     * @param additional 待增加的数量
+     * @return 两个数量之和，溢出时为 <code>Long.MAX_VALUE</code>
+     */
+    public static long saturatedAdd(long current, long additional) {
+        current = Math.max(0L, current);
+        additional = Math.max(0L, additional);
+        return current > Long.MAX_VALUE - additional ? Long.MAX_VALUE : current + additional;
+    }
+
+    private static long clampRemaining(long remaining, long requested) {
+        return Clamp.clamp(remaining, 0L, requested);
     }
 
     /**

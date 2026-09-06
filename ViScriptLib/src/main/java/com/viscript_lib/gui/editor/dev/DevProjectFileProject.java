@@ -15,6 +15,7 @@ import com.lowdragmc.lowdraglib2.syncdata.IPersistedSerializable;
 import com.lowdragmc.lowdraglib2.syncdata.annotation.Persisted;
 import com.lowdragmc.lowdraglib2.utils.TagBuilder;
 import com.viscript_lib.gui.editor.IRuntimeFileProject;
+import com.viscript_lib.util.item.ViScriptItemStack;
 import dev.vfyjxf.taffy.style.FlexDirection;
 import lombok.Getter;
 import net.minecraft.core.HolderLookup;
@@ -39,8 +40,8 @@ public class DevProjectFileProject implements IRuntimeFileProject {
     private final Resources resources = Resources.of();
     private String projectNote = "";
     private String runtimeContent = "";
-    private final MissingItemTestData missingItemTestData = new MissingItemTestData();
-    private boolean writeMissingItemOnNextSave;
+    private final UnavailableItemTestData unavailableItemTestData = new UnavailableItemTestData();
+    private boolean writeUnavailableItemsOnNextSave;
     private View view;
     private CodeEditor projectEditor;
     private CodeEditor runtimeEditor;
@@ -63,15 +64,15 @@ public class DevProjectFileProject implements IRuntimeFileProject {
                   "message": "这是由工程文件导出的运行时文件。"
                 }
                 """;
-        missingItemTestData.reset();
-        writeMissingItemOnNextSave = false;
+        unavailableItemTestData.reset();
+        writeUnavailableItemsOnNextSave = false;
     }
 
     @Override
     public CompoundTag serializeProject(@Nonnull HolderLookup.Provider provider) {
-        var serializedItems = missingItemTestData.serializeNBT(provider);
-        if (writeMissingItemOnNextSave) {
-            writeMissingItemTestData(serializedItems);
+        var serializedItems = unavailableItemTestData.serializeNBT(provider);
+        if (writeUnavailableItemsOnNextSave) {
+            writeUnavailableItemTestData(serializedItems);
         }
         return TagBuilder.compound()
                 .add("type", "project_file")
@@ -87,15 +88,16 @@ public class DevProjectFileProject implements IRuntimeFileProject {
         runtimeContent = nbt.getString("runtimeContent");
         var serializedItems = nbt.getCompound("itemTestData").copy();
         if (serializedItems.isEmpty()) {
-            missingItemTestData.reset();
-            serializedItems = missingItemTestData.serializeNBT(provider);
+            unavailableItemTestData.reset();
+            serializedItems = unavailableItemTestData.serializeNBT(provider);
             var legacyItem = nbt.get("previewItem");
             if (legacyItem != null) {
                 serializedItems.put("directItem", legacyItem.copy());
             }
         }
-        missingItemTestData.deserializeNBT(provider, serializedItems);
-        writeMissingItemOnNextSave = false;
+        migrateLegacyUnavailableItemTestData(serializedItems);
+        unavailableItemTestData.deserializeNBT(provider, serializedItems);
+        writeUnavailableItemsOnNextSave = false;
     }
 
     @Override
@@ -114,7 +116,7 @@ public class DevProjectFileProject implements IRuntimeFileProject {
         view = new View("viscript_lib.dev_editor.project_file.view", Icons.JSON);
         view.layout(layout -> layout.flexDirection(FlexDirection.COLUMN).gapAll(2));
         view.addChildren(
-                createMissingItemTestRow(),
+                createUnavailableItemTestSection(),
                 new Label()
                         .setText("viscript_lib.dev_editor.project_file.project_section")
                         .layout(layout -> layout.widthPercent(100).height(12)),
@@ -137,14 +139,48 @@ public class DevProjectFileProject implements IRuntimeFileProject {
         runtimeEditor = null;
     }
 
-    private UIElement createMissingItemTestRow() {
-        var armButton = new Button().setText("viscript_lib.dev_editor.project_file.arm_missing_item");
+    private UIElement createUnavailableItemTestSection() {
+        var armButton = new Button().setText("viscript_lib.dev_editor.project_file.arm_unavailable_items");
         armButton.setOnClick(event -> {
-            writeMissingItemOnNextSave = true;
-            armButton.setText("viscript_lib.dev_editor.project_file.missing_item_armed");
+            writeUnavailableItemsOnNextSave = true;
+            armButton.setText("viscript_lib.dev_editor.project_file.unavailable_items_armed");
         });
         armButton.layout(layout -> layout.height(16));
 
+        return new UIElement()
+                .layout(layout -> layout
+                        .widthPercent(100)
+                        .height(84)
+                        .flexDirection(FlexDirection.COLUMN)
+                        .gapAll(2))
+                .addChildren(
+                        new UIElement()
+                                .layout(layout -> layout
+                                        .widthPercent(100)
+                                        .height(18)
+                                        .flexDirection(FlexDirection.ROW)
+                                        .gapAll(4))
+                                .addChildren(
+                                        new Label().setText("viscript_lib.dev_editor.project_file.item_section")
+                                                .layout(layout -> layout.height(18).flex(1)),
+                                        armButton
+                                ),
+                        createUnavailableItemCase(
+                                "viscript_lib.dev_editor.project_file.case_missing_item",
+                                unavailableItemTestData.directItem.toItemStack()
+                        ),
+                        createUnavailableItemCase(
+                                "viscript_lib.dev_editor.project_file.case_missing_component",
+                                unavailableItemTestData.firstCollectionItem()
+                        ),
+                        createUnavailableItemCase(
+                                "viscript_lib.dev_editor.project_file.case_missing_enchantment",
+                                unavailableItemTestData.nested.item.toItemStack()
+                        )
+                );
+    }
+
+    private static UIElement createUnavailableItemCase(String labelKey, ItemStack itemStack) {
         return new UIElement()
                 .layout(layout -> layout
                         .widthPercent(100)
@@ -152,32 +188,67 @@ public class DevProjectFileProject implements IRuntimeFileProject {
                         .flexDirection(FlexDirection.ROW)
                         .gapAll(4))
                 .addChildren(
-                        new Label().setText("viscript_lib.dev_editor.project_file.item_section")
-                                .layout(layout -> layout.height(18)),
-                        new ItemSlot().setItem(missingItemTestData.directItem),
-                        new ItemSlot().setItem(missingItemTestData.firstCollectionItem()),
-                        new ItemSlot().setItem(missingItemTestData.nested.item),
-                        armButton
+                        new ItemSlot().setItem(itemStack),
+                        new Label().setText(labelKey).layout(layout -> layout.height(18))
                 );
     }
 
-    private static void writeMissingItemTestData(CompoundTag serializedItems) {
-        serializedItems.put("directItem", missingItem("missing_direct_item"));
+    private static void writeUnavailableItemTestData(CompoundTag serializedItems) {
+        serializedItems.put("directItem", missingItem());
 
         var collection = new ListTag();
-        collection.add(missingItem("missing_collection_item"));
+        collection.add(missingComponent());
         serializedItems.put("collectionItems", collection);
 
         var nested = serializedItems.getCompound("nested").copy();
-        nested.put("item", missingItem("missing_nested_item"));
+        nested.put("item", missingEnchantment());
         serializedItems.put("nested", nested);
     }
 
-    private static CompoundTag missingItem(String path) {
+    static boolean migrateLegacyUnavailableItemTestData(CompoundTag serializedItems) {
+        var directItem = serializedItems.getCompound("directItem");
+        if (!directItem.getString("id").equals("viscript_lib:missing_direct_item")) {
+            return false;
+        }
+        writeUnavailableItemTestData(serializedItems);
+        return true;
+    }
+
+    private static CompoundTag missingItem() {
         var missingItem = new CompoundTag();
-        missingItem.putString("id", "viscript_lib:" + path);
+        missingItem.putString("id", "viscript_lib:missing_item");
         missingItem.putInt("count", 1);
         return missingItem;
+    }
+
+    private static CompoundTag missingComponent() {
+        var potionContents = new CompoundTag();
+        potionContents.putString("potion", "minecraft:water");
+        var components = new CompoundTag();
+        components.put("minecraft:potion_contents", potionContents);
+        components.putInt("viscript_lib:missing_component", 3);
+
+        var item = new CompoundTag();
+        item.putString("id", "minecraft:potion");
+        item.putInt("count", 1);
+        item.put("components", components);
+        return item;
+    }
+
+    private static CompoundTag missingEnchantment() {
+        var levels = new CompoundTag();
+        levels.putInt("minecraft:sharpness", 2);
+        levels.putInt("viscript_lib:missing_enchantment", 3);
+        var enchantments = new CompoundTag();
+        enchantments.put("levels", levels);
+        var components = new CompoundTag();
+        components.put("minecraft:enchantments", enchantments);
+
+        var item = new CompoundTag();
+        item.putString("id", "minecraft:diamond_sword");
+        item.putInt("count", 1);
+        item.put("components", components);
+        return item;
     }
 
     private CodeEditor createEditor(String value, Consumer<String[]> responder) {
@@ -189,28 +260,28 @@ public class DevProjectFileProject implements IRuntimeFileProject {
         return editor;
     }
 
-    private static final class MissingItemTestData implements IPersistedSerializable {
+    private static final class UnavailableItemTestData implements IPersistedSerializable {
         @Persisted
-        private ItemStack directItem = ItemStack.EMPTY;
+        private ViScriptItemStack directItem = new ViScriptItemStack();
         @Persisted
-        private final List<ItemStack> collectionItems = new ArrayList<>();
+        private final List<ViScriptItemStack> collectionItems = new ArrayList<>();
         @Persisted(subPersisted = true)
         private final NestedItemData nested = new NestedItemData();
 
         private void reset() {
-            directItem = new ItemStack(Items.DIAMOND);
+            directItem = new ViScriptItemStack(new ItemStack(Items.DIAMOND));
             collectionItems.clear();
-            collectionItems.add(new ItemStack(Items.EMERALD));
-            nested.item = new ItemStack(Items.GOLD_INGOT);
+            collectionItems.add(new ViScriptItemStack(new ItemStack(Items.EMERALD)));
+            nested.item = new ViScriptItemStack(new ItemStack(Items.GOLD_INGOT));
         }
 
         private ItemStack firstCollectionItem() {
-            return collectionItems.isEmpty() ? ItemStack.EMPTY : collectionItems.get(0);
+            return collectionItems.isEmpty() ? ItemStack.EMPTY : collectionItems.get(0).toItemStack();
         }
     }
 
     private static final class NestedItemData {
         @Persisted
-        private ItemStack item = ItemStack.EMPTY;
+        private ViScriptItemStack item = new ViScriptItemStack();
     }
 }

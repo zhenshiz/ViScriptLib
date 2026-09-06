@@ -44,11 +44,11 @@ public class ItemMatchRule implements IConfigurable, IPersistedSerializable {
         return ItemUtil.isSameItem(candidate, target, resolvedCompareMode(), resolvedComponents());
     }
 
-    public int getItemForPlayerCount(ServerPlayer player, ItemStack itemStack) {
+    public long getItemForPlayerCount(ServerPlayer player, ItemStack itemStack) {
         return ItemUtil.getItemForPlayerCount(player, itemStack, resolvedCompareMode(), resolvedComponents());
     }
 
-    public int removeItemForPlayer(ServerPlayer player, ItemStack itemStack, int count) {
+    public long removeItemForPlayer(ServerPlayer player, ItemStack itemStack, long count) {
         return ItemUtil.removeItemForPlayer(player, itemStack, count, resolvedCompareMode(), resolvedComponents());
     }
 
