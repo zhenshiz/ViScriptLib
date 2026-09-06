@@ -14,7 +14,9 @@ import com.viscriptshop.gui.data.ShopInfo;
 import com.viscriptshop.gui.data.ShopSavedData;
 import com.viscriptshop.network.s2c.S2CPayload;
 import dev.latvian.mods.kubejs.typings.Info;
+import net.minecraft.ChatFormatting;
 import net.minecraft.nbt.Tag;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 
 import javax.annotation.Nullable;
@@ -33,6 +35,30 @@ public class ViScriptShopServerUtil {
     @Info("服务端为玩家打开快捷商店选择界面")
     public static void serverOpenShopSelector(ServerPlayer player) {
         RPCPacketDistributor.rpcToPlayer(player, S2CPayload.OPEN_SHOP_SELECTOR);
+    }
+
+    /**
+     * 为玩家打开 FTB 侧边栏配置的默认商店。
+     *
+     * <p>路径为空时打开快捷商店选择界面；路径无效时发送错误消息并回退到选择界面。
+     * 客户端不提供路径，实际目标始终由服务端公共配置决定。
+     *
+     * @param player 接收商店界面的服务端玩家
+     */
+    public static void serverOpenFtbShop(ServerPlayer player) {
+        String location = Config.ftbDefaultShop.get().trim();
+        if (location.isEmpty()) {
+            serverOpenShopSelector(player);
+            return;
+        }
+        ShopInfo shop = getOrInitSavedShopInfo(location);
+        if (shop == null) {
+            player.sendSystemMessage(Component.translatable("viscript_shop.message.ftb_default_shop_unavailable", location)
+                    .withStyle(ChatFormatting.RED));
+            serverOpenShopSelector(player);
+            return;
+        }
+        serverOpenShop(player, location);
     }
 
     @Info("服务端打开商店")
@@ -193,7 +219,7 @@ public class ViScriptShopServerUtil {
     }
 
     @Info("扣减玩家购买后的库存")
-    public static boolean reduceMerchantStock(ServerPlayer player, String shopLocation, String categoryId, MerchantInfo merchantInfo, int count) {
+    public static boolean reduceMerchantStock(ServerPlayer player, String shopLocation, String categoryId, MerchantInfo merchantInfo, long count) {
         int stock = merchantInfo.getStock();
         if (stock < 0 || count <= 0) {
             return false;
@@ -203,7 +229,7 @@ public class ViScriptShopServerUtil {
         if (shopSavedData != null) {
             int currentStock = getEffectiveMerchantStock(player, shopLocation, categoryId, merchantInfo);
             shopSavedData.setMerchantStock(shopLocation, getStockOwner(player), categoryId, merchantInfo.getId(),
-                    Math.max(0, currentStock - count));
+                    (int) Math.max(0, currentStock - count));
         }
         return false;
     }
@@ -218,8 +244,8 @@ public class ViScriptShopServerUtil {
     }
 
     @Info("获取玩家钱")
-    public static int getMoney(ServerPlayer player) {
-        return ShopRegistries.getMoneySavedData().getMoney(player).getMoney();
+    public static double getMoney(ServerPlayer player) {
+        return MoneyUtil.normalize(ShopRegistries.getMoneySavedData().getMoney(player).getMoney());
         //return player.getData(ShopRegistries.MONEY).getMoney();
     }
 
@@ -281,27 +307,27 @@ public class ViScriptShopServerUtil {
     }
 
     @Info("设置玩家钱")
-    public static void setMoney(ServerPlayer player, int money) {
+    public static void setMoney(ServerPlayer player, double money) {
         ShopRegistries.Money data = ShopRegistries.getMoneySavedData().getMoney(player);
-        data.setMoney(money);
+        double normalized = MoneyUtil.normalize(money);
+        data.setMoney(normalized);
         ShopRegistries.getMoneySavedData().setMoney(player, data);
         //player.setData(ShopRegistries.MONEY, data);
     }
 
     @Info("给玩家钱")
-    public static void addMoney(ServerPlayer player, int money) {
-        setMoney(player, getMoney(player) + money);
+    public static void addMoney(ServerPlayer player, double money) {
+        if (MoneyUtil.isPositive(money)) {
+            setMoney(player, MoneyUtil.add(getMoney(player), money));
+        }
     }
 
     @Info("扣除玩家钱")
-    public static int removeMoney(ServerPlayer player, int money) {
-        int playerMoney = getMoney(player);
-        if (money > playerMoney) {
-            setMoney(player, 0);
-            return playerMoney;
-        } else {
-            setMoney(player, playerMoney - money);
-            return money;
-        }
+    public static double removeMoney(ServerPlayer player, double money) {
+        double requested = MoneyUtil.normalize(money);
+        double playerMoney = getMoney(player);
+        double removed = Math.min(requested, playerMoney);
+        setMoney(player, MoneyUtil.subtract(playerMoney, removed));
+        return removed;
     }
 }

@@ -9,6 +9,14 @@ public class Config {
     //是否打开FTB Library的按钮来允许打开商店
     public static ForgeConfigSpec.BooleanValue showFtbLibraryButton = null;
 
+    /**
+     * FTB 侧边栏按钮默认打开的商店路径。
+     *
+     * <p>该值由服务端读取，格式与 {@code /viscript_shop open} 后的商店参数一致；
+     * 留空时显示快捷商店选择界面。
+     */
+    public static ForgeConfigSpec.ConfigValue<String> ftbDefaultShop;
+
     //是否启用旧版本数据迁移（.shop文件）
     //当确认所有.shop文件都是最新版本后，可以关闭此选项以提升性能
     public static ForgeConfigSpec.BooleanValue enableLegacyDataMigration;
@@ -30,6 +38,9 @@ public class Config {
         if (ViscriptShop.isFtbLibraryLoaded()) {
             showFtbLibraryButton = CONFIG_BUILDER.define("showFtbLibraryButton", false);
         }
+        ftbDefaultShop = CONFIG_BUILDER
+                .translation("viscript_shop.configuration.ftbDefaultShop")
+                .define("ftbDefaultShop", "");
         enableLegacyDataMigration = CONFIG_BUILDER.define("enableLegacyDataMigration", true);
         maxShopUiGiveItemsPerPurchase = CONFIG_BUILDER.defineInRange("maxShopUiGiveItemsPerPurchase", -1, -1, Integer.MAX_VALUE);
         isPersonalStock = CONFIG_BUILDER.define("isPersonalStock", false);

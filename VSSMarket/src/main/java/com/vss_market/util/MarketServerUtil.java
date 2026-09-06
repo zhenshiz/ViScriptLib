@@ -1,6 +1,8 @@
 package com.vss_market.util;
 
 import com.viscript_lib.util.item.ItemUtil;
+import com.viscript_lib.util.item.ViScriptItemStack;
+import com.viscriptshop.util.MoneyUtil;
 import com.viscriptshop.util.ViScriptShopServerUtil;
 import com.vss_market.Config;
 import com.vss_market.data.MarketListing;
@@ -45,7 +47,7 @@ public class MarketServerUtil {
         return MarketResult.success("vss_market.message.shop_saved");
     }
 
-    public static MarketResult uploadListing(ServerPlayer player, ItemStack stack, int price, int bundleSize, int stock, boolean purchaseOrder) {
+    public static MarketResult uploadListing(ServerPlayer player, ItemStack stack, double price, int bundleSize, int stock, boolean purchaseOrder) {
         if (!validatePrice(price)) {
             return MarketResult.error("vss_market.message.invalid_price");
         }
@@ -66,14 +68,14 @@ public class MarketServerUtil {
         }
         var unitStack = stack.copyWithCount(1);
         if (purchaseOrder) {
-            long total = totalPrice(price, stock);
-            if (total <= 0 || total > Integer.MAX_VALUE) {
+            double total = totalPrice(price, stock);
+            if (!MoneyUtil.isPositive(total)) {
                 return MarketResult.error("vss_market.message.price_too_large");
             }
-            if (ViScriptShopServerUtil.getMoney(player) < total) {
+            if (!MoneyUtil.hasEnough(ViScriptShopServerUtil.getMoney(player), total)) {
                 return MarketResult.error("vss_market.message.not_enough_money");
             }
-            ViScriptShopServerUtil.removeMoney(player, (int) total);
+            ViScriptShopServerUtil.removeMoney(player, total);
         } else {
             if (ItemUtil.getItemForPlayerCount(player, unitStack) < requiredItems) {
                 return MarketResult.error("vss_market.message.not_enough_item");
@@ -83,7 +85,7 @@ public class MarketServerUtil {
 
         long now = System.currentTimeMillis();
         var listing = new MarketListing()
-                .setItem(unitStack)
+                .setItem(new ViScriptItemStack(unitStack))
                 .setPrice(price)
                 .setBundleSize(bundleSize)
                 .setStock(stock)
@@ -111,7 +113,7 @@ public class MarketServerUtil {
             return MarketResult.error("vss_market.message.cannot_buy_self");
         }
         var listing = shop.findListing(listingId).orElse(null);
-        if (listing == null || listing.getItem().isEmpty()) {
+        if (listing == null || listing.getItem() == null || listing.getItem().isUnavailable() || listing.unitStack().isEmpty()) {
             return MarketResult.error("vss_market.message.listing_not_found");
         }
         if (listing.getStock() < count) {
@@ -121,12 +123,12 @@ public class MarketServerUtil {
         if (itemCount <= 0) {
             return MarketResult.error("vss_market.message.invalid_count");
         }
-        long total = (long) listing.getPrice() * count;
-        if (total > Integer.MAX_VALUE) {
+        double total = totalPrice(listing.getPrice(), count);
+        if (!MoneyUtil.isPositive(total)) {
             return MarketResult.error("vss_market.message.price_too_large");
         }
         long now = System.currentTimeMillis();
-        int moneySpent = (int) total;
+        double moneySpent = total;
         if (listing.isPurchaseOrder()) {
             if (ItemUtil.getItemForPlayerCount(buyer, listing.unitStack()) < itemCount) {
                 return MarketResult.error("vss_market.message.not_enough_item");
@@ -143,21 +145,21 @@ public class MarketServerUtil {
                     .setCollectedStock(listing.getCollectedStock() + count)
                     .setUpdatedTime(now);
         } else {
-            if (ViScriptShopServerUtil.getMoney(buyer) < total) {
+            if (!MoneyUtil.hasEnough(ViScriptShopServerUtil.getMoney(buyer), total)) {
                 return MarketResult.error("vss_market.message.not_enough_money");
             }
-            if (shop.getBalance() > Long.MAX_VALUE - total) {
+            if (!canAddMoney(shop.getBalance(), total)) {
                 return MarketResult.error("vss_market.message.price_too_large");
             }
             ViScriptShopServerUtil.removeMoney(buyer, moneySpent);
             giveItem(buyer, listing.unitStack(), itemCount);
             listing.setStock(listing.getStock() - count).setUpdatedTime(now);
-            shop.setBalance(shop.getBalance() + moneySpent).setUpdatedTime(now);
+            shop.setBalance(MoneyUtil.add(shop.getBalance(), moneySpent)).setUpdatedTime(now);
         }
         shop.addPurchaseRecord(new MarketPurchaseRecord()
                 .setBuyerId(buyer.getUUID())
                 .setBuyerName(buyer.getGameProfile().getName())
-                .setItem(listing.unitStack())
+                .setItem(new ViScriptItemStack(listing.unitStack()))
                 .setQuantity(itemCount)
                 .setMoneySpent(moneySpent)
                 .setPurchaseOrder(listing.isPurchaseOrder())
@@ -178,7 +180,7 @@ public class MarketServerUtil {
             return MarketResult.error("vss_market.message.shop_not_found");
         }
         var listing = shop.findListing(listingId).orElse(null);
-        if (listing == null || listing.getItem().isEmpty()) {
+        if (listing == null || listing.getItem() == null || listing.getItem().isUnavailable() || listing.unitStack().isEmpty()) {
             return MarketResult.error("vss_market.message.listing_not_found");
         }
         if ((long) listing.getStock() + count > Integer.MAX_VALUE) {
@@ -186,14 +188,14 @@ public class MarketServerUtil {
         }
 
         if (listing.isPurchaseOrder()) {
-            long total = totalPrice(listing.getPrice(), count);
-            if (total <= 0 || total > Integer.MAX_VALUE) {
+            double total = totalPrice(listing.getPrice(), count);
+            if (!MoneyUtil.isPositive(total)) {
                 return MarketResult.error("vss_market.message.price_too_large");
             }
-            if (ViScriptShopServerUtil.getMoney(owner) < total) {
+            if (!MoneyUtil.hasEnough(ViScriptShopServerUtil.getMoney(owner), total)) {
                 return MarketResult.error("vss_market.message.not_enough_money");
             }
-            ViScriptShopServerUtil.removeMoney(owner, (int) total);
+            ViScriptShopServerUtil.removeMoney(owner, total);
         } else {
             int itemCount = totalItems(listing.getBundleSize(), count);
             if (itemCount <= 0) {
@@ -212,7 +214,7 @@ public class MarketServerUtil {
                 : "vss_market.message.restocked");
     }
 
-    public static MarketResult updatePrice(ServerPlayer owner, String listingId, int price) {
+    public static MarketResult updatePrice(ServerPlayer owner, String listingId, double price) {
         if (!validatePrice(price)) {
             return MarketResult.error("vss_market.message.invalid_price");
         }
@@ -226,20 +228,20 @@ public class MarketServerUtil {
             return MarketResult.error("vss_market.message.listing_not_found");
         }
         if (listing.isPurchaseOrder()) {
-            long oldTotal = totalPrice(listing.getPrice(), listing.getStock());
-            long newTotal = totalPrice(price, listing.getStock());
-            long difference = newTotal - oldTotal;
-            if (difference > 0) {
-                if (ViScriptShopServerUtil.getMoney(owner) < difference) {
+            double oldTotal = totalPrice(listing.getPrice(), listing.getStock());
+            double newTotal = totalPrice(price, listing.getStock());
+            if (newTotal > oldTotal) {
+                double difference = MoneyUtil.subtract(newTotal, oldTotal);
+                if (!MoneyUtil.hasEnough(ViScriptShopServerUtil.getMoney(owner), difference)) {
                     return MarketResult.error("vss_market.message.not_enough_money");
                 }
-                ViScriptShopServerUtil.removeMoney(owner, (int) difference);
-            } else if (difference < 0) {
-                long refund = -difference;
-                if (refund > Integer.MAX_VALUE || !canAddMoney(owner, (int) refund)) {
+                ViScriptShopServerUtil.removeMoney(owner, difference);
+            } else if (newTotal < oldTotal) {
+                double refund = MoneyUtil.subtract(oldTotal, newTotal);
+                if (!canAddMoney(owner, refund)) {
                     return MarketResult.error("vss_market.message.money_too_large");
                 }
-                ViScriptShopServerUtil.addMoney(owner, (int) refund);
+                ViScriptShopServerUtil.addMoney(owner, refund);
             }
         }
         listing.setPrice(price).setUpdatedTime(System.currentTimeMillis());
@@ -259,15 +261,15 @@ public class MarketServerUtil {
             return MarketResult.error("vss_market.message.listing_not_found");
         }
         if (listing.isPurchaseOrder()) {
-            long refund = totalPrice(listing.getPrice(), listing.getStock());
-            if (refund > Integer.MAX_VALUE || !canAddMoney(owner, (int) refund)) {
+            double refund = totalPrice(listing.getPrice(), listing.getStock());
+            if (!canAddMoney(owner, refund)) {
                 return MarketResult.error("vss_market.message.money_too_large");
             }
             if (listing.getCollectedStock() > 0) {
                 giveItem(owner, listing.unitStack(), totalItems(listing.getBundleSize(), listing.getCollectedStock()));
             }
-            if (refund > 0) {
-                ViScriptShopServerUtil.addMoney(owner, (int) refund);
+            if (MoneyUtil.isPositive(refund)) {
+                ViScriptShopServerUtil.addMoney(owner, refund);
             }
         } else if (listing.getStock() > 0) {
             giveItem(owner, listing.unitStack(), totalItems(listing.getBundleSize(), listing.getStock()));
@@ -284,15 +286,15 @@ public class MarketServerUtil {
         if (shop == null) {
             return MarketResult.error("vss_market.message.shop_not_found");
         }
-        if (shop.getBalance() <= 0) {
+        if (!MoneyUtil.isPositive(shop.getBalance())) {
             return MarketResult.error("vss_market.message.no_balance");
         }
-        int amount = (int) Math.min(shop.getBalance(), remainingMoneyCapacity(owner));
-        if (amount <= 0) {
+        double amount = Math.min(shop.getBalance(), remainingMoneyCapacity(owner));
+        if (!MoneyUtil.isPositive(amount)) {
             return MarketResult.error("vss_market.message.money_too_large");
         }
         ViScriptShopServerUtil.addMoney(owner, amount);
-        shop.setBalance(shop.getBalance() - amount).setUpdatedTime(System.currentTimeMillis());
+        shop.setBalance(MoneyUtil.subtract(shop.getBalance(), amount)).setUpdatedTime(System.currentTimeMillis());
         savedData.setDirty();
         return MarketResult.success("vss_market.message.withdrawn");
     }
@@ -303,37 +305,37 @@ public class MarketServerUtil {
         if (shop == null) {
             return MarketResult.error("vss_market.message.shop_not_found");
         }
-        long refund = shop.getBalance();
+        double refund = MoneyUtil.normalize(shop.getBalance());
         for (var listing : shop.getListings()) {
             if (listing.isPurchaseOrder()) {
-                long listingRefund = totalPrice(listing.getPrice(), listing.getStock());
-                if (listingRefund < 0 || refund > Long.MAX_VALUE - listingRefund) {
+                double listingRefund = totalPrice(listing.getPrice(), listing.getStock());
+                if (!canAddMoney(refund, listingRefund)) {
                     return MarketResult.error("vss_market.message.money_too_large");
                 }
-                refund += listingRefund;
+                refund = MoneyUtil.add(refund, listingRefund);
             }
         }
-        if (refund > Integer.MAX_VALUE || !canAddMoney(owner, (int) refund)) {
+        if (!canAddMoney(owner, refund)) {
             return MarketResult.error("vss_market.message.money_too_large");
         }
         for (var listing : shop.getListings()) {
             if (listing.isPurchaseOrder()) {
-                if (listing.getCollectedStock() > 0 && !listing.getItem().isEmpty()) {
+                if (listing.getCollectedStock() > 0 && !listing.unitStack().isEmpty()) {
                     giveItem(owner, listing.unitStack(), totalItems(listing.getBundleSize(), listing.getCollectedStock()));
                 }
-            } else if (listing.getStock() > 0 && !listing.getItem().isEmpty()) {
+            } else if (listing.getStock() > 0 && !listing.unitStack().isEmpty()) {
                 giveItem(owner, listing.unitStack(), totalItems(listing.getBundleSize(), listing.getStock()));
             }
         }
-        if (refund > 0) {
-            ViScriptShopServerUtil.addMoney(owner, (int) refund);
+        if (MoneyUtil.isPositive(refund)) {
+            ViScriptShopServerUtil.addMoney(owner, refund);
         }
         savedData.removeShop(owner.getUUID());
         return MarketResult.success("vss_market.message.shop_deleted");
     }
 
-    private static boolean validatePrice(int price) {
-        return price >= Config.MIN_PRICE.get() && price <= Config.MAX_PRICE.get();
+    private static boolean validatePrice(double price) {
+        return MoneyUtil.isPositive(price) && price >= Config.MIN_PRICE.get() && price <= Config.MAX_PRICE.get();
     }
 
     private static boolean validateCount(int count) {
@@ -345,16 +347,21 @@ public class MarketServerUtil {
         return total > 0 && total <= Integer.MAX_VALUE ? (int) total : -1;
     }
 
-    private static long totalPrice(int price, int stock) {
-        return (long) price * stock;
+    private static double totalPrice(double price, int stock) {
+        return MoneyUtil.multiply(price, stock);
     }
 
-    private static boolean canAddMoney(ServerPlayer player, int amount) {
-        return amount >= 0 && amount <= remainingMoneyCapacity(player);
+    private static boolean canAddMoney(ServerPlayer player, double amount) {
+        return canAddMoney(ViScriptShopServerUtil.getMoney(player), amount);
     }
 
-    private static long remainingMoneyCapacity(ServerPlayer player) {
-        return (long) Integer.MAX_VALUE - ViScriptShopServerUtil.getMoney(player);
+    private static boolean canAddMoney(double balance, double amount) {
+        return Double.isFinite(amount) && amount >= 0
+                && MoneyUtil.hasEnough(MoneyUtil.subtract(Double.MAX_VALUE, balance), amount);
+    }
+
+    private static double remainingMoneyCapacity(ServerPlayer player) {
+        return MoneyUtil.subtract(Double.MAX_VALUE, ViScriptShopServerUtil.getMoney(player));
     }
 
     private static void giveItem(ServerPlayer player, ItemStack unitStack, int count) {

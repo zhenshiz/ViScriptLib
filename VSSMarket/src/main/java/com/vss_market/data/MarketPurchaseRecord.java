@@ -5,6 +5,7 @@ import com.lowdragmc.lowdraglib2.syncdata.annotation.Persisted;
 import com.lowdragmc.lowdraglib2.utils.PersistedParser;
 import com.lowdragmc.lowdraglib2.utils.codec.StreamCodec;
 import com.mojang.serialization.Codec;
+import com.viscript_lib.util.item.ViScriptItemStack;
 import io.netty.buffer.ByteBuf;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -27,21 +28,25 @@ public class MarketPurchaseRecord implements IPersistedSerializable {
     @Persisted
     private String buyerName = "";
     @Persisted
-    private ItemStack item = ItemStack.EMPTY;
+    private ViScriptItemStack item = new ViScriptItemStack();
     @Persisted
     private int quantity;
     @Persisted
-    private int moneySpent;
+    private double moneySpent;
     @Persisted
     private boolean purchaseOrder;
     @Persisted
     private long purchasedTime;
 
     public ItemStack displayStack() {
-        if (item.isEmpty()) {
+        if (item == null) {
             return ItemStack.EMPTY;
         }
-        return item.copyWithCount(1);
+        var stack = item.toItemStack();
+        if (stack.isEmpty()) {
+            return ItemStack.EMPTY;
+        }
+        return stack.copyWithCount(1);
     }
 
     public String buyerDisplayName() {

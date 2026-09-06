@@ -95,7 +95,7 @@ public class S2CPayload {
     }
 
     @RPCPacket(RELOAD_SHOP_UI)
-    public static void reloadShopUI(RPCSender sender, ShopInfo shopInfo, AggregatedResources cost) {
+    public static void reloadShopUI(RPCSender sender, ShopInfo shopInfo) {
         if (Minecraft.getInstance().screen instanceof ModularUIScreen screen
                 && screen.modularUI.ui.rootElement instanceof ShopUI shopUI) {
             String selectedCategoryId = shopUI.getSelectedCategory() != null ? shopUI.getSelectedCategory().getId() : null;
@@ -108,9 +108,6 @@ public class S2CPayload {
                         .findFirst()
                         .ifPresent(shopUI::setSelectedCategory);
             }
-
-            // 清除玩家的物品计数
-            cost.getItemEntries().forEach(shopUI::removeItemCount);
 
             shopUI.reloadMerchants();
             shopUI.reloadInventoryItem();
@@ -146,6 +143,7 @@ public class S2CPayload {
         var itemEntries = CodecUtil.deserializeList(tag, AggregatedResources.ItemEntry.CODEC, Platform.getFrozenRegistry());
         if (Minecraft.getInstance().screen instanceof ModularUIScreen screen
                 && screen.modularUI.ui.rootElement instanceof ShopUI shopUI) {
+            shopUI.playerItems.clear();
             itemEntries.forEach(shopUI::setItemCount);
             shopUI.reloadInventoryItem();
             shopUI.reloadShoppingItem();

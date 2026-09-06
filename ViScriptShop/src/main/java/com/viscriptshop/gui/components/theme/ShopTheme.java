@@ -38,6 +38,7 @@ public record ShopTheme(
         IGuiTexture summaryPanel,
         IGuiTexture shoppingCartPanel,
         IGuiTexture consumptionPanel,
+        IGuiTexture messageBackground,
         IGuiTexture searchIcon,
         IGuiTexture searchIconBackground,
         IGuiTexture searchField,
@@ -75,6 +76,24 @@ public record ShopTheme(
         return styleClass.equals("shop-theme-gray-cat-workshop");
     }
 
+    /**
+     * 返回快捷商店选择弹窗的面板背景。
+     *
+     * @return 与此商店主题匹配的面板背景纹理
+     */
+    public IGuiTexture dialogPanel() {
+        return isGrayCatWorkshop() ? messageBackground : rounded(0xC0202934, 0x70D6E5F2, 1, 5);
+    }
+
+    /**
+     * 返回快捷商店选择器下拉列表的背景。
+     *
+     * @return 与此商店主题匹配的不透明下拉背景纹理
+     */
+    public IGuiTexture selectorPopup() {
+        return isGrayCatWorkshop() ? messageBackground : rounded(0xF0202934, 0x70D6E5F2, 1, 4);
+    }
+
     private static ShopTheme grayCatWorkshop() {
         return new ShopTheme(
                 "shop-theme-gray-cat-workshop",
@@ -104,6 +123,7 @@ public record ShopTheme(
                 IGuiTexture.EMPTY,
                 IGuiTexture.EMPTY,
                 IGuiTexture.EMPTY,
+                sprite("gray_cat_workshop", "controls/secondary_button.png").setBorder(2),
                 IGuiTexture.EMPTY,
                 IGuiTexture.EMPTY,
                 sprite("gray_cat_workshop", "controls/input.png"),
@@ -174,6 +194,7 @@ public record ShopTheme(
                 rounded(panel, border, 1, 4),
                 rounded(inset, border, 1, 4),
                 rounded(inset, border, 1, 4),
+                rounded(header, border, 1, 4),
                 commonIcon("search.png"),
                 IGuiTexture.EMPTY,
                 rounded(inset, border, 1, 5),

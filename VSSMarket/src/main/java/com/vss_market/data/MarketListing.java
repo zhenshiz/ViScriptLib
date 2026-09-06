@@ -5,6 +5,7 @@ import com.lowdragmc.lowdraglib2.syncdata.annotation.Persisted;
 import com.lowdragmc.lowdraglib2.utils.PersistedParser;
 import com.lowdragmc.lowdraglib2.utils.codec.StreamCodec;
 import com.mojang.serialization.Codec;
+import com.viscript_lib.util.item.ViScriptItemStack;
 import io.netty.buffer.ByteBuf;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -25,9 +26,9 @@ public class MarketListing implements IPersistedSerializable {
     @Persisted
     private String id = UUID.randomUUID().toString();
     @Persisted
-    private ItemStack item = ItemStack.EMPTY;
+    private ViScriptItemStack item = new ViScriptItemStack();
     @Persisted
-    private int price = 1;
+    private double price = 1;
     @Persisted
     private int bundleSize = 1;
     @Persisted
@@ -42,17 +43,25 @@ public class MarketListing implements IPersistedSerializable {
     private long updatedTime;
 
     public ItemStack displayStack() {
-        if (item.isEmpty()) {
+        if (item == null) {
             return ItemStack.EMPTY;
         }
-        return item.copyWithCount(Math.max(1, bundleSize));
+        var stack = item.toItemStack();
+        if (stack.isEmpty()) {
+            return ItemStack.EMPTY;
+        }
+        return stack.copyWithCount(Math.max(1, bundleSize));
     }
 
     public ItemStack unitStack() {
-        if (item.isEmpty()) {
+        if (item == null) {
             return ItemStack.EMPTY;
         }
-        return item.copyWithCount(1);
+        var stack = item.toItemStack();
+        if (stack.isEmpty()) {
+            return ItemStack.EMPTY;
+        }
+        return stack.copyWithCount(1);
     }
 
     public boolean isSoldOut() {

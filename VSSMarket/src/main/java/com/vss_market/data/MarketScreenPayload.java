@@ -34,7 +34,7 @@ public class MarketScreenPayload implements IPersistedSerializable {
     @Persisted
     private String view = "MARKET";
     @Persisted
-    private int money;
+    private double money;
     @Persisted
     private String messageKey = "";
     @Persisted
@@ -42,7 +42,7 @@ public class MarketScreenPayload implements IPersistedSerializable {
     @Persisted
     private ItemStack uploadStack = ItemStack.EMPTY;
     @Persisted
-    private int uploadPrice = 1;
+    private double uploadPrice = 1;
     @Persisted
     private int uploadBundleSize = 1;
     @Persisted

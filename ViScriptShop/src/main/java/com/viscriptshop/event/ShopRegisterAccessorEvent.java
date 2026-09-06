@@ -4,6 +4,8 @@ import com.viscript_lib.annotation.ViScriptRegisterAccessors;
 import com.viscript_lib.event.RegisterAccessorEvent;
 import com.viscriptshop.ShopRegistries;
 import com.viscriptshop.gui.data.*;
+import com.viscriptshop.promotion.PromotionRule;
+import com.viscriptshop.promotion.condition.PromotionConditionEntry;
 
 public final class ShopRegisterAccessorEvent {
     private ShopRegisterAccessorEvent() {
@@ -21,6 +23,8 @@ public final class ShopRegisterAccessorEvent {
         event.register(AggregatedResources.PurchaseEntry.class, AggregatedResources.PurchaseEntry::new);
         event.register(AggregatedResources.ItemEntry.class, AggregatedResources.ItemEntry::new);
         event.register(AggregatedResources.class, AggregatedResources::new);
+        event.register(PromotionConditionEntry.class, PromotionConditionEntry::new);
+        event.register(PromotionRule.class, PromotionRule::new);
         event.register(ShopInfo.class, ShopInfo::new);
 
         event.register(ShopRegistries.Money.class, ShopRegistries.Money::new);

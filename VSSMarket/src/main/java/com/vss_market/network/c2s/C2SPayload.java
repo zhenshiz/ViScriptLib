@@ -54,7 +54,7 @@ public class C2SPayload {
     }
 
     @RPCPacket(UPLOAD_LISTING)
-    public static void uploadListing(RPCSender sender, ItemStack stack, int price, int bundleSize, int stock, boolean purchaseOrder) {
+    public static void uploadListing(RPCSender sender, ItemStack stack, double price, int bundleSize, int stock, boolean purchaseOrder) {
         var player = sender.asPlayer();
         if (player != null) {
             var result = MarketServerUtil.uploadListing(player, stack, price, bundleSize, stock, purchaseOrder);
@@ -83,7 +83,7 @@ public class C2SPayload {
     }
 
     @RPCPacket(UPDATE_PRICE)
-    public static void updatePrice(RPCSender sender, String listingId, int price, float shopListScroll, float manageListingScroll) {
+    public static void updatePrice(RPCSender sender, String listingId, double price, float shopListScroll, float manageListingScroll) {
         var player = sender.asPlayer();
         if (player != null) {
             S2CPayload.open(player, player.getUUID().toString(), listingId, "DETAIL", shopListScroll, manageListingScroll, MarketServerUtil.updatePrice(player, listingId, price));

@@ -36,8 +36,8 @@ public class ViScriptShopClientUtil {
     }
 
     @Info("获取玩家钱")
-    public static int getMoney(LocalPlayer player) {
-        return ShopRegistries.clientPlayerMoney.getMoney();
+    public static double getMoney(LocalPlayer player) {
+        return MoneyUtil.normalize(ShopRegistries.clientPlayerMoney.getMoney());
     }
 
     @Info("获取玩家阶段标记")

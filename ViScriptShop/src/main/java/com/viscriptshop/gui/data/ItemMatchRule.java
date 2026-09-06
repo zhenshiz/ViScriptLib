@@ -12,14 +12,20 @@ import com.lowdragmc.lowdraglib2.syncdata.annotation.Persisted;
 import com.lowdragmc.lowdraglib2.utils.PersistedParser;
 import com.lowdragmc.lowdraglib2.utils.codec.StreamCodec;
 import com.mojang.serialization.Codec;
+import com.viscript_lib.configurator.accessor.NbtKey;
 import com.viscript_lib.util.item.ItemStackCompareMode;
 import com.viscript_lib.util.item.ItemUtil;
 import io.netty.buffer.ByteBuf;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.StringTag;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
+import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
@@ -36,7 +42,26 @@ public class ItemMatchRule implements IConfigurable, IPersistedSerializable {
     @ConfigSelector(subConfiguratorBuilder = "compareModeSubConfiguratorBuilder")
     private ItemStackCompareMode compareMode = ItemStackCompareMode.ALL_COMPONENTS;
     @Persisted
-    private List<String> components = new ArrayList<>();
+    private List<NbtKey> components = new ArrayList<>();
+
+    @Override
+    public CompoundTag serializeNBT(HolderLookup.@NotNull Provider provider) {
+        var tag = new CompoundTag();
+        tag.putString("compareMode", compareMode.getSerializedName());
+        if (!components.isEmpty()) {
+            var listTag = new ListTag();
+            for (var component : components) listTag.add(StringTag.valueOf(component.getKey()));
+            tag.put("components", listTag);
+        }
+        return tag;
+    }
+
+    @Override
+    public void deserializeNBT(HolderLookup.@NotNull Provider provider, @NotNull CompoundTag tag) {
+        setCompareMode(ItemStackCompareMode.fromSerializedName(tag.getString("compareMode")));
+        var listTag = tag.getList("components", 8);
+        for (var component : listTag) components.add(new NbtKey(component.getAsString()));
+    }
 
     static {
         CODEC = PersistedParser.createCodec(ItemMatchRule::new);
@@ -47,16 +72,16 @@ public class ItemMatchRule implements IConfigurable, IPersistedSerializable {
         return ItemUtil.isSameItem(candidate, target, resolvedCompareMode(), resolvedComponents());
     }
 
-    public int getItemForPlayerCount(ServerPlayer player, ItemStack itemStack) {
+    public long getItemForPlayerCount(ServerPlayer player, ItemStack itemStack) {
         return ItemUtil.getItemForPlayerCount(player, itemStack, resolvedCompareMode(), resolvedComponents());
     }
 
-    public void removeItemForPlayer(ServerPlayer player, ItemStack itemStack, int count) {
+    public void removeItemForPlayer(ServerPlayer player, ItemStack itemStack, long count) {
         ItemUtil.removeItemForPlayer(player, itemStack, count, resolvedCompareMode(), resolvedComponents());
     }
 
     public ItemMatchRule copy() {
-        return new ItemMatchRule(resolvedCompareMode(), new ArrayList<>(resolvedComponents()));
+        return new ItemMatchRule(resolvedCompareMode(), new ArrayList<>(components));
     }
 
     public ItemStackCompareMode resolvedCompareMode() {
@@ -64,7 +89,9 @@ public class ItemMatchRule implements IConfigurable, IPersistedSerializable {
     }
 
     public List<String> resolvedComponents() {
-        return components == null ? List.of() : components;
+        var list = new ArrayList<String>(components.size());
+        for (var component : components) list.add(component.getKey());
+        return list;
     }
 
     @SuppressWarnings({"rawtypes", "unchecked"})
@@ -75,7 +102,7 @@ public class ItemMatchRule implements IConfigurable, IPersistedSerializable {
         try {
             Field field = getClass().getDeclaredField("components");
             Configurator configurator = ((IConfiguratorAccessor) ConfiguratorAccessors.findByType(field.getGenericType()))
-                    .create("viscript_shop.data.item_match_rule.components", this::getComponents, valueList -> setComponents((List<String>) valueList), true, field, this)
+                    .create("viscript_shop.data.item_match_rule.components", this::getComponents, valueList -> setComponents((List<NbtKey>) valueList), true, field, this)
                     .setTips("viscript_shop.data.item_match_rule.components.tips");
             if (configurator instanceof ConfiguratorGroup componentGroup) {
                 componentGroup.setCollapse(false);

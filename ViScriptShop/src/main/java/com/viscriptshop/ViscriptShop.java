@@ -9,6 +9,7 @@ import com.mojang.logging.LogUtils;
 import com.viscriptshop.compat.ModComPat;
 import com.viscriptshop.gui.ShopEditor;
 import com.viscriptshop.gui.data.ShopSavedData;
+import com.viscriptshop.promotion.PromotionRegistries;
 import lombok.Getter;
 import lombok.Setter;
 import net.minecraft.client.Minecraft;
@@ -28,6 +29,7 @@ public class ViscriptShop {
     private static ShopSavedData shopSavedData;
 
     public ViscriptShop() {
+        PromotionRegistries.init();
         var dist = FMLEnvironment.dist;
         ModComPat.init(dist);
         PlayerUIMenuType.register(ShopEditor.SHOP_ID, ignored -> player -> {
@@ -44,9 +46,6 @@ public class ViscriptShop {
         ModLoadingContext context = ModLoadingContext.get();
         context.registerConfig(ModConfig.Type.COMMON, Config.CONFIG_SPEC, String.format("%s_config.toml", MOD_ID));
         context.registerConfig(ModConfig.Type.CLIENT, Config.CLIENT_CONFIG_SPEC, String.format("%s_client.toml", MOD_ID));
-        /*if (dist.isClient()) {
-            context.registerExtensionPoint(ConfigScreenHandler.ConfigScreenFactory.class, ConfigurationScreen::new);
-        }*/
     }
 
     public static ResourceLocation id(String path) {
@@ -62,16 +61,12 @@ public class ViscriptShop {
     }
 
     //jei
-    public static boolean isJEILoaded() {
-        return isModLoaded("jei");
-    }
+    public static boolean isJEILoaded() {return isModLoaded("jei");}
 
     //FtbLibrary
-    public static boolean isFtbLibraryLoaded() {
-        return isModLoaded("ftblibrary");
-    }
+    public static boolean isFtbLibraryLoaded() {return isModLoaded("ftblibrary");}
 
-    private static boolean isModLoaded(String modId) {
-        return ModList.get().isLoaded(modId);
-    }
+    public static boolean isFtbQuestsLoaded() {return isModLoaded("ftbquests");}
+
+    private static boolean isModLoaded(String modId) {return ModList.get().isLoaded(modId);}
 }
