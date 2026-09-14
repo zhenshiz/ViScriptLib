@@ -7,12 +7,14 @@ import com.lowdragmc.lowdraglib2.editor.ui.EditorWindow;
 import com.lowdragmc.lowdraglib2.gui.texture.DynamicTexture;
 import com.lowdragmc.lowdraglib2.gui.texture.Icons;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.Button;
+import com.lowdragmc.lowdraglib2.gui.ui.event.UIEvents;
 import com.viscript_lib.mixin.EditorWindowAccessor;
 import dev.vfyjxf.taffy.style.TaffyPosition;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.toasts.SystemToast;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.Mth;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
@@ -32,6 +34,7 @@ public class ViScriptEditorWindow extends EditorWindow {
     private boolean minimizedToBounds;
     private boolean defaultScaleButtonVisible = true;
     private boolean constructed;
+    private boolean adaptAfterScreenInit;
 
     /**
      * 打开此编辑器窗口，并在存在时恢复已缓存的最小化实例。
@@ -61,15 +64,56 @@ public class ViScriptEditorWindow extends EditorWindow {
     }
 
     public ViScriptEditorWindow(Supplier<Editor> editorCreator) {
-        super(editorCreator);
-        constructed = true;
-        applyWindowButtonPolicy();
+        this(null, editorCreator);
     }
 
     public ViScriptEditorWindow(@Nullable ResourceLocation windowID, Supplier<Editor> editorCreator) {
         super(windowID, editorCreator);
         constructed = true;
         applyWindowButtonPolicy();
+        window.addEventListener(UIEvents.LAYOUT_CHANGED, e -> adaptWindowToScreen());
+    }
+
+    @Override
+    public void initScreen(int screenWidth, int screenHeight) {
+        super.initScreen(screenWidth, screenHeight);
+        adaptAfterScreenInit = true;
+    }
+
+    @Override
+    public void screenTick() {
+        super.screenTick();
+        if (adaptAfterScreenInit) {
+            adaptAfterScreenInit = false;
+            adaptWindowToScreen();
+        }
+    }
+
+    private void adaptWindowToScreen() {
+        var mui = getModularUI();
+        if (adaptAfterScreenInit || isMaximized() || mui == null
+                || mui.getScreenWidth() <= 0 || mui.getScreenHeight() <= 0
+                || window.getSizeWidth() <= 0 || window.getSizeHeight() <= 0) {
+            return;
+        }
+
+        var width = Math.min(window.getSizeWidth(), mui.getScreenWidth());
+        var height = Math.min(window.getSizeHeight(), mui.getScreenHeight());
+        var x = window.getPositionX();
+        var y = window.getPositionY();
+        var left = window.getLayoutX() + (Mth.clamp(x, 0, mui.getScreenWidth() - width) - x);
+        var top = window.getLayoutY() + (Mth.clamp(y, 0, mui.getScreenHeight() - height) - y);
+
+        if (left != window.getLayoutX() || top != window.getLayoutY()
+                || width != window.getSizeWidth() || height != window.getSizeHeight()) {
+            window.layout(layout -> layout.left(left).top(top).width(width).height(height));
+        }
+
+        var accessor = (EditorWindowAccessor) this;
+        accessor.viscript_lib$setWindowLeft(left);
+        accessor.viscript_lib$setWindowTop(top);
+        accessor.viscript_lib$setWindowWidth(width);
+        accessor.viscript_lib$setWindowHeight(height);
     }
 
     private static void restoreMinimizedWindow(ViScriptEditorWindow editorWindow) {

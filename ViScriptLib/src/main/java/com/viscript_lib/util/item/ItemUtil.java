@@ -319,4 +319,11 @@ public class ItemUtil {
     public static CompoundTag getNbt(ItemStack stack) {
         return stack.getTag() == null ? new CompoundTag() : stack.getTag();
     }
+
+    /**替代1.21的ItemStack.hashItemAndComponents()方法*/
+    public static int hashItemStack(ItemStack stack) {
+        int i = stack.getItem().hashCode();
+        i ^= stack.getCount();
+        return stack.getTag() == null ? i : i ^ stack.getTag().hashCode();
+    }
 }

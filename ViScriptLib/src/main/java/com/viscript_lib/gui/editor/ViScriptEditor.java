@@ -16,6 +16,7 @@ import com.lowdragmc.lowdraglib2.gui.util.TreeBuilder;
 import com.viscript_lib.util.NbtHelper;
 import com.viscript_lib.util.item.ViScriptItemStack;
 import net.minecraft.client.Minecraft;
+import net.minecraft.resources.ResourceLocation;
 
 import javax.annotation.Nullable;
 import java.io.File;
@@ -32,6 +33,14 @@ import java.util.*;
 public abstract class ViScriptEditor extends Editor {
     final List<ProjectType> projectTypes = new ArrayList<>();
     private final Set<String> removedWindowAnchors = new HashSet<>();
+
+    @Override
+    protected void initMenus() {
+        super.initMenus();
+        menuContainer.addChild(new UnavailableItemsMenu(this)
+                .createMenuTab()
+                .setId("viscript_lib_unavailable_items_menu"));
+    }
 
     /**
      * 注册工程文件项目类型。
@@ -50,6 +59,54 @@ public abstract class ViScriptEditor extends Editor {
      */
     protected final List<ProjectType> getProjectTypes() {
         return Collections.unmodifiableList(projectTypes);
+    }
+
+    /**
+     * 返回当前项目中所有未注册的物品 ID。
+     *
+     * <p>结果从当前项目的内存序列化数据生成，因此会包含打开项目后新增或保留在嵌套
+     * 组件中的缺失物品。
+     *
+     * @return 按完整资源位置排序且不重复的缺失物品 ID；没有项目时返回空列表
+     */
+    public final List<ResourceLocation> findCurrentMissingItemIds() {
+        var project = getCurrentProject();
+        if (project == null) {
+            return List.of();
+        }
+        return MissingItemProjectData.findMissingItemIds(
+                project.serializeNBT(Platform.getFrozenRegistry())
+        );
+    }
+
+    /**
+     * 删除当前项目中使用指定未注册物品 ID 的全部物品栈。
+     *
+     * <p>修改只作用于当前内存项目，不会立即写入项目文件。存在匹配项时会通过原项目
+     * 类型创建替换实例并重新载入编辑器，使项目视图与修改后的数据保持一致。
+     *
+     * @param  itemId 需要删除的未注册物品 ID
+     * @return 删除或清空的物品栈条目数量；没有项目或匹配项时返回 <code>0</code>
+     */
+    public final int deleteCurrentMissingItemId(ResourceLocation itemId) {
+        var project = getCurrentProject();
+        if (project == null) {
+            return 0;
+        }
+
+        var registries = Platform.getFrozenRegistry();
+        var projectData = project.serializeNBT(registries);
+        var removed = MissingItemProjectData.deleteMissingItemId(projectData, itemId);
+        if (removed == 0) {
+            return 0;
+        }
+
+        var replacement = project.getProjectType().newEmptyProject();
+        replacement.deserializeNBT(registries, projectData);
+        var projectFile = getCurrentProjectFile();
+        closeCurrentProject();
+        loadNewProject(replacement, projectFile);
+        return removed;
     }
 
     /**
