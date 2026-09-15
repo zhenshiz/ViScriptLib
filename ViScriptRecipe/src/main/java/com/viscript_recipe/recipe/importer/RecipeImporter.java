@@ -1,5 +1,6 @@
 package com.viscript_recipe.recipe.importer;
 
+import com.viscript_lib.util.item.ItemUtil;
 import com.viscript_recipe.compat.create.data.CreateMechanicalCraftingRecipeData;
 import com.viscript_recipe.data.*;
 import com.viscript_recipe.data.vanilla.*;
@@ -374,16 +375,10 @@ public final class RecipeImporter {
     public static String ingredientKey(RecipeIngredient ingredient) {
         if (ingredient.isEmpty()) return "empty";
         return switch (ingredient.getKind()) {
-            case ITEM -> "item:" + hashItemStack(ingredient.getItem());
+            case ITEM -> "item:" + ItemUtil.hashItemStack(ingredient.getItem());
             case TAG -> "tag:" + ingredient.getTag();
             case ITEM_ABILITY -> "item_ability:" + ingredient.getItemAbility();
         };
-    }
-
-    private static int hashItemStack(ItemStack stack) {
-        int i = stack.getItem().hashCode();
-        i ^= stack.getCount();
-        return stack.getTag() == null ? i : i ^ stack.getTag().hashCode();
     }
 
     private static String recipeTypeName(Recipe<?> recipe) {

@@ -10,7 +10,13 @@ var fabricDeps = [
         "dev.su5ed.sinytra.fabric-api:fabric-api-base:0.4.32+ef105b4977"
 ]
 
-allprojects {
+subprojects {
+    apply plugin: 'idea'
+    apply plugin: 'java-library'
+    apply plugin: 'maven-publish'
+    apply plugin: 'net.neoforged.moddev.legacyforge'
+    apply plugin: 'io.freefair.lombok'
+
     var dir = new File(rootProject.projectDir as String + "/build/${project.name}")
     if (!dir.exists()) dir.mkdirs()
     buildDir dir
@@ -163,9 +169,6 @@ allprojects {
     }
 }
 
-subprojects {
-}
-
 configure(project(":ViScriptLib")) {
     plugins.withId('net.neoforged.moddev.legacyforge') {
         dependencies {
@@ -174,5 +177,29 @@ configure(project(":ViScriptLib")) {
     }
 }
 
-// tasks.register('buildAll') { dependsOn subprojects.collect { it.tasks.named('build') } }
-// tasks.register('cleanAll') { dependsOn subprojects.collect { it.tasks.named('clean') } }
+tasks.register('buildAll', Copy) {
+    group = 'build'
+    description = '构建所有子项目，并把各子项目的 libs 产物复制到根项目的 build/libs'
+    // 1. 先让所有子项目完成构建
+    dependsOn subprojects.collect {sub -> sub.tasks.matching { it.name == 'build' }}
+    // 2. 复制配置
+    duplicatesStrategy = DuplicatesStrategy.INCLUDE   // 遇到同名文件时覆盖而不是报错
+    includeEmptyDirs = false
+    // 3. 源：每个子项目的 libs 目录（layout.buildDirectory 会自动指向 root/build/<子项目名>/libs）
+    from(subprojects.collect { it.layout.buildDirectory.dir('libs') }) {
+        include '*.jar'
+    }
+    into(rootProject.file('build/libs'))
+}
+
+tasks.register('cleanLibs', Delete) {
+    group = 'build'
+    description = '只删除所有子项目的构建目录下的 libs 和 devlibs 文件夹'
+
+    delete(subprojects.collect { sub ->
+        [
+                sub.layout.buildDirectory.dir('libs').get().asFile,
+                sub.layout.buildDirectory.dir('devlibs').get().asFile
+        ]
+    })
+}
