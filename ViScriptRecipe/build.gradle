@@ -119,9 +119,9 @@ dependencies {
     //诡厄巫法：Goety
     modCompileOnly "curse.maven:goety-586095:${goety_file}"
     //东方女仆：Touhou Little Maid
-//    implementation "curse.maven:touhou-little-maid-355044:${touhou_little_maid_file}"
+    modImplementation "curse.maven:touhou-little-maid-355044:${touhou_little_maid_file}"
     //通用机械：Mekanism
-    modImplementation "mekanism:Mekanism:${mekanism_version}"
+    modCompileOnly "mekanism:Mekanism:${mekanism_version}"
 
     //must
 //    implementation "maven.modrinth:advanced-loot-info:${advanced_loot_info_version}"

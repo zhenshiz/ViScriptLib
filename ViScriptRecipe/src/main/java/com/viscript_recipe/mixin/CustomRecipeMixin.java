@@ -1,6 +1,7 @@
 package com.viscript_recipe.mixin;
 
 import com.Polarice3.Goety.common.crafting.*;
+import com.github.tartaricacid.touhoulittlemaid.crafting.AltarRecipe;
 import com.simibubi.create.content.processing.recipe.ProcessingRecipe;
 import com.simibubi.create.content.processing.sequenced.SequencedAssemblyRecipe;
 import com.viscript_recipe.recipe.RecipeIdSetter;
@@ -208,6 +209,15 @@ class SoulAbsorberRecipesMixin implements RecipeIdSetter {
 
 @Mixin(value = MekanismRecipe.class, remap = false)
 class MekanismRecipeMixin implements RecipeIdSetter {
+    @Final @Mutable @Shadow
+    private ResourceLocation id;
+
+    @Override
+    public void setId(ResourceLocation id) {this.id = id;}
+}
+
+@Mixin(value = AltarRecipe.class, remap = false)
+class AltarRecipeMixin implements RecipeIdSetter {
     @Final @Mutable @Shadow
     private ResourceLocation id;
 

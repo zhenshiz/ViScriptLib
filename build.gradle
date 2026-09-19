@@ -146,7 +146,7 @@ subprojects {
             // modCompileOnly "maven.modrinth:slashblade-resharped:${slashblade_resharped_version}"
 
             //must
-            // runtimeOnly "maven.modrinth:embeddium:${sodium_version}"
+            modRuntimeOnly "maven.modrinth:embeddium:${sodium_version}"
             // runtimeOnly "maven.modrinth:iris:${iris_version}"
             // runtimeOnly "curse.maven:lan-server-properties-387365:${lsp_version}"
         }
