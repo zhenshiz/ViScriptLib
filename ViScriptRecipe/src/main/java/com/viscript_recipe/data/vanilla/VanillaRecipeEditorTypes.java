@@ -11,7 +11,7 @@ import net.minecraft.resources.ResourceLocation;
 
 import java.util.List;
 
-@LDLRegister(registry = IModModule.ID, name = VanillaRecipeEditorTypes.MOD_ID)
+@LDLRegister(registry = IModModule.ID, name = VanillaRecipeEditorTypes.MOD_ID, priority = 1000)
 public final class VanillaRecipeEditorTypes implements IModModule {
     public static final String MOD_ID = "minecraft";
 

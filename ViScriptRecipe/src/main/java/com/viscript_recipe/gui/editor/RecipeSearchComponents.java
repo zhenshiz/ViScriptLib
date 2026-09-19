@@ -30,7 +30,7 @@ import java.util.stream.Collectors;
 
 public final class RecipeSearchComponents {
     private static final ResourceLocation DEFAULT_ENTITY_TAG = new ResourceLocation("undead");
-    private static final ResourceLocation DEFAULT_FLUID_TAG = new ResourceLocation("c", "water");
+    private static final ResourceLocation DEFAULT_FLUID_TAG = new ResourceLocation("forge", "water");
     private static final ResourceLocation DEFAULT_STRUCTURE_TAG = new ResourceLocation("village");
     private static final ResourceLocation DEFAULT_BIOME_TAG = new ResourceLocation("is_overworld");
     private static final ResourceLocation DEFAULT_DIMENSION_TYPE = new ResourceLocation("overworld");

@@ -105,7 +105,7 @@ subprojects {
             implementation "thedarkcolour:kotlinforforge:4.12.0"
             // LDLib2
             //implementation("com.lowdragmc.ldlib2:ldlib2-neoforge-${minecraft_version}:${ldlib2_version}:all")
-            modImplementation "curse.maven:lowdraglib2-unofficial-port-1641643:8587827"
+            implementation files('libs/ldlib2-forge-1.20.1-2.2.37-dev.jar')
 
             // 数据附件
 //            fabricDeps.forEach {modImplementation(it)}

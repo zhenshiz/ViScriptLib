@@ -20,7 +20,7 @@ public class FluidIngredientData implements ISkipDefaultedSerialize, IConfigurab
     @Persisted
     private FluidStack fluid = new FluidStack(Fluids.WATER, 1000);
     @Persisted
-    private ResourceLocation tag = new ResourceLocation("c", "milk");
+    private ResourceLocation tag = new ResourceLocation("forge", "milk");
     @Persisted
     private int amount = 1000;
 

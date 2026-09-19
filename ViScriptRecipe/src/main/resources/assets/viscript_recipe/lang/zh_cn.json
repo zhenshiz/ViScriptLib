@@ -1004,5 +1004,10 @@
   "viscript_recipe.editor.alloy_smelter.smelting_time": "%s ⌚/秒",
   "viscript_recipe.editor.alloy_smelter.fuel_per_tick": "%s 🔥/tick",
   "viscript_recipe.editor.alloy_smelter.tier": "熔炉等级：%s",
-  "viscript_recipe.editor.alloy_smelter.fuel_hint": "JEI 燃料示例（不会写入该配方）"
+  "viscript_recipe.editor.alloy_smelter.fuel_hint": "JEI 燃料示例（不会写入该配方）",
+
+  "viscript_recipe.editor.category.mekanism.gas_conversion": "物品到气体",
+  "viscript_recipe.editor.category.mekanism.infusion_conversion": "物品到灌注类型",
+  "viscript_recipe.editor.type.mekanism.gas_conversion": "通用机械：物品到气体",
+  "viscript_recipe.editor.type.mekanism.infusion_conversion": "通用机械：物品到灌注类型"
 }

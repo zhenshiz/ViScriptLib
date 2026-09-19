@@ -27,6 +27,3 @@ mandatory=true
 versionRange = "[${ldlib2_version},)"
 ordering = "NONE"
 side = "BOTH"
-
-[features.viscript_quests]
-openGLVersion = "[3.2,)"

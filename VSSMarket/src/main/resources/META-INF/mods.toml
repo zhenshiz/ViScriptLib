@@ -43,6 +43,3 @@ mandatory=true
 versionRange = "[${viscriptshop_version},)"
 ordering = "AFTER"
 side = "BOTH"
-
-[features.vss_market]
-openGLVersion = "[3.2,)"

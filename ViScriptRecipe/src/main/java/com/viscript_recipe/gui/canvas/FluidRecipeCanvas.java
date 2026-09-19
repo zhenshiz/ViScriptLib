@@ -65,7 +65,7 @@ public abstract class FluidRecipeCanvas<D extends IVSRecipeData> extends RecipeC
         var ingredient = getSelectedFluidInput();
         ingredient.setKind(kind);
         if (kind == FluidIngredientKind.TAG) {
-            if (ingredient.getTag() == null) ingredient.setTag(new ResourceLocation("c", "milk"));
+            if (ingredient.getTag() == null) ingredient.setTag(new ResourceLocation("forge", "milk"));
             if (ingredient.getAmount() <= 0) ingredient.setAmount(1000);
         }
         setSelectedFluidInput(ingredient);

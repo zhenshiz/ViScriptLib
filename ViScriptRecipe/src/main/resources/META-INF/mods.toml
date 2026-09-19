@@ -41,6 +41,3 @@ mandatory=false
 versionRange = "[6.0.8,)"
 ordering = "AFTER"
 side = "BOTH"
-
-[features.viscript_recipe]
-openGLVersion = "[3.2,)"

@@ -289,7 +289,7 @@ public class PropertiesView extends View {
     }
 
     public static ResourceLocation defaultFluidTag() {
-        return new ResourceLocation("c", "water");
+        return new ResourceLocation("forge", "water");
     }
 
     public static Block ingredientBlock(RecipeIngredient ingredient) {

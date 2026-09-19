@@ -1004,5 +1004,10 @@
   "viscript_recipe.editor.alloy_smelter.smelting_time": "%s ⌚/s",
   "viscript_recipe.editor.alloy_smelter.fuel_per_tick": "%s 🔥/tick",
   "viscript_recipe.editor.alloy_smelter.tier": "Forge Tier: %s",
-  "viscript_recipe.editor.alloy_smelter.fuel_hint": "JEI fuel example (not stored in this recipe)"
+  "viscript_recipe.editor.alloy_smelter.fuel_hint": "JEI fuel example (not stored in this recipe)",
+
+  "viscript_recipe.editor.category.mekanism.gas_conversion": "Gas Conversion",
+  "viscript_recipe.editor.category.mekanism.infusion_conversion": "Infusion Conversion",
+  "viscript_recipe.editor.type.mekanism.gas_conversion": "Mekanism: Gas Conversion",
+  "viscript_recipe.editor.type.mekanism.infusion_conversion": "Mekanism: Infusion Conversion"
 }
