@@ -1,0 +1,3 @@
+[submodule "ViScriptRecipe"]
+	path = ViScriptRecipe
+	url = https://github.com/zhenshiz/ViScriptRecipe.git
