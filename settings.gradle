@@ -13,5 +13,8 @@ plugins {
 rootProject.name = 'ViScript'
 
 include(':ViScriptLib')
+include(':ViScriptQuests')
 include(':ViScriptRecipe')
 include(':ViScriptShop')
+include(':ViScriptShop-Market')
+include(':ViScriptTeam')

@@ -4,3 +4,12 @@
 [submodule "ViScriptShop"]
 	path = ViScriptShop
 	url = https://github.com/zhenshiz/ViScriptShop.git
+[submodule "ViScriptTeam"]
+	path = ViScriptTeam
+	url = https://github.com/zhenshiz/ViScriptTeam.git
+[submodule "ViScriptShop-Market"]
+	path = ViScriptShop-Market
+	url = https://github.com/zhenshiz/ViScriptShop-Market.git
+[submodule "ViScriptQuests"]
+	path = ViScriptQuests
+	url = https://github.com/zhenshiz/ViScriptQuests.git
