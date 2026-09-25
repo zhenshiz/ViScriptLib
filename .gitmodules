@@ -1,3 +1,6 @@
 [submodule "ViScriptRecipe"]
 	path = ViScriptRecipe
 	url = https://github.com/zhenshiz/ViScriptRecipe.git
+[submodule "ViScriptShop"]
+	path = ViScriptShop
+	url = https://github.com/zhenshiz/ViScriptShop.git
