@@ -12,8 +12,8 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.levelgen.structure.BuiltinStructures;
 import net.minecraft.world.level.levelgen.structure.Structure;
-import net.neoforged.neoforge.server.ServerLifecycleHooks;
 
+import net.minecraftforge.server.ServerLifecycleHooks;
 import org.jetbrains.annotations.Nullable;
 import java.util.Comparator;
 import java.util.List;
@@ -56,8 +56,7 @@ public class StructureSearchBox extends RegistrySearchBox<ResourceKey<Structure>
             BuiltinStructures.RUINED_PORTAL_OCEAN,
             BuiltinStructures.RUINED_PORTAL_NETHER,
             BuiltinStructures.ANCIENT_CITY,
-            BuiltinStructures.TRAIL_RUINS,
-            BuiltinStructures.TRIAL_CHAMBERS
+            BuiltinStructures.TRAIL_RUINS
     );
 
     public StructureSearchBox() {

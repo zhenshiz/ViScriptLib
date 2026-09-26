@@ -4,11 +4,7 @@ import com.lowdragmc.lowdraglib2.gui.texture.ColorRectTexture;
 import com.lowdragmc.lowdraglib2.gui.ui.ModularUI;
 import com.lowdragmc.lowdraglib2.gui.ui.UI;
 import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
-import com.lowdragmc.lowdraglib2.gui.ui.data.Horizontal;
-import com.lowdragmc.lowdraglib2.gui.ui.data.ScrollDisplay;
-import com.lowdragmc.lowdraglib2.gui.ui.data.ScrollerMode;
-import com.lowdragmc.lowdraglib2.gui.ui.data.TextWrap;
-import com.lowdragmc.lowdraglib2.gui.ui.data.Vertical;
+import com.lowdragmc.lowdraglib2.gui.ui.data.*;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.Label;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.ScrollerView;
 import com.lowdragmc.lowdraglib2.gui.ui.styletemplate.Sprites;
@@ -133,6 +129,6 @@ public class DraggableUIScreenTest implements IScreenTest {
         if (order.isEmpty()) {
             return "Order: empty";
         }
-        return "Top: " + order.getFirst() + "    Bottom: " + order.getLast();
+        return "Top: " + order.get(0) + "    Bottom: " + order.get(order.size() - 1);
     }
 }

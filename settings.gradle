@@ -1,8 +1,9 @@
 pluginManagement {
     repositories {
-        mavenLocal()
+        maven { url "https://maven.fabricmc.net/" }
+        maven { url "https://maven.architectury.dev/" }
+        maven { url "https://files.minecraftforge.net/maven/" }
         gradlePluginPortal()
-        maven { url = 'https://maven.neoforged.net/releases' }
     }
 }
 
@@ -13,8 +14,9 @@ plugins {
 rootProject.name = 'ViScript'
 
 include(':ViScriptLib')
-include(':ViScriptQuests')
-include(':ViScriptRecipe')
 include(':ViScriptShop')
-include(':ViScriptShop-Market')
+include(':VSSMarket')
+
+include(':ViScriptRecipe')
 include(':ViScriptTeam')
+include(':ViScriptQuest')

@@ -8,36 +8,14 @@ import com.lowdragmc.lowdraglib2.gui.ui.data.ScrollDisplay;
 import com.lowdragmc.lowdraglib2.gui.ui.data.ScrollerMode;
 import com.lowdragmc.lowdraglib2.gui.ui.data.Vertical;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.Label;
-import com.lowdragmc.lowdraglib2.gui.ui.elements.SearchComponent;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.ScrollerView;
+import com.lowdragmc.lowdraglib2.gui.ui.elements.SearchComponent;
 import com.lowdragmc.lowdraglib2.gui.ui.styletemplate.Sprites;
 import com.lowdragmc.lowdraglib2.registry.RegistrationEnvironment;
 import com.lowdragmc.lowdraglib2.registry.annotation.LDLRegisterClient;
 import com.lowdragmc.lowdraglib2.test.ui.IScreenTest;
 import com.lowdragmc.lowdraglib2.utils.LocalizationUtils;
-import com.viscript_lib.gui.components.search.AttributeSearchBox;
-import com.viscript_lib.gui.components.search.BiomeSearchBox;
-import com.viscript_lib.gui.components.search.BiomeTagSearchBox;
-import com.viscript_lib.gui.components.search.BlockSearchBox;
-import com.viscript_lib.gui.components.search.BlockTagSearchBox;
-import com.viscript_lib.gui.components.search.DataPackFileSearchBox;
-import com.viscript_lib.gui.components.search.DamageTypeSearchBox;
-import com.viscript_lib.gui.components.search.DamageTypeTagSearchBox;
-import com.viscript_lib.gui.components.search.DimensionSearchBox;
-import com.viscript_lib.gui.components.search.EnchantmentSearchBox;
-import com.viscript_lib.gui.components.search.EnchantmentTagSearchBox;
-import com.viscript_lib.gui.components.search.EntityTypeSearchBox;
-import com.viscript_lib.gui.components.search.EntityTypeTagSearchBox;
-import com.viscript_lib.gui.components.search.FluidSearchBox;
-import com.viscript_lib.gui.components.search.FluidTagSearchBox;
-import com.viscript_lib.gui.components.search.ItemSearchBox;
-import com.viscript_lib.gui.components.search.ItemTagSearchBox;
-import com.viscript_lib.gui.components.search.MobEffectSearchBox;
-import com.viscript_lib.gui.components.search.ParticleTypeSearchBox;
-import com.viscript_lib.gui.components.search.ResourcePackFileSearchBox;
-import com.viscript_lib.gui.components.search.SoundEventSearchBox;
-import com.viscript_lib.gui.components.search.StructureSearchBox;
-import com.viscript_lib.gui.components.search.StructureTagSearchBox;
+import com.viscript_lib.gui.components.search.*;
 import lombok.NoArgsConstructor;
 import net.minecraft.core.Holder;
 import net.minecraft.core.particles.ParticleType;
@@ -45,18 +23,18 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.tags.TagKey;
-import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.entity.ai.attributes.Attribute;
-import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.damagesource.DamageType;
+import net.minecraft.world.effect.MobEffect;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.ai.attributes.Attribute;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.enchantment.Enchantment;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.levelgen.structure.Structure;
 import net.minecraft.world.level.material.Fluid;
 
@@ -251,13 +229,13 @@ public class SearchBoxScreenTest implements IScreenTest {
         enchantmentSearchBox.setOnValueChanged(enchantment -> updateEnchantmentLabels(selectedEnchantmentIdLabel, enchantmentDisplayNameLabel, enchantment));
 
         //附魔标签
-        var enchantmentTagSearchBox = new EnchantmentTagSearchBox();
+/*        var enchantmentTagSearchBox = new EnchantmentTagSearchBox();
         setupSearchBox(enchantmentTagSearchBox);
 
         var selectedEnchantmentTagIdLabel = createValueLabel();
         var selectedEnchantmentTagReferenceLabel = createValueLabel();
         updateEnchantmentTagLabels(selectedEnchantmentTagIdLabel, selectedEnchantmentTagReferenceLabel, enchantmentTagSearchBox.getValue());
-        enchantmentTagSearchBox.setOnValueChanged(tag -> updateEnchantmentTagLabels(selectedEnchantmentTagIdLabel, selectedEnchantmentTagReferenceLabel, tag));
+        enchantmentTagSearchBox.setOnValueChanged(tag -> updateEnchantmentTagLabels(selectedEnchantmentTagIdLabel, selectedEnchantmentTagReferenceLabel, tag));*/
 
         //状态效果
         var mobEffectSearchBox = new MobEffectSearchBox();
@@ -320,7 +298,7 @@ public class SearchBoxScreenTest implements IScreenTest {
                 createSection("SOUND_EVENT", soundEventSearchBox, selectedSoundEventIdLabel, soundEventLocationLabel),
                 createSection("PARTICLE_TYPE", particleTypeSearchBox, selectedParticleTypeIdLabel, particleTypeOverrideLimiterLabel),
                 createSection("ENCHANTMENT", enchantmentSearchBox, selectedEnchantmentIdLabel, enchantmentDisplayNameLabel),
-                createSection("ENCHANTMENT_TAG", enchantmentTagSearchBox, selectedEnchantmentTagIdLabel, selectedEnchantmentTagReferenceLabel),
+//                createSection("ENCHANTMENT_TAG", enchantmentTagSearchBox, selectedEnchantmentTagIdLabel, selectedEnchantmentTagReferenceLabel),
                 createSection("MOB_EFFECT", mobEffectSearchBox, selectedMobEffectIdLabel, mobEffectDisplayNameLabel),
                 createSection("DIMENSION", dimensionSearchBox, selectedDimensionIdLabel, selectedDimensionKeyLabel),
                 createSection("DATA_PACK_FILE", dataPackFileSearchBox, selectedDataPackFileIdLabel, dataPackFilePathPrefixLabel),
@@ -468,9 +446,9 @@ public class SearchBoxScreenTest implements IScreenTest {
         selectedTagReferenceLabel.setText(Component.literal("Tag Reference: " + EntityTypeTagSearchBox.getEntityTypeTagReferenceString(tag)));
     }
 
-    private static void updateAttributeLabels(Label selectedIdLabel, Label displayNameLabel, Holder<Attribute> attribute) {
+    private static void updateAttributeLabels(Label selectedIdLabel, Label displayNameLabel, Attribute attribute) {
         selectedIdLabel.setText(Component.literal("Attribute ID: " + AttributeSearchBox.getAttributeIdString(attribute)));
-        displayNameLabel.setText(Component.literal("Display Name: " + (attribute == null ? "" : LocalizationUtils.format(attribute.value().getDescriptionId()))));
+        displayNameLabel.setText(Component.literal("Display Name: " + (attribute == null ? "" : LocalizationUtils.format(attribute.getDescriptionId()))));
     }
 
     private static void updateSoundEventLabels(Label selectedIdLabel, Label soundLocationLabel, SoundEvent soundEvent) {
@@ -483,19 +461,19 @@ public class SearchBoxScreenTest implements IScreenTest {
         overrideLimiterLabel.setText(Component.literal("Override Limiter: " + ParticleTypeSearchBox.particleTypeOverridesLimiter(particleType)));
     }
 
-    private static void updateEnchantmentLabels(Label selectedIdLabel, Label displayNameLabel, Holder<Enchantment> enchantment) {
+    private static void updateEnchantmentLabels(Label selectedIdLabel, Label displayNameLabel, Enchantment enchantment) {
         selectedIdLabel.setText(Component.literal("Enchantment ID: " + EnchantmentSearchBox.getEnchantmentIdString(enchantment)));
-        displayNameLabel.setText(Component.literal("Display Name: " + (enchantment == null ? "" : enchantment.value().description().getString())));
+        displayNameLabel.setText(Component.literal("Display Name: " + (enchantment == null ? "" : enchantment.getDescriptionId())));
     }
 
-    private static void updateEnchantmentTagLabels(Label selectedTagIdLabel, Label selectedTagReferenceLabel, TagKey<Enchantment> tag) {
+/*    private static void updateEnchantmentTagLabels(Label selectedTagIdLabel, Label selectedTagReferenceLabel, TagKey<Enchantment> tag) {
         selectedTagIdLabel.setText(Component.literal("Tag ID: " + EnchantmentTagSearchBox.getEnchantmentTagIdString(tag)));
         selectedTagReferenceLabel.setText(Component.literal("Tag Reference: " + EnchantmentTagSearchBox.getEnchantmentTagReferenceString(tag)));
-    }
+    }*/
 
-    private static void updateMobEffectLabels(Label selectedIdLabel, Label displayNameLabel, Holder<MobEffect> mobEffect) {
+    private static void updateMobEffectLabels(Label selectedIdLabel, Label displayNameLabel, MobEffect mobEffect) {
         selectedIdLabel.setText(Component.literal("Mob Effect ID: " + MobEffectSearchBox.getMobEffectIdString(mobEffect)));
-        displayNameLabel.setText(Component.literal("Display Name: " + (mobEffect == null ? "" : mobEffect.value().getDisplayName().getString())));
+        displayNameLabel.setText(Component.literal("Display Name: " + (mobEffect == null ? "" : mobEffect.getDisplayName().getString())));
     }
 
     private static void updateDimensionLabels(Label selectedIdLabel, Label selectedKeyLabel, ResourceKey<Level> dimension) {

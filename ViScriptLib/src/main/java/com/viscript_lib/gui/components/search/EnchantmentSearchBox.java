@@ -4,10 +4,8 @@ import com.lowdragmc.lowdraglib2.gui.texture.IGuiTexture;
 import com.lowdragmc.lowdraglib2.gui.texture.ItemStackTexture;
 import com.lowdragmc.lowdraglib2.gui.ui.utils.UIElementProvider;
 import com.lowdragmc.lowdraglib2.utils.search.IResultHandler;
-import net.minecraft.client.Minecraft;
-import net.minecraft.core.Holder;
 import net.minecraft.core.Registry;
-import net.minecraft.core.registries.Registries;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.EnchantedBookItem;
@@ -21,7 +19,7 @@ import java.util.Comparator;
 /**
  * 附魔自动补全框，值类型为 {@code Holder<Enchantment>}。
  */
-public class EnchantmentSearchBox extends RegistrySearchBox<Holder<Enchantment>> {
+public class EnchantmentSearchBox extends RegistrySearchBox<Enchantment> {
 
     public EnchantmentSearchBox() {
         this(Enchantments.SHARPNESS);
@@ -31,7 +29,7 @@ public class EnchantmentSearchBox extends RegistrySearchBox<Holder<Enchantment>>
         this(getEnchantmentHolder(defaultValue));
     }
 
-    public EnchantmentSearchBox(@Nullable Holder<Enchantment> defaultValue) {
+    public EnchantmentSearchBox(@Nullable Enchantment defaultValue) {
         super(
                 defaultValue,
                 EnchantmentSearchBox::getEnchantmentRegistry,
@@ -40,7 +38,7 @@ public class EnchantmentSearchBox extends RegistrySearchBox<Holder<Enchantment>>
                 EnchantmentSearchBox::searchEnchantments,
                 UIElementProvider.iconText(
                         EnchantmentSearchBox::createEnchantmentIcon,
-                        enchantment -> enchantment.value().description()
+                        enchantment -> enchantment.getFullname(1)
                 )
         );
     }
@@ -55,55 +53,48 @@ public class EnchantmentSearchBox extends RegistrySearchBox<Holder<Enchantment>>
     }
 
     @Nullable
-    public static Holder.Reference<Enchantment> getEnchantmentHolder(ResourceKey<Enchantment> key) {
+    public static Enchantment getEnchantmentHolder(ResourceKey<Enchantment> key) {
         var registry = getEnchantmentRegistry();
-        return registry == null ? null : registry.getHolder(key).orElse(null);
+        return registry == null ? null : registry.get(key);
     }
 
     @Nullable
-    public static ResourceLocation getEnchantmentId(@Nullable Holder<Enchantment> enchantment) {
-        return enchantment == null ? null : enchantment.unwrapKey()
-                .map(ResourceKey::location)
-                .orElse(null);
+    public static ResourceLocation getEnchantmentId(@Nullable Enchantment enchantment) {
+        return enchantment == null ? null : getEnchantmentRegistry().getKey(enchantment);
     }
 
-    public static String getEnchantmentIdString(@Nullable Holder<Enchantment> enchantment) {
+    public static String getEnchantmentIdString(@Nullable Enchantment enchantment) {
         var id = getEnchantmentId(enchantment);
         return id == null ? "" : id.toString();
     }
 
-    @Nullable
     static Registry<Enchantment> getEnchantmentRegistry() {
-        var minecraft = Minecraft.getInstance();
-        if (minecraft.level == null) {
-            return null;
-        }
-        return minecraft.level.registryAccess().registry(Registries.ENCHANTMENT).orElse(null);
+        return BuiltInRegistries.ENCHANTMENT;
     }
 
-    static IGuiTexture createEnchantmentIcon(Holder<Enchantment> enchantment) {
+    static IGuiTexture createEnchantmentIcon(Enchantment enchantment) {
         return new ItemStackTexture(createEnchantedBook(enchantment));
     }
 
-    static net.minecraft.world.item.ItemStack createEnchantedBook(Holder<Enchantment> enchantment) {
+    static net.minecraft.world.item.ItemStack createEnchantedBook(Enchantment enchantment) {
         return EnchantedBookItem.createForEnchantment(new EnchantmentInstance(
                 enchantment,
-                Math.max(1, enchantment.value().getMaxLevel())
+                Math.max(1, enchantment.getMaxLevel())
         ));
     }
 
-    private static void searchEnchantments(String word, IResultHandler<Holder<Enchantment>> searchHandler) {
+    private static void searchEnchantments(String word, IResultHandler<Enchantment> searchHandler) {
         var registry = getEnchantmentRegistry();
         if (registry == null) {
             return;
         }
 
         var lowerWord = word.toLowerCase(java.util.Locale.ROOT);
-        registry.holders()
-                .sorted(Comparator.comparing(holder -> holder.key().location().toString()))
+        registry.stream()
+                .sorted(Comparator.comparing(holder -> registry.getKey(holder).toString()))
                 .takeWhile(holder -> !Thread.currentThread().isInterrupted())
-                .filter(holder -> matches(lowerWord, holder.key().location().toString())
-                        || matches(lowerWord, holder.value().description().getString()))
+                .filter(holder -> matches(lowerWord, registry.getKey(holder).toString())
+                        || matches(lowerWord, holder.getFullname(1).getString()))
                 .forEach(searchHandler::acceptResult);
     }
 }

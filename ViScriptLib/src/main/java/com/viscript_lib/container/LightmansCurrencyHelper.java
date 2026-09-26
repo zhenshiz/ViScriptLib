@@ -6,10 +6,8 @@ import com.viscript_lib.util.item.ItemStackCompareMode;
 import com.viscript_lib.util.item.ItemUtil;
 import io.github.lightman314.lightmanscurrency.LightmansCurrency;
 import io.github.lightman314.lightmanscurrency.api.money.coins.CoinAPI;
-import io.github.lightman314.lightmanscurrency.common.attachments.WalletHandler;
+import io.github.lightman314.lightmanscurrency.common.capability.wallet.WalletHandler;
 import io.github.lightman314.lightmanscurrency.common.items.WalletItem;
-import io.github.lightman314.lightmanscurrency.common.items.data.WalletDataWrapper;
-import net.minecraft.core.component.DataComponentType;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.Container;
 import net.minecraft.world.item.ItemStack;
@@ -28,19 +26,19 @@ public class LightmansCurrencyHelper implements IContainerHelper {
 
     @Override
     public long getItemStackCount(ServerPlayer player, ItemStack item,
-                                  ItemStackCompareMode compareMode,
-                                  List<DataComponentType<?>> components) {
+                                 ItemStackCompareMode compareMode,
+                                 List<String> components) {
         if (!CoinAPI.getApi().IsCoin(item, false)) {
-            return 0L;
+            return 0;
         }
 
-        WalletHandler walletHandler = WalletHandler.get(player);
+        WalletHandler walletHandler = new WalletHandler(player);
         ItemStack wallet = walletHandler.getWallet();
         if (!WalletItem.isWallet(wallet)) {
-            return 0L;
+            return 0;
         }
 
-        return ItemUtil.getItemCountByContainer(WalletItem.getDataWrapper(wallet).getContents(), item, compareMode, components);
+        return ItemUtil.getItemCountByContainer(WalletItem.getWalletInventory(wallet), item, compareMode, components);
     }
 
     @Override
@@ -50,24 +48,21 @@ public class LightmansCurrencyHelper implements IContainerHelper {
 
     @Override
     public long removeItemStackByCount(ServerPlayer player, ItemStack item, long count,
-                                       ItemStackCompareMode compareMode,
-                                       List<DataComponentType<?>> components) {
+                                      ItemStackCompareMode compareMode,
+                                      List<String> components) {
         count = Math.max(0L, count);
         if (!CoinAPI.getApi().IsCoin(item, false)) {
             return count;
         }
 
-        WalletHandler walletHandler = WalletHandler.get(player);
+        WalletHandler walletHandler = new WalletHandler(player);
         ItemStack wallet = walletHandler.getWallet();
         if (!WalletItem.isWallet(wallet)) {
             return count;
         }
 
-        WalletDataWrapper wrapper = WalletItem.getDataWrapper(wallet);
-        Container contents = wrapper.getContents();
+        Container contents = WalletItem.getWalletInventory(wallet);
         count = ItemUtil.removeItemByContainer(contents, item, count, compareMode, components);
-
-        wrapper.setContents(contents, player);
 
         return count;
     }

@@ -3,7 +3,6 @@ package com.viscript_lib.register;
 import com.lowdragmc.lowdraglib2.registry.ILDLRegister;
 import com.viscript_lib.ViScriptLib;
 import com.viscript_lib.util.item.ItemStackCompareMode;
-import net.minecraft.core.component.DataComponentType;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
@@ -29,12 +28,12 @@ public interface IContainerHelper extends ILDLRegister<IContainerHelper, Supplie
      * @param player 玩家
      * @param item 物品
      * @param compareMode 物品比较模式
-     * @param components 参与或排除比较的组件列表，语义由 compareMode 决定
+     * @param nbtKeys 参与或排除比较的nbt键列表，语义由 compareMode 决定
      * @return 该物品的数量
      */
     default long getItemStackCount(ServerPlayer player, ItemStack item,
-                                   ItemStackCompareMode compareMode,
-                                   List<DataComponentType<?>> components) {
+                                  ItemStackCompareMode compareMode,
+                                  List<String> nbtKeys) {
         return getItemStackCount(player, item);
     }
 
@@ -55,14 +54,15 @@ public interface IContainerHelper extends ILDLRegister<IContainerHelper, Supplie
      * @param item 物品
      * @param count 要删除的物品数量
      * @param compareMode 物品比较模式
-     * @param components 参与或排除比较的组件列表，语义由 compareMode 决定
+     * @param nbtKeys 参与或排除比较的nbt键列表，语义由 compareMode 决定
      * @return 删除后剩余的数量
      */
     default long removeItemStackByCount(ServerPlayer player, ItemStack item, long count,
-                                        ItemStackCompareMode compareMode,
-                                        List<DataComponentType<?>> components) {
+                                       ItemStackCompareMode compareMode,
+                                       List<String> nbtKeys) {
         return removeItemStackByCount(player, item, count);
     }
+
 
     /**
      * 判断该库存兼容是否可以作为一个显式的物品输出目标。

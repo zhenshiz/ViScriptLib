@@ -3,6 +3,7 @@ package com.viscript_lib.gui.components.search;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.SearchComponent;
 import com.lowdragmc.lowdraglib2.gui.ui.utils.UIElementProvider;
 import com.lowdragmc.lowdraglib2.utils.search.IResultHandler;
+import lombok.Getter;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.ResourceManager;
@@ -20,6 +21,7 @@ public class JsonFileSearchBox extends SearchComponent<ResourceLocation> {
     private static final String JSON_SUFFIX = ".json";
 
     private final Supplier<@Nullable ResourceManager> resourceManagerSupplier;
+    @Getter
     private String pathPrefix;
 
     public JsonFileSearchBox(String pathPrefix, Supplier<@Nullable ResourceManager> resourceManagerSupplier) {
@@ -41,10 +43,6 @@ public class JsonFileSearchBox extends SearchComponent<ResourceLocation> {
     public void show() {
         super.show();
         onSearchWordChanged("");
-    }
-
-    public String getPathPrefix() {
-        return pathPrefix;
     }
 
     public JsonFileSearchBox setPathPrefix(String pathPrefix) {
@@ -123,7 +121,7 @@ public class JsonFileSearchBox extends SearchComponent<ResourceLocation> {
 
     private static ResourceLocation stripJsonSuffix(ResourceLocation location) {
         var path = location.getPath();
-        return ResourceLocation.fromNamespaceAndPath(
+        return new ResourceLocation(
                 location.getNamespace(),
                 path.substring(0, path.length() - JSON_SUFFIX.length())
         );

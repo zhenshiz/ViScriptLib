@@ -2,15 +2,15 @@
   "required": true,
   "minVersion": "0.8",
   "package": "com.viscript_lib.mixin",
-  "compatibilityLevel": "JAVA_21",
+  "compatibilityLevel": "JAVA_17",
   "mixins": [
+    "EditorWindowAccessor",
+    "ItemStackAccessorClientMixin",
     "LDLibCommonProxyMixin",
     "PersistedParserMixin"
   ],
   "client": [
-    "EditorWindowAccessor",
-    "FtbLibraryClientMixin",
-    "ItemStackAccessorClientMixin"
+    "FtbLibraryClientMixin"
   ],
   "injectors": {
     "defaultRequire": 1

@@ -19,8 +19,7 @@ import net.minecraft.world.entity.player.Player;
         environment = RegistrationEnvironment.DEV_ONLY
 )
 public class DevProjectFileEditorMenuTest implements IMenuTest {
-    private static final ResourceLocation WINDOW_ID = ResourceLocation.fromNamespaceAndPath(
-            ViScriptLib.MOD_ID, "dev_project_file_editor");
+    private static final ResourceLocation WINDOW_ID = new ResourceLocation(ViScriptLib.MOD_ID, "dev_project_file_editor");
 
     @Override
     public ModularUI createUI(Player player) {

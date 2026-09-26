@@ -15,7 +15,7 @@ public class NbtHelper {
 
     public static String tagToString(Tag tag) {return tagToString(tag, true);}
     public static String tagToString(Tag tag, boolean toJson) {
-        var s = new TextComponentTagVisitor("  ").visit(tag).getString()
+        var s = new TextComponentTagVisitor("  ", 0).visit(tag).getString()
                 .replaceAll("[BIL];\\s*", ""); // 移除Byte, Int, Long数组的类型标签
         return toJson ? nbtToJson(s) : s;
     }

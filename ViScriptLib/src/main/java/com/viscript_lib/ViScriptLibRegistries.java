@@ -13,8 +13,8 @@ public class ViScriptLibRegistries {
 
     static {
         COMMANDS = AutoRegistry.LDLibRegister
-                .create(ResourceLocation.parse(ICommand.COMMAND_ID), ICommand.class, AutoRegistry::noArgsCreator);
+                .create(new ResourceLocation(ICommand.COMMAND_ID), ICommand.class, AutoRegistry::noArgsCreator);
         ContainerHelper = AutoRegistry.LDLibRegister
-                .create(ResourceLocation.parse(IContainerHelper.CONTAINER_HELPER_ID), IContainerHelper.class, AutoRegistry::noArgsCreator);
+                .create(new ResourceLocation(IContainerHelper.CONTAINER_HELPER_ID), IContainerHelper.class, AutoRegistry::noArgsCreator);
     }
 }

@@ -7,7 +7,7 @@ import org.spongepowered.asm.mixin.gen.Accessor;
 
 import java.util.Map;
 
-@Mixin(EditorWindow.class)
+@Mixin(value = EditorWindow.class, remap = false)
 public interface EditorWindowAccessor {
     @Accessor("MINIMIZED_WINDOWS")
     static Map<ResourceLocation, EditorWindow> viscript_lib$getMinimizedWindows() {

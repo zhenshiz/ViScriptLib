@@ -4,13 +4,13 @@ import com.lowdragmc.lowdraglib2.registry.annotation.LDLRegister;
 import com.viscript_lib.register.IContainerHelper;
 import com.viscript_lib.util.item.ItemStackCompareMode;
 import com.viscript_lib.util.item.ItemUtil;
+import com.viscript_lib.util.math.Clamp;
 import com.wintercogs.beyonddimensions.api.dimensionnet.DimensionsNet;
 import com.wintercogs.beyonddimensions.api.dimensionnet.UnifiedStorage;
 import com.wintercogs.beyonddimensions.api.ids.BDConstants;
 import com.wintercogs.beyonddimensions.api.storage.key.KeyAmount;
 import com.wintercogs.beyonddimensions.api.storage.key.impl.ItemStackKey;
 import com.wintercogs.beyonddimensions.common.init.BDItems;
-import net.minecraft.core.component.DataComponentType;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
@@ -30,14 +30,14 @@ public class BeyondDimensionsHelper implements IContainerHelper {
 
     @Override
     public long getItemStackCount(ServerPlayer player, ItemStack item,
-                                  ItemStackCompareMode compareMode,
-                                  List<DataComponentType<?>> components) {
+                                 ItemStackCompareMode compareMode,
+                                 List<String> components) {
         DimensionsNet net = DimensionsNet.getPrimaryNetFromPlayer(player);
         if (net != null) {
             UnifiedStorage storage = net.getUnifiedStorage();
             return getMatchingItemCount(storage, item, compareMode, components);
         }
-        return 0L;
+        return 0;
     }
 
     @Override
@@ -47,12 +47,11 @@ public class BeyondDimensionsHelper implements IContainerHelper {
 
     @Override
     public long removeItemStackByCount(ServerPlayer player, ItemStack item, long count,
-                                       ItemStackCompareMode compareMode,
-                                       List<DataComponentType<?>> components) {
-        count = Math.max(0L, count);
+                                      ItemStackCompareMode compareMode,
+                                      List<String> components) {
         DimensionsNet net = DimensionsNet.getPrimaryNetFromPlayer(player);
         if (net == null) return count;
-        if (count == 0L) return 0L;
+        if (count <= 0) return 0;
 
         var storage = net.getUnifiedStorage();
 
@@ -60,8 +59,8 @@ public class BeyondDimensionsHelper implements IContainerHelper {
     }
 
     private static long getMatchingItemCount(UnifiedStorage storage, ItemStack item,
-                                             ItemStackCompareMode compareMode,
-                                             List<DataComponentType<?>> components) {
+                                            ItemStackCompareMode compareMode,
+                                            List<String> components) {
         long count = 0L;
         for (KeyAmount keyAmount : storage.getStorage()) {
             Object stack = keyAmount.toStack();
@@ -73,8 +72,8 @@ public class BeyondDimensionsHelper implements IContainerHelper {
     }
 
     private static long removeMatchingItems(UnifiedStorage storage, ItemStack item, long count,
-                                            ItemStackCompareMode compareMode,
-                                            List<DataComponentType<?>> components) {
+                                           ItemStackCompareMode compareMode,
+                                           List<String> components) {
         long remain = count;
         // UnifiedStorage#getStorage 是基于内部 slotIndex 的视图，扣除时会改变它；先复制一份避免遍历中跳项。
         for (KeyAmount keyAmount : new ArrayList<>(storage.getStorage())) {
@@ -83,7 +82,7 @@ public class BeyondDimensionsHelper implements IContainerHelper {
             Object stack = keyAmount.toStack();
             if (stack instanceof ItemStack itemStack && ItemUtil.isSameItem(itemStack, item, compareMode, components)) {
                 KeyAmount extracted = storage.extract(keyAmount.key(), remain, false, false);
-                remain -= Math.clamp(extracted.amount(), 0L, remain);
+                remain -= Clamp.clamp(extracted.amount(), 0L, remain);
             }
         }
         return remain;
@@ -126,6 +125,6 @@ public class BeyondDimensionsHelper implements IContainerHelper {
                 count,
                 false
         );
-        return Math.clamp(remaining.amount(), 0L, count);
+        return Clamp.clamp(remaining.amount(), 0L, count);
     }
 }

@@ -1,28 +1,23 @@
 plugins {
-    id 'net.neoforged.moddev' version '2.0.82' apply false
+    id 'net.neoforged.moddev.legacyforge' version '2.0.141' apply false
     id 'io.freefair.lombok' version '8.6' apply false
-    id "dev.vfyjxf.modaccessor" version "1.1" apply false
 }
+
+/*var fabricDeps = [
+        "dev.su5ed.sinytra.fabric-api:fabric-data-attachment-api-v1:1.0.2+30ef839e77",
+        "dev.su5ed.sinytra.fabric-api:fabric-entity-events-v1:1.6.1+4ca7515277",
+        "dev.su5ed.sinytra.fabric-api:fabric-object-builder-api-v1:11.1.5+f8c414ce77",
+        "dev.su5ed.sinytra.fabric-api:fabric-api-base:0.4.32+ef105b4977"
+]*/
 
 subprojects {
     apply plugin: 'idea'
     apply plugin: 'java-library'
     apply plugin: 'maven-publish'
-    apply plugin: 'net.neoforged.moddev'
+    apply plugin: 'net.neoforged.moddev.legacyforge'
     apply plugin: 'io.freefair.lombok'
-    apply plugin: 'dev.vfyjxf.modaccessor'
 
-    configurations {
-        create("mixinAgent") {
-            canBeConsumed = false
-            canBeResolved = true
-            defaultDependencies {
-                add(dependencyFactory.create("dev.vfyjxf:mixin-hotswap-agent:1.1").setTransitive(false))
-            }
-        }
-    }
-
-    var dir = file(rootProject.projectDir as String + "/build/${project.name}")
+    var dir = new File(rootProject.projectDir as String + "/build/${project.name}")
     if (!dir.exists()) dir.mkdirs()
     buildDir dir
 
@@ -70,145 +65,99 @@ subprojects {
         }
 
         //cf
-        maven {
-            url "https://cursemaven.com"
-        }
+        maven { url "https://cursemaven.com" }
 
-        maven {
-            url "https://maven.sighs.cc/repository/maven-public/"
-        }
+        maven { url "https://maven.sighs.cc/repository/maven-public/" }
 
         maven {
             name = "Illusive Soulworks maven"
             url = "https://maven.theillusivec4.top/"
         }
+        // ffapi
+        maven { url "https://maven.su5ed.dev/releases" }
         maven {
-            name = "magicTeam MavenReleases"
-            url = "https://maven.confluence.ink/releases"
+            name = "Kotlin for Forge"
+            url = "https://thedarkcolour.github.io/KotlinForForge/"
         }
         maven {
-            name = "magicTeam MavenSnapshots"
-            url = "https://maven.confluence.ink/snapshots"
+            url = 'https://nikdo53.github.io'
         }
     }
 
     plugins.withId('java') {
-        java.toolchain.languageVersion = JavaLanguageVersion.of(21)
+        java.toolchain.languageVersion = JavaLanguageVersion.of(17)
     }
 
-    plugins.withId('net.neoforged.moddev') {
-        neoForge {
-            version = project.neo_version
+    plugins.withId('net.neoforged.moddev.legacyforge') {
+        legacyForge {
+            version = project.minecraft_version + '-' + project.forge_version
             parchment {
                 mappingsVersion = project.parchment_mappings_version
                 minecraftVersion = project.parchment_minecraft_version
             }
-
-            runs {
-                client {
-                    client()
-                    systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
-                    var file = file("runs/client")
-                    if (!file.exists()) file.mkdirs()
-                    setGameDirectory file
-                }
-
-                clinet2 {
-                    client()
-                    systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
-                    programArgument '--username'
-                    programArgument 'zhenshiz'
-                    var file = file("runs/client")
-                    if (!file.exists()) file.mkdirs()
-                    setGameDirectory file
-                }
-
-                server {
-                    server()
-                    systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
-                    var file = file("runs/server")
-                    if (!file.exists()) file.mkdirs()
-                    setGameDirectory file
-                }
-
-                configureEach {
-                    systemProperty 'forge.logging.markers', 'REGISTRIES'
-                    systemProperty 'terminal.jline', 'true'
-                    logLevel = org.slf4j.event.Level.DEBUG
-
-                    def files = project.configurations.mixinAgent.files
-                    if (!files.isEmpty()) {
-                        jvmArgument '-javaagent:' + files.first().toPath()
-                    }
-                    jvmArguments.addAll([
-                            // 忽略无效指令，避免有的人没安装 JetBrain Runtime 无法启动游戏
-                            '-XX:+IgnoreUnrecognizedVMOptions',
-                            // 启用 JetBrain Runtime 热重载功能
-                            '-XX:+AllowEnhancedClassRedefinition',
-                            '-XX:HotswapAgent=fatjar'
-                    ])
-                }
-            }
         }
 
         dependencies {
+            // Mixin
+            annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
+            compileOnly "io.github.llamalad7:mixinextras-common:0.5.4"
+            annotationProcessor "io.github.llamalad7:mixinextras-common:0.5.4"
+            // kotlin
+            implementation "thedarkcolour:kotlinforforge:4.12.0"
             // LDLib2
-            implementation("com.lowdragmc.ldlib2:ldlib2-neoforge-${minecraft_version}:${ldlib2_version}:all")
+            //implementation("com.lowdragmc.ldlib2:ldlib2-neoforge-${minecraft_version}:${ldlib2_version}:all")
+            implementation files('libs/ldlib2-forge-1.20.1-2.2.41.1-dev.jar')
+            // StreamCodec、数据附件
+            modImplementation "net.nikdo53:NeoBackports:1.4.2"
+            interfaceInjectionData "net.nikdo53:NeoBackports:1.4.2"
 
             //联动模组
             // KubeJS
-            implementation "dev.latvian.mods:rhino:${rhino_version}"
-            implementation "dev.latvian.mods:kubejs-neoforge:${kubejs_version}"
+            modCompileOnly "dev.latvian.mods:rhino-forge:${rhino_version}"
+            modCompileOnly "dev.latvian.mods:kubejs-forge:${kubejs_version}"
             //精妙背包
-            compileOnly "maven.modrinth:sophisticated-backpacks:${sophisticated_backpacks_version}"
-            compileOnly "maven.modrinth:sophisticated-core:${sophisticated_core_version}"
+            modCompileOnly "maven.modrinth:sophisticated-backpacks:${sophisticated_backpacks_version}"
+            modCompileOnly "maven.modrinth:sophisticated-core:${sophisticated_core_version}"
             //超越维度
-            compileOnly "curse.maven:beyond-dimensions-1222890:${beyonddimensions_version}"
+            modCompileOnly "curse.maven:beyond-dimensions-1222890:${beyonddimensions_version}"
             //Lightman's Currency
-            compileOnly "maven.modrinth:lightmans-currency:${lightmans_currency_version}"
-            //饰品栏
-            implementation "top.theillusivec4.curios:curios-neoforge:${curios_version}"
+            modCompileOnly "maven.modrinth:lightmans-currency:${lightmans_currency_version}"
             //汇流来世
-            implementation "maven.modrinth:confluence:${confluence_version}"
-            // Confluence's public recipe classes inherit these codecs; the modpack supplies it at runtime.
-            compileOnly files("libs/Confluence-Magic-Lib-0.0.8.jar")
-            compileOnly "org.confluence:TerraCurio:${terra_curio_version}"
-            compileOnly "org.confluence:TerraEntity:${terra_entity_version}"
+            modCompileOnly "top.theillusivec4.curios:curios-forge:${curios_version}"
+            /*modCompileOnly "org.confluence.lib:Confluence-Magic-Lib:${confluence_lib_version}"
+            modCompileOnly ("org.confluence.mod:ConfluenceOtherworld:${confluence_version}") {
+                transitive = false
+            }*/
+            modCompileOnly "maven.modrinth:terra-curio:${terra_curio_version}"
+            modCompileOnly "maven.modrinth:terra-entity:${terra_entity_version}"
             //Magic Coins
-            compileOnly "curse.maven:magic-coins-597281:${magic_coins_version}"
-            compileOnly "curse.maven:sg-economy-api-1446971:${sg_economy_api_version}"
+            // modCompileOnly "curse.maven:magic-coins-597281:${magic_coins_version}"
+            // modCompileOnly "curse.maven:sg-economy-api-1446971:${sg_economy_api_version}"
             //jech
-            compileOnly "curse.maven:just-enough-characters-250702:${jech_version}"
+            modImplementation "maven.modrinth:jei:${jei_version}"
+            modCompileOnly "curse.maven:just-enough-characters-250702:${jech_version}"
             //ftb
-            compileOnly "curse.maven:ftb-quests-forge-289412:7324136"
-            compileOnly "curse.maven:ftb-library-forge-404465:7312258"
-            compileOnly "curse.maven:ftb-teams-forge-404468:7369021"
-            compileOnly "curse.maven:architectury-api-419699:5786327"
+            modCompileOnly "curse.maven:ftb-quests-forge-289412:8078538"
+            modCompileOnly "curse.maven:ftb-library-forge-404465:8226927"
+            modCompileOnly "curse.maven:ftb-teams-forge-404468:7499810"
+            modCompileOnly "curse.maven:architectury-api-419699:5137938"
             //tacz
-            //compileOnly "maven.modrinth:tacz-1.21.1:${tacz_version}"
+            // modCompileOnly "maven.modrinth:timeless-and-classics-zero:${tacz_version}"
             //拔刀剑
-            //compileOnly "maven.modrinth:slashblade-resharped:${slashblade_resharped_version}"
+            // modCompileOnly "maven.modrinth:slashblade-resharped:${slashblade_resharped_version}"
 
             //must
-            runtimeOnly "maven.modrinth:sodium:${sodium_version}"
-            runtimeOnly "maven.modrinth:iris:${iris_version}"
-            runtimeOnly "maven.modrinth:lan-server-properties:${lsp_version}"
-            implementation "maven.modrinth:jei:${jei_version}"
-
-            //plugin
-            additionalRuntimeClasspath("dev.vfyjxf:mixin-hotswap-agent:1.1")
+            // modRuntimeOnly "maven.modrinth:embeddium:${sodium_version}"
+            // runtimeOnly "maven.modrinth:iris:${iris_version}"
+            // runtimeOnly "curse.maven:lan-server-properties-387365:${lsp_version}"
         }
     }
 
     tasks.withType(JavaCompile).configureEach {
         options.encoding = 'UTF-8' // Use the UTF-8 charset for Java compilation
     }
-
-    plugins.withId('dev.vfyjxf.modaccessor') {
-        modAccessor {
-            createTransformConfiguration(configurations.compileOnly)
-            accessTransformerFiles = project.files('src/main/resources/META-INF/accesstransformer.cfg')
-        }
+    tasks.withType(ProcessResources).configureEach {
+        duplicatesStrategy = DuplicatesStrategy.INCLUDE
     }
 
     plugins.withId('idea') {
@@ -221,11 +170,16 @@ subprojects {
     }
 }
 
+//configure(project(":ViScriptLib")) {
+//    plugins.withId('net.neoforged.moddev.legacyforge') {
+//    }
+//}
+
 tasks.register('buildAll', Copy) {
     group = 'build'
     description = '构建所有子项目，并把各子项目的 libs 产物复制到根项目的 build/libs'
     // 1. 先让所有子项目完成构建
-    dependsOn subprojects.collect {project -> project.tasks.matching { it.name == 'build' }}
+    dependsOn subprojects.collect {sub -> sub.tasks.matching { it.name == 'build' }}
     // 2. 复制配置
     duplicatesStrategy = DuplicatesStrategy.INCLUDE   // 遇到同名文件时覆盖而不是报错
     includeEmptyDirs = false
@@ -238,7 +192,12 @@ tasks.register('buildAll', Copy) {
 
 tasks.register('cleanLibs', Delete) {
     group = 'build'
-    description = '只删除所有子项目的构建目录下的 libs 文件夹'
+    description = '只删除所有子项目的构建目录下的 libs 和 devlibs 文件夹'
 
-    delete(subprojects.collect {project -> [ project.layout.buildDirectory.dir('libs').get().asFile ]})
+    delete(subprojects.collect { sub ->
+        [
+                sub.layout.buildDirectory.dir('libs').get().asFile,
+                sub.layout.buildDirectory.dir('devlibs').get().asFile
+        ]
+    })
 }

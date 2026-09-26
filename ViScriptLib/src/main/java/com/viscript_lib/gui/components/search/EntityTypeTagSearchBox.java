@@ -25,7 +25,7 @@ import java.util.Locale;
 public class EntityTypeTagSearchBox extends RegistrySearchBox<TagKey<EntityType<?>>> {
 
     public EntityTypeTagSearchBox() {
-        this(EntityTypeTags.UNDEAD);
+        this(EntityTypeTags.SKELETONS);
     }
 
     public EntityTypeTagSearchBox(TagKey<EntityType<?>> defaultValue) {

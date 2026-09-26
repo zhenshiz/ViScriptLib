@@ -4,20 +4,20 @@ import com.lowdragmc.lowdraglib2.registry.annotation.LDLRegister;
 import com.viscript_lib.register.IContainerHelper;
 import com.viscript_lib.util.item.ItemStackCompareMode;
 import com.viscript_lib.util.item.ItemUtil;
-import net.minecraft.core.component.DataComponentType;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
-import net.neoforged.neoforge.items.IItemHandler;
+import net.minecraftforge.items.IItemHandler;
 import net.p3pp3rf1y.sophisticatedbackpacks.SophisticatedBackpacks;
+import net.p3pp3rf1y.sophisticatedbackpacks.api.CapabilityBackpackWrapper;
 import net.p3pp3rf1y.sophisticatedbackpacks.backpack.BackpackStorage;
-import net.p3pp3rf1y.sophisticatedbackpacks.backpack.wrapper.BackpackWrapper;
 import net.p3pp3rf1y.sophisticatedbackpacks.backpack.wrapper.IBackpackWrapper;
 import net.p3pp3rf1y.sophisticatedbackpacks.common.gui.BackpackContext;
-import net.p3pp3rf1y.sophisticatedbackpacks.network.BackpackContentsPayload;
+import net.p3pp3rf1y.sophisticatedbackpacks.network.BackpackContentsMessage;
 import net.p3pp3rf1y.sophisticatedbackpacks.util.PlayerInventoryProvider;
 import net.p3pp3rf1y.sophisticatedcore.inventory.InventoryHandler;
+import net.p3pp3rf1y.sophisticatedcore.network.PacketHandler;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -36,8 +36,8 @@ public class SophisticatedBackpacksHelper implements IContainerHelper {
 
     @Override
     public long getItemStackCount(ServerPlayer player, ItemStack item,
-                                  ItemStackCompareMode compareMode,
-                                  List<DataComponentType<?>> components) {
+                                 ItemStackCompareMode compareMode,
+                                 List<String> components) {
         long count = 0L;
         for (ItemStack itemStack : getItemsFromInventoryBackpack(player)) {
             if (ItemUtil.isSameItem(itemStack, item, compareMode, components)) {
@@ -55,20 +55,20 @@ public class SophisticatedBackpacksHelper implements IContainerHelper {
 
     @Override
     public long removeItemStackByCount(ServerPlayer player, ItemStack item, long count,
-                                       ItemStackCompareMode compareMode,
-                                       List<DataComponentType<?>> components) {
-        if (count <= 0L) return 0L;
+                                      ItemStackCompareMode compareMode,
+                                      List<String> components) {
+        if (count <= 0) return 0;
 
         final long[] remain = {count};
         PlayerInventoryProvider.get().runOnBackpacks(player, (backpack, inventoryName, identifier, index) -> {
             final boolean[] changed = {false};
-            IBackpackWrapper wrapper = BackpackWrapper.fromStack(backpack);
+            IBackpackWrapper wrapper = fromStack(backpack);
             InventoryHandler inventoryHandler = wrapper.getInventoryHandler();
             for (int i = 0; i < inventoryHandler.getSlots(); i++) {
                 if (remain[0] <= 0) break;
                 ItemStack stackInSlot = inventoryHandler.getStackInSlot(i);
                 if (ItemUtil.isSameItem(stackInSlot, item, compareMode, components)) {
-                    int canRemove = (int) Math.min((long) stackInSlot.getCount(), remain[0]);
+                    int canRemove = (int) Math.min(stackInSlot.getCount(), remain[0]);
                     ItemStack removed = inventoryHandler.extractItem(i, canRemove, false);
                     remain[0] -= removed.getCount();
                     changed[0] |= !removed.isEmpty();
@@ -83,16 +83,19 @@ public class SophisticatedBackpacksHelper implements IContainerHelper {
         return remain[0];
     }
 
+    public static IBackpackWrapper fromStack(ItemStack backpack) {
+        return backpack.getCapability(CapabilityBackpackWrapper.getCapabilityInstance()).orElseGet(() -> IBackpackWrapper.Noop.INSTANCE);
+    }
+
     //获取玩家所有背包中所有的物品，不包括玩家物品栏
     public static List<ItemStack> getItemsFromInventoryBackpack(Player player) {
         List<ItemStack> items = new ArrayList<>();
         PlayerInventoryProvider.get().runOnBackpacks(player, (backpack, inventoryName, identifier, index) -> {
-            addHandlerItems(items, BackpackWrapper.fromStack(backpack).getInventoryHandler());
+            addHandlerItems(items, fromStack(backpack).getInventoryHandler());
             return false;
         });
         return items;
     }
-
 
     //获取玩家背包中所有的背包
     public static List<ItemStack> getAllInventoryBackpack(Player player) {
@@ -107,15 +110,15 @@ public class SophisticatedBackpacksHelper implements IContainerHelper {
     //获取背包中所有的物品
     public static List<ItemStack> getItemsFromBackpackItem(ItemStack itemStack) {
         List<ItemStack> items = new ArrayList<>();
-        BackpackWrapper.fromExistingData(itemStack)
-                .ifPresent(wrapper -> addHandlerItems(items, wrapper.getInventoryHandler()));
+        var wrapper = fromStack(itemStack);
+        addHandlerItems(items, wrapper.getInventoryHandler());
         return items;
     }
 
     public static void modifyInventoryBackpack(ServerPlayer player, ItemStack backpackItem, Consumer<IItemHandler> action) {
         PlayerInventoryProvider.get().runOnBackpacks(player, (backpack, inventoryName, identifier, index) -> {
-            if (!ItemStack.isSameItemSameComponents(backpack, backpackItem)) return false;
-            modifyBackpack(player, BackpackWrapper.fromStack(backpack), action);
+            if (!ItemStack.isSameItemSameTags(backpack, backpackItem)) return false;
+            modifyBackpack(player, fromStack(backpack), action);
             return false;
         });
     }
@@ -145,6 +148,6 @@ public class SophisticatedBackpacksHelper implements IContainerHelper {
         UUID uuid = wrapper.getContentsUuid().orElse(null);
         if (uuid == null) return;
         CompoundTag backpackContent = BackpackStorage.get().getOrCreateBackpackContents(uuid);
-        player.connection.send(new BackpackContentsPayload(uuid, backpackContent));
+        PacketHandler.INSTANCE.sendToClient(player, new BackpackContentsMessage(uuid, backpackContent));
     }
 }

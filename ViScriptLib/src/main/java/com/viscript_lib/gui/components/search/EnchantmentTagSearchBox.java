@@ -1,3 +1,4 @@
+package com.viscript_lib.gui.components.search;/*
 package com.viscript_lib.gui.components.search;
 
 import com.lowdragmc.lowdraglib2.gui.texture.IGuiTexture;
@@ -7,19 +8,16 @@ import com.lowdragmc.lowdraglib2.utils.search.IResultHandler;
 import net.minecraft.core.Holder;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.tags.EnchantmentTags;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.enchantment.Enchantment;
 
 import org.jetbrains.annotations.Nullable;
+
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Locale;
 
-/**
- * 附魔标签自动补全框，值类型为 {@code TagKey<Enchantment>}。
- */
 public class EnchantmentTagSearchBox extends RegistrySearchBox<TagKey<Enchantment>> {
 
     public EnchantmentTagSearchBox() {
@@ -101,3 +99,4 @@ public class EnchantmentTagSearchBox extends RegistrySearchBox<TagKey<Enchantmen
         return new ItemStackTexture(itemStacks.toArray(ItemStack[]::new));
     }
 }
+*/

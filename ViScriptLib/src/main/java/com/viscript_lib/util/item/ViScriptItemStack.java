@@ -1,39 +1,24 @@
 package com.viscript_lib.util.item;
 
-import com.lowdragmc.lowdraglib2.Platform;
+import com.lowdragmc.lowdraglib2.compat.network.codec.ByteBufCodecs;
 import com.mojang.datafixers.util.Pair;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.DynamicOps;
-import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.ChatFormatting;
-import net.minecraft.core.HolderLookup;
-import net.minecraft.core.component.DataComponentPatch;
-import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.NbtOps;
-import net.minecraft.nbt.Tag;
-import net.minecraft.network.RegistryFriendlyByteBuf;
-import net.minecraft.network.codec.ByteBufCodecs;
-import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.nbt.StringTag;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.RegistryOps;
-import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.util.ExtraCodecs;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
-import net.minecraft.world.item.component.ItemLore;
+import net.nikdo53.neobackports.io.StreamCodec;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.Deque;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.function.Consumer;
 
@@ -54,29 +39,8 @@ import java.util.function.Consumer;
  * {@link #toItemStack()} 取得独立副本。
  */
 public final class ViScriptItemStack {
-    private static final ResourceLocation ENCHANTMENTS_COMPONENT_ID =
-            ResourceLocation.withDefaultNamespace("enchantments");
-    private static final ResourceLocation STORED_ENCHANTMENTS_COMPONENT_ID =
-            ResourceLocation.withDefaultNamespace("stored_enchantments");
     private static final ThreadLocal<Deque<Consumer<UnavailableItem>>> UNAVAILABLE_ITEM_LISTENERS =
             new ThreadLocal<>();
-    private static final Codec<ItemStack> UNBOUNDED_STACK_CODEC = Codec.lazyInitialized(
-            () -> RecordCodecBuilder.create(instance -> instance.group(
-                    ItemStack.ITEM_NON_AIR_CODEC.fieldOf("id").forGetter(ItemStack::getItemHolder),
-                    ExtraCodecs.intRange(1, Integer.MAX_VALUE)
-                            .fieldOf("count")
-                            .orElse(1)
-                            .forGetter(ItemStack::getCount),
-                    DataComponentPatch.CODEC
-                            .optionalFieldOf("components", DataComponentPatch.EMPTY)
-                            .forGetter(ItemStack::getComponentsPatch)
-            ).apply(instance, ItemStack::new))
-    );
-    private static final Codec<ItemStack> OPTIONAL_UNBOUNDED_STACK_CODEC =
-            ExtraCodecs.optionalEmptyMap(UNBOUNDED_STACK_CODEC).xmap(
-                    optional -> optional.orElse(ItemStack.EMPTY),
-                    stack -> stack.isEmpty() ? Optional.empty() : Optional.of(stack)
-            );
 
     /**
      * 使用无损不可解析物品回退和无界正整数数量的物品栈 Codec。
@@ -89,36 +53,34 @@ public final class ViScriptItemStack {
                 var idValue = map.get().get("id");
                 if (idValue != null) {
                     var idResult = ResourceLocation.CODEC.parse(ops, idValue);
-                    if (idResult.isError()) {
+                    if (idResult.error().isPresent()) {
                         return idResult.map(id -> Pair.of(new ViScriptItemStack(), ops.empty()));
                     }
 
                     var itemId = idResult.result().orElseThrow();
-                    var countResult = decodeCount(ops, map.get().get("count"));
-                    if (countResult.isError()) {
+                    var countResult = decodeCount(ops, map.get().get("Count"));
+                    if (countResult.error().isPresent()) {
                         return countResult.map(count -> Pair.of(new ViScriptItemStack(), ops.empty()));
                     }
-                    var count = countResult.result().orElseThrow();
                     if (!BuiltInRegistries.ITEM.containsKey(itemId)) {
                         return decodeUnavailableStack(
                                 ops,
                                 input,
                                 itemId,
-                                count,
                                 "Unknown item: " + itemId,
                                 new UnavailableCause(UnavailableCauseType.MISSING_ITEM, itemId)
                         );
                     }
 
                     var decoded = decodeKnownStack(ops, input);
-                    if (decoded.isSuccess()) {
+                    if (decoded.result().isPresent()) {
                         return decoded.map(pair -> pair.mapFirst(ViScriptItemStack::new));
                     }
 
                     var decodeError = decoded.error()
-                            .map(DataResult.Error::message)
+                            .map(DataResult.PartialResult::message)
                             .orElse("Unknown item stack decode error");
-                    return decodeUnavailableStack(ops, input, itemId, count, decodeError, null);
+                    return decodeUnavailableStack(ops, input, itemId, decodeError, null);
                 }
             }
 
@@ -145,8 +107,7 @@ public final class ViScriptItemStack {
     /**
      * 使用 {@link #CODEC} 在注册表友好缓冲区中传输物品栈的流 Codec。
      */
-    public static final StreamCodec<RegistryFriendlyByteBuf, ViScriptItemStack> STREAM_CODEC =
-            ByteBufCodecs.fromCodecWithRegistriesTrusted(CODEC);
+    public static final StreamCodec<ViScriptItemStack> STREAM_CODEC = ByteBufCodecs.fromCodec(CODEC);
 
     private ItemStack itemStack;
     @Nullable
@@ -224,7 +185,7 @@ public final class ViScriptItemStack {
      * @throws Exception 操作抛出的异常
      * @deprecated 使用 {@link #withUnavailableItemListener(Consumer, Callable)} 获取错误原因。
      */
-    @Deprecated(forRemoval = false)
+    @Deprecated
     public static <T> T withMissingItemListener(Consumer<ResourceLocation> listener,
                                                 Callable<T> operation) throws Exception {
         Objects.requireNonNull(listener, "listener");
@@ -265,9 +226,8 @@ public final class ViScriptItemStack {
         }
 
         var placeholder = itemStack.copy();
-        placeholder.setCount(count);
         var serialized = unresolvedSerializedStack.copy();
-        serialized.putInt("count", count);
+        serialized.putInt("Count", count);
         return new ViScriptItemStack(placeholder, serializedItemId, serialized, unavailability);
     }
 
@@ -286,7 +246,7 @@ public final class ViScriptItemStack {
      * @return 已保留不可解析物品原始数据时返回 {@code true}
      * @deprecated 使用 {@link #isUnavailable()}，当前问题也可能来自缺失或不兼容的组件。
      */
-    @Deprecated(forRemoval = false)
+    @Deprecated
     public boolean isMissingItem() {
         return isUnavailable();
     }
@@ -335,141 +295,27 @@ public final class ViScriptItemStack {
         return countValue == null
                 ? DataResult.success(1)
                 : Codec.INT.parse(ops, countValue)
-                .flatMap(count -> count > 0
+                .flatMap(count -> count >= 0
                         ? DataResult.success(count)
-                        : DataResult.error(() -> "Item count must be positive: " + count));
+                        : DataResult.error(() -> "Item count must be non-negative: " + count));
     }
 
     private static <T> DataResult<Pair<ViScriptItemStack, T>> decodeUnavailableStack(
-            DynamicOps<T> ops, T input, ResourceLocation itemId, int count, String decodeError,
+            DynamicOps<T> ops, T input, ResourceLocation itemId, String decodeError,
             @Nullable UnavailableCause knownCause) {
         var serialized = ops.convertTo(NbtOps.INSTANCE, input);
         if (!(serialized instanceof CompoundTag compoundTag)) {
             return DataResult.error(() -> "Unavailable item stack must be encoded as a map");
         }
 
-        var causes = knownCause == null
-                ? detectUnavailableCauses(ops, compoundTag)
-                : List.of(knownCause);
+        var causes = knownCause == null ? List.of(new UnavailableCause[0]) : List.of(knownCause);
         var unavailableItem = new UnavailableItem(itemId, causes, decodeError);
         notifyUnavailableItem(unavailableItem);
         var placeholder = createBarrierPlaceholder(unavailableItem);
-        placeholder.setCount(count);
         return DataResult.success(Pair.of(
                 new ViScriptItemStack(placeholder, itemId, compoundTag.copy(), unavailableItem),
                 ops.empty()
         ));
-    }
-
-    private static List<UnavailableCause> detectUnavailableCauses(
-            DynamicOps<?> ops, CompoundTag serializedStack) {
-        if (!(serializedStack.get("components") instanceof CompoundTag components)) {
-            return List.of();
-        }
-
-        var causes = new ArrayList<UnavailableCause>();
-        for (var serializedComponentKey : components.getAllKeys()) {
-            var componentKey = serializedComponentKey.startsWith("!")
-                    ? serializedComponentKey.substring(1)
-                    : serializedComponentKey;
-            var componentId = ResourceLocation.tryParse(componentKey);
-            if (componentId == null) {
-                continue;
-            }
-            if (!BuiltInRegistries.DATA_COMPONENT_TYPE.containsKey(componentId)) {
-                addCause(causes, new UnavailableCause(
-                        UnavailableCauseType.MISSING_COMPONENT,
-                        componentId
-                ));
-                continue;
-            }
-            if (!serializedComponentKey.startsWith("!")
-                    && (componentId.equals(ENCHANTMENTS_COMPONENT_ID)
-                    || componentId.equals(STORED_ENCHANTMENTS_COMPONENT_ID))) {
-                detectMissingEnchantments(ops, components.get(serializedComponentKey), causes);
-            }
-        }
-        return List.copyOf(causes);
-    }
-
-    private static void detectMissingEnchantments(
-            DynamicOps<?> ops, @Nullable Tag serializedEnchantments,
-            List<UnavailableCause> causes) {
-        if (!(serializedEnchantments instanceof CompoundTag enchantments)) {
-            return;
-        }
-
-        CompoundTag levels;
-        var serializedLevels = enchantments.get("levels");
-        if (serializedLevels instanceof CompoundTag levelMap) {
-            levels = levelMap;
-        } else if (serializedLevels == null) {
-            levels = enchantments;
-        } else {
-            return;
-        }
-
-        for (var enchantmentKey : levels.getAllKeys()) {
-            if (enchantmentKey.equals("show_in_tooltip")) {
-                continue;
-            }
-            var enchantmentId = ResourceLocation.tryParse(enchantmentKey);
-            if (enchantmentId != null
-                    && !isEnchantmentRegistered(ops, enchantmentId).orElse(true)) {
-                addCause(causes, new UnavailableCause(
-                        UnavailableCauseType.MISSING_ENCHANTMENT,
-                        enchantmentId
-                ));
-            }
-        }
-    }
-
-    private static Optional<Boolean> isEnchantmentRegistered(
-            DynamicOps<?> ops, ResourceLocation enchantmentId) {
-        if (ops instanceof RegistryOps<?> registryOps) {
-            var result = findEnchantment(registryOps.lookupProvider, enchantmentId);
-            if (result.isPresent()) {
-                return result;
-            }
-        }
-
-        try {
-            var result = findEnchantment(Platform.getClientRegistryAccess(), enchantmentId);
-            if (result.isPresent()) {
-                return result;
-            }
-        } catch (RuntimeException ignored) {
-        }
-
-        try {
-            return findEnchantment(Platform.getServerRegistryAccess(), enchantmentId);
-        } catch (RuntimeException ignored) {
-            return Optional.empty();
-        }
-    }
-
-    private static Optional<Boolean> findEnchantment(
-            RegistryOps.RegistryInfoLookup registryLookup, ResourceLocation enchantmentId) {
-        return registryLookup.lookup(Registries.ENCHANTMENT)
-                .map(info -> info.getter().get(ResourceKey.create(
-                        Registries.ENCHANTMENT,
-                        enchantmentId
-                )).isPresent());
-    }
-
-    private static Optional<Boolean> findEnchantment(
-            HolderLookup.Provider registries, ResourceLocation enchantmentId) {
-        return registries.lookup(Registries.ENCHANTMENT)
-                .map(lookup -> lookup.get(ResourceKey.create(
-                        Registries.ENCHANTMENT,
-                        enchantmentId
-                )).isPresent());
-    }
-
-    private static void addCause(List<UnavailableCause> causes, UnavailableCause cause) {
-        if (!causes.contains(cause)) {
-            causes.add(cause);
-        }
     }
 
     private static void notifyUnavailableItem(UnavailableItem unavailableItem) {
@@ -481,39 +327,47 @@ public final class ViScriptItemStack {
 
     private static ItemStack createBarrierPlaceholder(UnavailableItem unavailableItem) {
         var placeholder = new ItemStack(Items.BARRIER);
-        placeholder.set(DataComponents.CUSTOM_NAME, createPlaceholderName(unavailableItem));
+        placeholder.setHoverName(createPlaceholderName(unavailableItem));
 
-        var lore = new ArrayList<Component>();
+        CompoundTag tag = ItemUtil.getNbt(placeholder);
+        CompoundTag display = tag.getCompound("display");
+        ListTag lore = new ListTag();
         var primaryCause = unavailableItem.primaryCause();
         if (primaryCause.isPresent()
                 && primaryCause.get().type() != UnavailableCauseType.MISSING_ITEM) {
-            lore.add(styleLore(Component.translatable(
+            lore.add(fromComponent(styleLore(Component.translatable(
                     "viscript_lib.unavailable_item.placeholder_lore.original_item",
                     unavailableItem.itemId().toString()
-            ), ChatFormatting.GRAY));
+            ), ChatFormatting.GRAY)));
         }
 
         if (unavailableItem.causes().isEmpty()) {
-            lore.add(styleLore(Component.translatable(
+            lore.add(fromComponent(styleLore(Component.translatable(
                     "viscript_lib.unavailable_item.placeholder_lore.decode_error"
-            ), ChatFormatting.RED));
+            ), ChatFormatting.RED)));
         } else {
             for (int index = 0; index < unavailableItem.causes().size(); index++) {
                 var cause = unavailableItem.causes().get(index);
                 if (index > 0) {
-                    lore.add(styleLore(createCauseDescription(cause), ChatFormatting.RED));
+                    lore.add(fromComponent(styleLore(createCauseDescription(cause), ChatFormatting.RED)));
                 }
-                lore.add(styleLore(Component.translatable(
+                lore.add(fromComponent(styleLore(Component.translatable(
                         "viscript_lib.unavailable_item.placeholder_lore.mod_namespace",
                         cause.sourceNamespace()
-                ), ChatFormatting.RED));
+                ), ChatFormatting.RED)));
             }
         }
-        lore.add(styleLore(Component.translatable(
+        lore.add(fromComponent(styleLore(Component.translatable(
                 "viscript_lib.unavailable_item.placeholder_restore_lore"
-        ), ChatFormatting.GRAY));
-        placeholder.set(DataComponents.LORE, new ItemLore(lore));
+        ), ChatFormatting.GRAY)));
+        display.put("Lore", lore);
+        tag.put("display", display);
+        placeholder.setTag(tag);
         return placeholder;
+    }
+
+    public static StringTag fromComponent(Component component) {
+        return StringTag.valueOf(Component.Serializer.toJson(component));
     }
 
     private static Component createPlaceholderName(UnavailableItem unavailableItem) {
@@ -601,8 +455,7 @@ public final class ViScriptItemStack {
      * @param causes 明确识别出的缺失注册表引用；无法分类时为空列表
      * @param decodeError 完整物品 Codec 返回的错误
      */
-    public record UnavailableItem(ResourceLocation itemId, List<UnavailableCause> causes,
-                                  String decodeError) {
+    public record UnavailableItem(ResourceLocation itemId, List<UnavailableCause> causes, String decodeError) {
         public UnavailableItem {
             Objects.requireNonNull(itemId, "itemId");
             causes = List.copyOf(Objects.requireNonNull(causes, "causes"));
@@ -625,7 +478,7 @@ public final class ViScriptItemStack {
          * @return 首个不可用原因；仅有通用 Codec 错误时为空
          */
         public Optional<UnavailableCause> primaryCause() {
-            return causes.isEmpty() ? Optional.empty() : Optional.of(causes.getFirst());
+            return causes.isEmpty() ? Optional.empty() : Optional.of(causes.get(0));
         }
 
         /**
@@ -642,56 +495,10 @@ public final class ViScriptItemStack {
     }
 
     private static <T> DataResult<Pair<ItemStack, T>> decodeKnownStack(DynamicOps<T> ops, T input) {
-        var primaryResult = OPTIONAL_UNBOUNDED_STACK_CODEC.decode(ops, input);
-        if (primaryResult.isSuccess()) {
-            return primaryResult;
-        }
-
-        try {
-            var clientResult = OPTIONAL_UNBOUNDED_STACK_CODEC.decode(
-                    Platform.getClientRegistryAccess().createSerializationContext(ops), input);
-            if (clientResult.isSuccess()) {
-                return clientResult;
-            }
-        } catch (RuntimeException ignored) {
-        }
-
-        try {
-            var serverResult = OPTIONAL_UNBOUNDED_STACK_CODEC.decode(
-                    Platform.getServerRegistryAccess().createSerializationContext(ops), input);
-            if (serverResult.isSuccess()) {
-                return serverResult;
-            }
-        } catch (RuntimeException ignored) {
-        }
-
-        return primaryResult;
+        return ItemStack.CODEC.decode(ops, input);
     }
 
     private static <T> DataResult<T> encodeKnownStack(ItemStack stack, DynamicOps<T> ops, T prefix) {
-        var primaryResult = OPTIONAL_UNBOUNDED_STACK_CODEC.encode(stack, ops, prefix);
-        if (primaryResult.isSuccess()) {
-            return primaryResult;
-        }
-
-        try {
-            var clientResult = OPTIONAL_UNBOUNDED_STACK_CODEC.encode(
-                    stack, Platform.getClientRegistryAccess().createSerializationContext(ops), prefix);
-            if (clientResult.isSuccess()) {
-                return clientResult;
-            }
-        } catch (RuntimeException ignored) {
-        }
-
-        try {
-            var serverResult = OPTIONAL_UNBOUNDED_STACK_CODEC.encode(
-                    stack, Platform.getServerRegistryAccess().createSerializationContext(ops), prefix);
-            if (serverResult.isSuccess()) {
-                return serverResult;
-            }
-        } catch (RuntimeException ignored) {
-        }
-
-        return primaryResult;
+        return ItemStack.CODEC.encode(stack, ops, prefix);
     }
 }

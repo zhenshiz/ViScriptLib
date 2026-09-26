@@ -1,25 +1,23 @@
 package com.viscript_lib.util.item;
 
-import com.lowdragmc.lowdraglib2.registry.AutoRegistry;
-import com.lowdragmc.lowdraglib2.registry.annotation.LDLRegister;
 import com.viscript_lib.ViScriptLibRegistries;
 import com.viscript_lib.register.IContainerHelper;
-import net.minecraft.core.component.DataComponentType;
+import com.viscript_lib.util.math.Clamp;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.Container;
 import net.minecraft.world.item.ItemStack;
-import net.neoforged.neoforge.items.IItemHandler;
-import net.neoforged.neoforge.items.ItemHandlerHelper;
+import net.minecraftforge.items.IItemHandler;
+import net.minecraftforge.items.ItemHandlerHelper;
 
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
-import java.util.function.Supplier;
 
 public class ItemUtil {
     //删除玩家物品，兼容背包，精妙背包，超越维度等库存模组
-    public static long removeItemForPlayer(ServerPlayer player, ItemStack itemStack, long count) {
+    public static long removeItemForPlayer(ServerPlayer player, ItemStack itemStack, int count) {
         return removeItemForPlayer(player, itemStack, count, ItemStackCompareMode.ALL_COMPONENTS, List.of());
     }
 
@@ -34,22 +32,15 @@ public class ItemUtil {
      * @return 未能删除的剩余数量
      */
     public static long removeItemForPlayer(ServerPlayer player, ItemStack itemStack, long count,
-                                            ItemStackCompareMode compareMode,
-                                            List<DataComponentType<?>> components) {
+                                           ItemStackCompareMode compareMode,
+                                           List<String> components) {
         count = Math.max(0L, count);
         if (player == null) return count;
-
-        for (AutoRegistry.Holder<LDLRegister, IContainerHelper, Supplier<IContainerHelper>> containerHelperSupplierHolder : ViScriptLibRegistries.ContainerHelper) {
+        for (var containerHelperSupplierHolder : ViScriptLibRegistries.ContainerHelper) {
             IContainerHelper iContainerHelper = containerHelperSupplierHolder.value().get();
             if (count > 0) {
                 try {
-                    long remaining = iContainerHelper.removeItemStackByCount(
-                            player,
-                            itemStack,
-                            count,
-                            compareMode,
-                            components
-                    );
+                    long remaining = iContainerHelper.removeItemStackByCount(player, itemStack, count, compareMode, components);
                     count = clampRemaining(remaining, count);
                 } catch (Throwable ignored) {
                 }
@@ -73,17 +64,14 @@ public class ItemUtil {
      * @return 玩家持有的匹配物品数量
      */
     public static long getItemForPlayerCount(ServerPlayer player, ItemStack item,
-                                             ItemStackCompareMode compareMode,
-                                             List<DataComponentType<?>> components) {
+                                            ItemStackCompareMode compareMode,
+                                            List<String> components) {
         long count = 0L;
         if (player != null) {
-            for (AutoRegistry.Holder<LDLRegister, IContainerHelper, Supplier<IContainerHelper>> containerHelperSupplierHolder : ViScriptLibRegistries.ContainerHelper) {
+            for (var containerHelperSupplierHolder : ViScriptLibRegistries.ContainerHelper) {
                 IContainerHelper iContainerHelper = containerHelperSupplierHolder.value().get();
                 try {
-                    count = saturatedAdd(
-                            count,
-                            iContainerHelper.getItemStackCount(player, item, compareMode, components)
-                    );
+                    count = saturatedAdd(count, iContainerHelper.getItemStackCount(player, item, compareMode, components));
                 } catch (Throwable ignored) {
                 }
             }
@@ -112,8 +100,8 @@ public class ItemUtil {
      * @return 该物品在背包里的数量
      */
     public static long getItemCountByContainer(Container container, ItemStack item,
-                                               ItemStackCompareMode compareMode,
-                                               List<DataComponentType<?>> components) {
+                                              ItemStackCompareMode compareMode,
+                                              List<String> components) {
         long count = 0L;
         for (int i = 0; i < container.getContainerSize(); i++) {
             ItemStack stack = container.getItem(i);
@@ -149,7 +137,7 @@ public class ItemUtil {
      */
     public static long removeItemByContainer(Container container, ItemStack item, long count,
                                              ItemStackCompareMode compareMode,
-                                             List<DataComponentType<?>> components) {
+                                             List<String> components) {
         count = Math.max(0L, count);
         boolean changed = false;
         for (int i = 0; i < container.getContainerSize(); i++) {
@@ -157,7 +145,7 @@ public class ItemUtil {
 
             ItemStack stack = container.getItem(i);
             if (isSameItem(stack, item, compareMode, components)) {
-                int toRemove = (int) Math.min(count, (long) stack.getCount());
+                int toRemove = (int) Math.min(count, stack.getCount());
                 stack.shrink(toRemove);
                 count -= toRemove;
                 changed |= toRemove > 0;
@@ -192,13 +180,13 @@ public class ItemUtil {
         int batchLimit = Math.max(1, template.getMaxStackSize());
         long remaining = count;
         while (remaining > 0L) {
-            int batch = (int) Math.min(remaining, (long) batchLimit);
+            int batch = (int) Math.min(remaining, batchLimit);
             ItemStack remainder = ItemHandlerHelper.insertItemStacked(
                     handler,
                     template.copyWithCount(batch),
                     false
             );
-            int rejected = remainder == null ? batch : Math.clamp(remainder.getCount(), 0, batch);
+            int rejected = Clamp.clamp(remainder.getCount(), 0, batch);
             int inserted = batch - rejected;
             if (inserted <= 0) break;
             remaining -= inserted;
@@ -223,7 +211,7 @@ public class ItemUtil {
     }
 
     private static long clampRemaining(long remaining, long requested) {
-        return Math.clamp(remaining, 0L, requested);
+        return Clamp.clamp(remaining, 0L, requested);
     }
 
     /**
@@ -237,7 +225,7 @@ public class ItemUtil {
      */
     public static boolean isSameItem(ItemStack itemA, ItemStack itemB,
                                      ItemStackCompareMode compareMode,
-                                     List<DataComponentType<?>> components) {
+                                     List<String> components) {
         ItemStackCompareMode mode = compareMode == null ? ItemStackCompareMode.ALL_COMPONENTS : compareMode;
         return switch (mode) {
             case ALL_COMPONENTS -> isSameItemWithAllComponents(itemA, itemB);
@@ -258,17 +246,17 @@ public class ItemUtil {
      * @return 物品类型相同，且未排除的组件都相同时返回 <code>true</code>
      */
     public static boolean isSameItemExcludingComponents(ItemStack itemA, ItemStack itemB,
-                                                        List<DataComponentType<?>> excludedComponents) {
+                                                        List<String> excludedComponents) {
         if (shouldFailItemComparison(itemA, itemB)) {
             return false;
         }
 
-        Set<DataComponentType<?>> excluded = toComponentSet(excludedComponents);
-        Set<DataComponentType<?>> componentTypes = new HashSet<>(itemA.getComponents().keySet());
-        componentTypes.addAll(itemB.getComponents().keySet());
+        Set<String> excluded = toComponentSet(excludedComponents);
+        Set<String> componentTypes = getNbt(itemA).getAllKeys();
+        componentTypes.addAll(getNbt(itemB).getAllKeys());
 
-        for (DataComponentType<?> component : componentTypes) {
-            if (!excluded.contains(component) && !Objects.equals(itemA.get(component), itemB.get(component))) {
+        for (String component : componentTypes) {
+            if (!excluded.contains(component) && !Objects.equals(getNbt(itemA).get(component), getNbt(itemB).get(component))) {
                 return false;
             }
         }
@@ -287,13 +275,13 @@ public class ItemUtil {
      * @return 物品类型相同，且指定组件都相同时返回 <code>true</code>
      */
     public static boolean isSameItemWithOnlyComponents(ItemStack itemA, ItemStack itemB,
-                                                       List<DataComponentType<?>> includedComponents) {
+                                                       List<String> includedComponents) {
         if (shouldFailItemComparison(itemA, itemB)) {
             return false;
         }
 
-        for (DataComponentType<?> component : toComponentSet(includedComponents)) {
-            if (!Objects.equals(itemA.get(component), itemB.get(component))) {
+        for (String component : toComponentSet(includedComponents)) {
+            if (!Objects.equals(getNbt(itemA).get(component), getNbt(itemB).get(component))) {
                 return false;
             }
         }
@@ -304,7 +292,7 @@ public class ItemUtil {
         if (itemA == null || itemB == null) {
             return false;
         }
-        return ItemStack.isSameItemSameComponents(itemA, itemB);
+        return ItemStack.isSameItemSameTags(itemA, itemB);
     }
 
     private static boolean shouldFailItemComparison(ItemStack itemA, ItemStack itemB) {
@@ -320,10 +308,22 @@ public class ItemUtil {
         return !ItemStack.isSameItem(itemA, itemB);
     }
 
-    private static Set<DataComponentType<?>> toComponentSet(List<DataComponentType<?>> components) {
+    private static Set<String> toComponentSet(List<String> components) {
         if (components == null || components.isEmpty()) {
             return Set.of();
         }
         return new HashSet<>(components);
+    }
+    
+    /**避免愚蠢的{@link ItemStack#getOrCreateTag()}给没有nbt标签的物品塞一个空的nbt*/
+    public static CompoundTag getNbt(ItemStack stack) {
+        return stack.getTag() == null ? new CompoundTag() : stack.getTag();
+    }
+
+    /**替代1.21的ItemStack.hashItemAndComponents()方法*/
+    public static int hashItemStack(ItemStack stack) {
+        int i = stack.getItem().hashCode();
+        i ^= stack.getCount();
+        return stack.getTag() == null ? i : i ^ stack.getTag().hashCode();
     }
 }

@@ -276,7 +276,7 @@ public class DevProjectFileProject implements IRuntimeFileProject {
         }
 
         private ItemStack firstCollectionItem() {
-            return collectionItems.isEmpty() ? ItemStack.EMPTY : collectionItems.getFirst().toItemStack();
+            return collectionItems.isEmpty() ? ItemStack.EMPTY : collectionItems.get(0).toItemStack();
         }
     }
 

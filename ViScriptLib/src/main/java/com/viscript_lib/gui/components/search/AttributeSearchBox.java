@@ -3,7 +3,6 @@ package com.viscript_lib.gui.components.search;
 import com.lowdragmc.lowdraglib2.gui.ui.utils.UIElementProvider;
 import com.lowdragmc.lowdraglib2.utils.LocalizationUtils;
 import com.lowdragmc.lowdraglib2.utils.search.IResultHandler;
-import net.minecraft.core.Holder;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
@@ -18,7 +17,7 @@ import java.util.Locale;
 /**
  * 实体属性自动补全框，值类型为 {@code Holder<Attribute>}。
  */
-public class AttributeSearchBox extends RegistrySearchBox<Holder<Attribute>> {
+public class AttributeSearchBox extends RegistrySearchBox<Attribute> {
 
     public AttributeSearchBox() {
         this(Attributes.MAX_HEALTH);
@@ -28,14 +27,14 @@ public class AttributeSearchBox extends RegistrySearchBox<Holder<Attribute>> {
         this(getAttributeHolder(defaultValue));
     }
 
-    public AttributeSearchBox(@Nullable Holder<Attribute> defaultValue) {
+    public AttributeSearchBox(@Nullable Attribute defaultValue) {
         super(
                 defaultValue,
                 () -> BuiltInRegistries.ATTRIBUTE,
                 AttributeSearchBox::getAttributeId,
                 AttributeSearchBox::getAttributeIdString,
                 AttributeSearchBox::searchAttributes,
-                UIElementProvider.text(attribute -> Component.translatable(attribute.value().getDescriptionId()))
+                UIElementProvider.text(attribute -> Component.translatable(attribute.getDescriptionId()))
         );
     }
 
@@ -57,37 +56,35 @@ public class AttributeSearchBox extends RegistrySearchBox<Holder<Attribute>> {
     }
 
     @Nullable
-    public static Holder.Reference<Attribute> getAttributeHolder(ResourceKey<Attribute> key) {
-        return BuiltInRegistries.ATTRIBUTE.getHolder(key).orElse(null);
+    public static Attribute getAttributeHolder(ResourceKey<Attribute> key) {
+        return BuiltInRegistries.ATTRIBUTE.get(key);
     }
 
     @Nullable
-    public static ResourceLocation getAttributeId(@Nullable Holder<Attribute> attribute) {
-        return attribute == null ? null : attribute.unwrapKey()
-                .map(ResourceKey::location)
-                .orElse(null);
+    public static ResourceLocation getAttributeId(@Nullable Attribute attribute) {
+        return attribute == null ? null : BuiltInRegistries.ATTRIBUTE.getKey(attribute);
     }
 
-    public static String getAttributeIdString(@Nullable Holder<Attribute> attribute) {
+    public static String getAttributeIdString(@Nullable Attribute attribute) {
         var id = getAttributeId(attribute);
         return id == null ? "" : id.toString();
     }
 
-    public static String getAttributeDescriptionId(@Nullable Holder<Attribute> attribute) {
-        return attribute == null ? "" : attribute.value().getDescriptionId();
+    public static String getAttributeDescriptionId(@Nullable Attribute attribute) {
+        return attribute == null ? "" : attribute.getDescriptionId();
     }
 
-    public static double getAttributeDefaultValue(@Nullable Holder<Attribute> attribute) {
-        return attribute == null ? 0.0 : attribute.value().getDefaultValue();
+    public static double getAttributeDefaultValue(@Nullable Attribute attribute) {
+        return attribute == null ? 0.0 : attribute.getDefaultValue();
     }
 
-    private static void searchAttributes(String word, IResultHandler<Holder<Attribute>> searchHandler) {
+    private static void searchAttributes(String word, IResultHandler<Attribute> searchHandler) {
         var lowerWord = word.toLowerCase(Locale.ROOT);
-        BuiltInRegistries.ATTRIBUTE.holders()
-                .sorted(Comparator.comparing(holder -> holder.key().location().toString()))
+        BuiltInRegistries.ATTRIBUTE.stream()
+                .sorted(Comparator.comparing(AttributeSearchBox::getAttributeIdString))
                 .takeWhile(holder -> !Thread.currentThread().isInterrupted())
-                .filter(holder -> matches(lowerWord, holder.key().location().toString())
-                        || matches(lowerWord, LocalizationUtils.format(holder.value().getDescriptionId())))
+                .filter(holder -> matches(lowerWord, getAttributeIdString(holder))
+                        || matches(lowerWord, LocalizationUtils.format(getAttributeDescriptionId(holder))))
                 .forEach(searchHandler::acceptResult);
     }
 }

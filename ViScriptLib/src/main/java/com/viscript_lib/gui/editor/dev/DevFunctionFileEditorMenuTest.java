@@ -8,9 +8,7 @@ import com.lowdragmc.lowdraglib2.registry.annotation.LDLRegister;
 import com.lowdragmc.lowdraglib2.test.ui.IMenuTest;
 import net.minecraft.world.entity.player.Player;
 
-/**
- * 注册无工程文件编辑器的开发环境菜单测试入口。
- */
+/**注册无工程文件编辑器的开发环境菜单测试入口。*/
 @LDLRegister(
         name = "viscript_function_file_editor",
         registry = "ldlib2:menu_test",

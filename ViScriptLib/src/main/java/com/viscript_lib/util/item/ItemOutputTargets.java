@@ -4,6 +4,7 @@ import com.lowdragmc.lowdraglib2.registry.AutoRegistry;
 import com.lowdragmc.lowdraglib2.registry.annotation.LDLRegister;
 import com.viscript_lib.ViScriptLibRegistries;
 import com.viscript_lib.register.IContainerHelper;
+import com.viscript_lib.util.math.Clamp;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
 
@@ -94,7 +95,7 @@ public final class ItemOutputTargets {
                 return targets.get((index + 1) % targets.size());
             }
         }
-        return targets.getFirst();
+        return targets.get(0);
     }
 
     /**
@@ -145,6 +146,6 @@ public final class ItemOutputTargets {
     }
 
     private static long clampRemaining(long remaining, long requested) {
-        return Math.clamp(remaining, 0L, requested);
+        return Clamp.clamp(remaining, 0L, requested);
     }
 }

@@ -11,7 +11,7 @@ import org.spongepowered.asm.mixin.injection.At;
 
 import java.lang.reflect.Field;
 
-@Mixin(PersistedParser.class)
+@Mixin(value = PersistedParser.class, remap = false)
 public class PersistedParserMixin {
 
     @WrapOperation(method = "serializeInternal", at = @At(value = "INVOKE", target = "Ljava/lang/reflect/Modifier;isStatic(I)Z"))

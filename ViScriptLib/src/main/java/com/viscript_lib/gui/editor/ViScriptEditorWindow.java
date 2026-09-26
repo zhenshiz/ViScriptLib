@@ -122,7 +122,7 @@ public class ViScriptEditorWindow extends EditorWindow {
         }
         var minecraft = Minecraft.getInstance();
         minecraft.getToasts().addToast(new SystemToast(
-                new SystemToast.SystemToastId(1000L),
+                SystemToast.SystemToastIds.TUTORIAL_HINT,
                 Component.translatable("editor.minimized.title"),
                 Component.translatable("editor.minimized.tips")
         ));

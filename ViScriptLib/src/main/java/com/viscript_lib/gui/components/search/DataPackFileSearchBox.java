@@ -3,8 +3,8 @@ package com.viscript_lib.gui.components.search;
 import com.lowdragmc.lowdraglib2.utils.search.IResultHandler;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.ResourceManager;
-import net.neoforged.neoforge.server.ServerLifecycleHooks;
 
+import net.minecraftforge.server.ServerLifecycleHooks;
 import org.jetbrains.annotations.Nullable;
 
 /**

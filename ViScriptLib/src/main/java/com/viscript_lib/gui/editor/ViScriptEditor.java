@@ -21,12 +21,7 @@ import net.minecraft.resources.ResourceLocation;
 import javax.annotation.Nullable;
 import java.io.File;
 import java.nio.file.Files;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * ViScript Lib 编辑器公共基类。
@@ -339,7 +334,7 @@ public abstract class ViScriptEditor extends Editor {
     }
 
     protected String loadFromClipboard() {
-        var project = getProjectTypes().getFirst().newEmptyProject();
+        var project = getProjectTypes().get(0).newEmptyProject();
         try {
             var tag = NbtHelper.tagFromString(Minecraft.getInstance().keyboardHandler.getClipboard());
             project.deserializeNBT(Platform.getFrozenRegistry(), tag);

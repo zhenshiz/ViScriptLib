@@ -6,11 +6,7 @@ import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.resources.ResourceLocation;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * 在已序列化的编辑器项目中查找和删除缺失物品 ID。
@@ -106,21 +102,21 @@ final class MissingItemProjectData {
         return getMissingItemId(compound).map(itemId::equals).orElse(false);
     }
 
-    private static java.util.Optional<ResourceLocation> getMissingItemId(CompoundTag compound) {
+    private static Optional<ResourceLocation> getMissingItemId(CompoundTag compound) {
         if (!compound.contains("id", Tag.TAG_STRING)
                 || !compound.contains("count", Tag.TAG_ANY_NUMERIC)
                 || compound.getInt("count") <= 0
                 || !ITEM_STACK_FIELDS.containsAll(compound.getAllKeys())) {
-            return java.util.Optional.empty();
+            return Optional.empty();
         }
         if (compound.contains("components")
                 && !compound.contains("components", Tag.TAG_COMPOUND)) {
-            return java.util.Optional.empty();
+            return Optional.empty();
         }
 
         var itemId = ResourceLocation.tryParse(compound.getString("id"));
         return itemId != null && !BuiltInRegistries.ITEM.containsKey(itemId)
-                ? java.util.Optional.of(itemId)
-                : java.util.Optional.empty();
+                ? Optional.of(itemId)
+                : Optional.empty();
     }
 }

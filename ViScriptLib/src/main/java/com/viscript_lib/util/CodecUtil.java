@@ -7,6 +7,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.NbtOps;
 import net.minecraft.nbt.Tag;
+import net.minecraft.resources.RegistryOps;
 
 import java.util.*;
 
@@ -45,11 +46,11 @@ public class CodecUtil {
     }
 
     public static <T> T deserializeNBT(Codec<T> codec, Tag tag, HolderLookup.Provider provider) {
-        return codec.decode(provider.createSerializationContext(NbtOps.INSTANCE), tag).getOrThrow().getFirst();
+        return codec.decode(RegistryOps.create(NbtOps.INSTANCE, provider), tag).getOrThrow(false, s->{}).getFirst();
     }
 
     public static <T> Tag serializeNBT(Codec<T> codec, T object, HolderLookup.Provider provider) {
-        return codec.encodeStart(provider.createSerializationContext(NbtOps.INSTANCE), object).result().orElse(new CompoundTag());
+        return codec.encodeStart(RegistryOps.create(NbtOps.INSTANCE, provider), object).result().orElse(new CompoundTag());
     }
 
     // ==================== List 序列化工具方法 ====================
