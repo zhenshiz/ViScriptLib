@@ -2,6 +2,8 @@ plugins {
     id 'net.neoforged.moddev' version '2.0.82' apply false
     id 'io.freefair.lombok' version '8.6' apply false
     id "dev.vfyjxf.modaccessor" version "1.1" apply false
+    id 'com.modrinth.minotaur' version '2.10.0' apply false
+    id 'net.darkhax.curseforgegradle' version '1.1.28' apply false
 }
 
 subprojects {
@@ -219,6 +221,9 @@ subprojects {
             }
         }
     }
+
+    // 每个子项目提供 publishMods 任务，上传至 CurseForge 与 Modrinth
+    apply from: rootProject.file('gradle/publish-conventions.gradle')
 }
 
 tasks.register('buildAll', Copy) {
@@ -241,4 +246,10 @@ tasks.register('cleanLibs', Delete) {
     description = '只删除所有子项目的构建目录下的 libs 文件夹'
 
     delete(subprojects.collect {project -> [ project.layout.buildDirectory.dir('libs').get().asFile ]})
+}
+
+tasks.register('publishAllMods') {
+    group = 'publishing'
+    description = '构建并上传所有子项目的 jar 至 CurseForge 与 Modrinth（token 通过 CURSEFORGE_TOKEN / MODRINTH_TOKEN 环境变量提供）'
+    dependsOn subprojects.collect {project -> project.tasks.matching { it.name == 'publishMods' }}
 }

@@ -28,3 +28,5 @@ build
 run
 runs
 ViScriptLib/src/main/java/com/viscript_lib/gametest/
+
+publish.env

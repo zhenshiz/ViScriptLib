@@ -1,0 +1,140 @@
+// 由根项目 build.gradle 对每个 mod 子项目 apply，配置发布：
+// - Modrinth: Minotaur（任务名 modrinth）
+// - CurseForge: CurseForgeGradle（任务名 publishCurseforge）
+// - 聚合任务 publishMods 同时发布两个平台；根项目另有 publishAllMods 发布全部子项目
+// 凭据读取优先级：系统环境变量 > 根目录 publish.env（已 gitignore）
+// 注意：本脚本在子项目自身 build.gradle 之前执行，project.version 尚未设置，
+// 因此版本号直接从 gradle.properties 的 mod_version 读取。
+apply plugin: 'com.modrinth.minotaur'
+apply plugin: 'net.darkhax.curseforgegradle'
+
+def projectName = project.name
+def publishVersion = project.findProperty('mod_version')?.toString() ?: project.version.toString()
+def publishMinecraftVersion = project.findProperty('minecraft_version')?.toString()
+
+// 空字符串视为未配置
+def trimToNull = { String v -> (v == null || v.trim().isEmpty()) ? null : v.trim() }
+
+// 解析根目录 publish.env（KEY=VALUE 格式，可带 # 注释）
+def publishEnvFile = rootProject.file('publish.env')
+def publishEnv = [:]
+if (publishEnvFile.exists()) {
+    publishEnvFile.eachLine { line ->
+        def trimmed = line.trim()
+        if (trimmed && !trimmed.startsWith('#')) {
+            def idx = trimmed.indexOf('=')
+            if (idx > 0) {
+                publishEnv[trimmed.substring(0, idx).trim()] =
+                        trimmed.substring(idx + 1).trim().replaceAll(/^["']|["']$/, '')
+            }
+        }
+    }
+}
+// 暴露给各子项目（如 maven 发布的 SIGHS_PUBLISH_USER / SIGHS_PUBLISH_PASSWORD 也从这里读取）
+project.ext.publishEnv = publishEnv
+
+def envOrFile = { String name -> trimToNull(System.getenv(name)) ?: trimToNull(publishEnv[name] as String) }
+
+// 项目 ID：优先写在各子项目自己的 gradle.properties 中，也可放 publish.env
+def cfProjectId = trimToNull(project.findProperty('publish_curseforge_project_id')?.toString()) ?: envOrFile('CURSEFORGE_PROJECT_ID')
+def mrProjectId = trimToNull(project.findProperty('publish_modrinth_project_id')?.toString()) ?: envOrFile('MODRINTH_PROJECT_ID')
+def cfToken = envOrFile('CURSEFORGE_TOKEN')
+def mrToken = envOrFile('MODRINTH_TOKEN')
+
+// 更新说明优先级：PUBLISH_CHANGELOG > publish_changelog 属性 > 项目 CHANGELOG.md > 默认文案
+def changelogFile = project.file('CHANGELOG.md')
+def publishChangelog = envOrFile('PUBLISH_CHANGELOG')
+        ?: trimToNull(project.findProperty('publish_changelog')?.toString())
+        ?: (changelogFile.exists() ? changelogFile.getText('UTF-8') : null)
+        ?: 'See the project page for details.'
+
+// 版本号含 alpha/beta 时自动标记发布类型（CF: release/beta/alpha；MR 同名）
+def versionLower = publishVersion.toLowerCase()
+def releaseType = versionLower.contains('alpha') ? 'alpha' : versionLower.contains('beta') ? 'beta' : 'release'
+
+// 前置关系（项目 slug，逗号分隔），写在各子项目 gradle.properties 中：
+//   publish_modrinth_requires=ldlib          (Modrinth slug)
+//   publish_curseforge_requires=ldlib        (CurseForge slug)
+// LDLib2 在两个平台都挂在 slug "ldlib" 下；ViScriptShop 的 slug 为 "viscriptshop"
+def splitSlugs = { String v -> (v ?: '').split(',').collect { it.trim() }.findAll { it } }
+def mrRequires = splitSlugs(trimToNull(project.findProperty('publish_modrinth_requires')?.toString()))
+def cfRequires = splitSlugs(trimToNull(project.findProperty('publish_curseforge_requires')?.toString()))
+
+def dryRun = providers.gradleProperty('publish_dry_run').isPresent()
+
+// ---- CurseForge ----
+// 未配置项目 ID 时干脆不注册任务，避免 publishAllMods 被未配置的子项目阻塞
+def cfTask = null
+if (cfProjectId) {
+    // apply plugin 方式下脚本类加载器不含插件类，需从插件自身的 classLoader 取任务类
+    def cfPlugin = project.plugins.findPlugin('net.darkhax.curseforgegradle')
+    def curseForgeTaskClass = cfPlugin.class.classLoader.loadClass('net.darkhax.curseforgegradle.TaskPublishCurseForge')
+    cfTask = tasks.register('publishCurseforge', curseForgeTaskClass) {
+        group = 'publishing'
+        dependsOn tasks.named('jar')
+        apiToken = cfToken
+        // -Ppublish_dry_run 时只打印请求不上传
+        debugMode = dryRun
+
+        def mainFile = upload(cfProjectId, tasks.named('jar').get())
+        mainFile.changelog = publishChangelog
+        mainFile.releaseType = releaseType
+        mainFile.addGameVersion(publishMinecraftVersion)
+        mainFile.addModLoader('NeoForge')
+        mainFile.addEnvironment('Client', 'Server')
+        mainFile.addJavaVersion('Java 21')
+        cfRequires.each { mainFile.addRequirement(it) }
+    }
+}
+
+// ---- Modrinth ----
+def mrConfigured = false
+if (mrProjectId) {
+    mrConfigured = true
+    modrinth {
+        token = mrToken
+        projectId = mrProjectId
+        versionNumber = publishVersion
+        versionType = releaseType
+        uploadFile = tasks.named('jar').get()
+        gameVersions = [publishMinecraftVersion]
+        loaders = ['neoforge']
+        changelog = publishChangelog
+        if (!mrRequires.isEmpty()) {
+            dependencies {
+                mrRequires.each { required.project it }
+            }
+        }
+    }
+    // 试运行时跳过实际上传（Minotaur 没有 dryRun，这里直接不执行）
+    tasks.named('modrinth') {
+        group = 'publishing'
+        onlyIf { !dryRun }
+    }
+}
+
+// ---- 聚合任务 publishMods ----
+def publishTaskNames = []
+if (cfTask != null) publishTaskNames << 'publishCurseforge'
+if (mrConfigured) publishTaskNames << 'modrinth'
+
+tasks.register('publishMods') {
+    group = 'publishing'
+    description = "发布 ${projectName} 至 CurseForge 与 Modrinth"
+    dependsOn publishTaskNames.collect { tasks.named(it) }
+    doFirst {
+        if (!cfProjectId && !mrProjectId) {
+            logger.warn("[${projectName}] 未配置 publish_curseforge_project_id / publish_modrinth_project_id，跳过发布")
+            return
+        }
+        if (cfProjectId && !cfToken) {
+            throw new GradleException("[${projectName}] 无法发布 CurseForge，缺少 CURSEFORGE_TOKEN")
+        }
+        if (mrProjectId && !mrToken) {
+            throw new GradleException("[${projectName}] 无法发布 Modrinth，缺少 MODRINTH_TOKEN")
+        }
+        if (dryRun) {
+            logger.lifecycle("[${projectName}] 试运行模式：CurseForge 仅打印请求，Modrinth 跳过")
+        }
+    }
+}
