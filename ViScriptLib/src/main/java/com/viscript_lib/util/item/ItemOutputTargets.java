@@ -6,6 +6,7 @@ import com.viscript_lib.ViScriptLibRegistries;
 import com.viscript_lib.register.IContainerHelper;
 import com.viscript_lib.util.math.Clamp;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.item.ItemStack;
 
 import java.util.ArrayList;
@@ -27,6 +28,23 @@ public final class ItemOutputTargets {
     public static final String BEYOND_DIMENSIONS = "beyonddimensions";
 
     private ItemOutputTargets() {
+    }
+
+    /** 处理输出目标未接收的物品数量。 */
+    @FunctionalInterface
+    public interface OverflowHandler {
+        /**
+         * 接收目标容器溢出的物品，并返回仍未处理的数量。
+         *
+         * <p>每次发货至多调用一次，且数量始终大于零。模板是独立的单个物品副本，
+         * 原始组件会保留；实现必须按 <code>count</code> 处理数量。
+         *
+         * @param player 接收物品的服务器玩家
+         * @param template 提供物品和组件的单个物品模板
+         * @param count 目标容器未接收的数量
+         * @return 未处理的数量，范围为零到 <code>count</code>
+         */
+        long handle(ServerPlayer player, ItemStack template, long count);
     }
 
     /**
@@ -101,13 +119,13 @@ public final class ItemOutputTargets {
     /**
      * 把一个物品堆发送到指定输出目标。
      *
-     * <p>物品堆的当前数量作为请求总量。未能插入指定目标的部分会继续尝试插入玩家背包，
-     * 背包也无法接收的部分通过返回值交还调用方，不会生成为世界掉落物。
+     * <p>物品堆的当前数量作为请求总量。目标容器装不下的部分在玩家脚下生成掉落物。
+     * 未知或不可用的目标回退到玩家背包。
      *
      * @param player 接收物品的服务器玩家
      * @param targetId 请求的输出目标注册名
      * @param stack 待输出的物品堆
-     * @return 未能插入任何输出目标的剩余数量
+     * @return 既未插入容器、也未成功生成掉落物的数量；全部交付时为零
      */
     public static long giveItem(ServerPlayer player, String targetId, ItemStack stack) {
         if (stack == null) return 0L;
@@ -115,34 +133,65 @@ public final class ItemOutputTargets {
     }
 
     /**
-     * 把指定总量的物品发送到输出目标，并把目标未接收的部分交给玩家背包处理。
+     * 把指定总量的物品发送到输出目标，并将余量掉落在玩家脚下。
      *
      * <p><code>template</code> 只提供物品和组件信息，其当前堆叠数量不会改变请求数量。调用方若要求
      * “目标不可用时整个操作失败”，必须在改变业务状态前先调用
-     * {@link IContainerHelper#isItemOutputAvailable(ServerPlayer)} 完成校验。这里的背包回退只用于处理
-     * 校验后的目标失效或容量变化；玩家背包也无法接收的数量会直接返回，不会静默丢失或生成
-     * 世界掉落物。
+     * {@link IContainerHelper#isItemOutputAvailable(ServerPlayer)} 完成校验。未知或不可用目标回退
+     * 到玩家背包；可用目标因容量不足返回的余量直接生成掉落物。掉落物保留组件，
+     * 按最大堆叠数量拆分，并限制为该玩家拾取。
      *
      * @param player 接收物品的服务器玩家
      * @param targetId 请求的输出目标注册名
      * @param template 提供物品及组件信息的模板
      * @param count 待输出的总数量；小于或等于零时视为零
-     * @return 未能插入任何输出目标的剩余数量
+     * @return 既未插入容器、也未成功生成掉落物的数量；全部交付时为零
      */
     public static long giveItem(ServerPlayer player, String targetId, ItemStack template, long count) {
+        return giveItem(player, targetId, template, count, ItemOutputTargets::dropAtPlayer);
+    }
+
+    /**
+     * 把指定总量的物品发送到输出目标，并将余量交给指定回调。
+     *
+     * <p>未知或不可用的目标回退到玩家背包。容器只插入一次；存在余量时才调用回调。
+     * 回调的返回值限制在零到余量之间，不会额外执行默认掉落逻辑。玩家或模板为空、
+     * 模板物品为空或数量非正时，不插入物品、不调用回调，返回非负请求数量。
+     *
+     * @param player 接收物品的服务器玩家
+     * @param targetId 请求的输出目标注册名
+     * @param template 提供物品及组件信息的模板，不会被修改
+     * @param count 待输出的总数量；小于或等于零时视为零
+     * @param overflowHandler 处理未插入数量的非空回调
+     * @return 容器和回调处理后仍未交付的数量
+     */
+    public static long giveItem(ServerPlayer player, String targetId, ItemStack template, long count,
+                                OverflowHandler overflowHandler) {
+        Objects.requireNonNull(overflowHandler, "overflowHandler");
         count = Math.max(0L, count);
         if (player == null || template == null || template.isEmpty() || count == 0L) return count;
 
-        IContainerHelper fallback = playerInventory();
         IContainerHelper target = resolve(targetId);
-        long remaining = count;
-        if (target.isItemOutputAvailable(player)) {
-            remaining = clampRemaining(target.insertItemForPlayer(player, template, remaining), remaining);
-        }
-        if (remaining > 0L && !Objects.equals(target.name(), fallback.name())) {
-            remaining = clampRemaining(fallback.insertItemForPlayer(player, template, remaining), remaining);
+        if (!target.isItemOutputAvailable(player)) target = playerInventory();
+        long remaining = clampRemaining(target.insertItemForPlayer(player, template.copyWithCount(1), count), count);
+        if (remaining > 0L) {
+            remaining = clampRemaining(overflowHandler.handle(player, template.copyWithCount(1), remaining), remaining);
         }
         return remaining;
+    }
+
+    private static long dropAtPlayer(ServerPlayer player, ItemStack template, long count) {
+        int stackLimit = Math.max(1, template.getMaxStackSize());
+        while (count > 0L) {
+            int batch = (int) Math.min(count, stackLimit);
+            var dropped = new ItemEntity(player.serverLevel(), player.getX(), player.getY() + 0.1, player.getZ(),
+                    template.copyWithCount(batch), 0, 0, 0);
+            dropped.setDefaultPickUpDelay();
+            dropped.setTarget(player.getUUID());
+            if (!player.serverLevel().addFreshEntity(dropped)) break;
+            count -= batch;
+        }
+        return count;
     }
 
     private static long clampRemaining(long remaining, long requested) {
