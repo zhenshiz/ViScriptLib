@@ -18,6 +18,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Field;
 import java.util.HashSet;
+import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
@@ -25,7 +26,7 @@ import java.util.function.Supplier;
 @AllArgsConstructor
 @NoArgsConstructor
 public class NbtKey implements IPersistedSerializable {
-    public static final HashSet<String> candidateKeys = new HashSet<>();
+    public static final HashSet<String> candidateKeys = new HashSet<>(Set.of("Damage", "display", "Enchantments"));
 
     public static void recordItemKey(ItemStack stack) {
         candidateKeys.addAll(ItemUtil.getNbt(stack).getAllKeys());
