@@ -164,6 +164,8 @@ subprojects {
             //精妙背包
             compileOnly "maven.modrinth:sophisticated-backpacks:${sophisticated_backpacks_version}"
             compileOnly "maven.modrinth:sophisticated-core:${sophisticated_core_version}"
+            // Backpacked 3.0.5 (1.21.1 NeoForge)
+            compileOnly "curse.maven:backpacked-352835:${backpacked_file}"
             //超越维度
             compileOnly "curse.maven:beyond-dimensions-1222890:${beyonddimensions_version}"
             //Lightman's Currency
@@ -172,10 +174,6 @@ subprojects {
             implementation "top.theillusivec4.curios:curios-neoforge:${curios_version}"
             //汇流来世
             implementation "maven.modrinth:confluence:${confluence_version}"
-            // Confluence's public recipe classes inherit these codecs; the modpack supplies it at runtime.
-            compileOnly files("libs/Confluence-Magic-Lib-0.0.8.jar")
-            compileOnly "org.confluence:TerraCurio:${terra_curio_version}"
-            compileOnly "org.confluence:TerraEntity:${terra_entity_version}"
             //Magic Coins
             compileOnly "curse.maven:magic-coins-597281:${magic_coins_version}"
             compileOnly "curse.maven:sg-economy-api-1446971:${sg_economy_api_version}"
@@ -201,6 +199,8 @@ subprojects {
             additionalRuntimeClasspath("dev.vfyjxf:mixin-hotswap-agent:1.1")
         }
     }
+
+    apply from: rootProject.file('gradle/confluence-dependencies.gradle')
 
     tasks.withType(JavaCompile).configureEach {
         options.encoding = 'UTF-8' // Use the UTF-8 charset for Java compilation

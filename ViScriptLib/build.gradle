@@ -9,6 +9,14 @@ base {
     archivesName = "${mod_name}-neoforge-${minecraft_version}"
 }
 
+// 附属模组嵌入本次构建的 VSL，并保留已发布依赖的 Jar-in-Jar 标识。
+configurations.create('embeddedLibrary') {
+    canBeResolved = false
+    canBeConsumed = true
+    outgoing.capability("${project.group}:${base.archivesName.get()}:${project.version}")
+    outgoing.artifact(tasks.named('jar'))
+}
+
 neoForge {
     mods {
         "${mod_id}" {

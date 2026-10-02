@@ -26,6 +26,9 @@ public final class ItemOutputTargets {
     /** “超越维度”维度背包 helper 的稳定注册名。 */
     public static final String BEYOND_DIMENSIONS = "beyonddimensions";
 
+    /** Backpacked 已装备背包 helper 的稳定注册名。 */
+    public static final String BACKPACKED = "backpacked";
+
     private ItemOutputTargets() {
     }
 

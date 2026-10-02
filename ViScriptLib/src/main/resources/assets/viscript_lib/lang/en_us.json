@@ -6,6 +6,8 @@
   "viscript_lib.item_stack_compare_mode.exclude_components": "Exclude Selected Components",
   "viscript_lib.item_output_target.player_inventory": "Output to Player Inventory",
   "viscript_lib.item_output_target.dimension_network": "Output to Dimensional Storage",
+  "viscript_lib.item_output_target.backpacked": "Output to Backpacked Backpacks",
+  "viscript_lib.item_output_target.backpacked_unavailable": "You have not equipped a Backpacked backpack",
   "viscript_lib.item_output_target.unavailable": "Output target “%s” is currently unavailable",
   "viscript_lib.item_output_target.dimension_network_unavailable": "You have not activated Dimensional Storage",
   "viscript_lib.editor.menu.upload": "Upload",
@@ -87,5 +89,6 @@
   "viscript_lib.dev_editor.project_file.case_missing_component": "Missing item component (collection field)",
   "viscript_lib.dev_editor.project_file.case_missing_enchantment": "Missing enchantment (nested field)",
   "viscript_lib.dev_editor.project_file.arm_unavailable_items": "Write all three invalid item cases on next save",
-  "viscript_lib.dev_editor.project_file.unavailable_items_armed": "Armed; save and reopen the file"
+  "viscript_lib.dev_editor.project_file.unavailable_items_armed": "Armed; save and reopen the file",
+  "viscript_lib.editor.server_upload_result.error.permission": "You do not have permission to upload editor files."
 }

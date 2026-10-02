@@ -40,5 +40,12 @@ versionRange = "[0.7.0,)"
 ordering = "NONE"
 side = "BOTH"
 
+[[dependencies."${mod_id}"]]
+modId = "backpacked"
+type = "optional"
+versionRange = "[3.0.5,)"
+ordering = "NONE"
+side = "BOTH"
+
 [features."${mod_id}"]
 openGLVersion = "[3.2,)"

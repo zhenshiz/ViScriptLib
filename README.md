@@ -24,12 +24,14 @@ dependencies {
     implementation project(":ViScriptLib")
 }
 ```
-如需打包ViScriptLib，由于ViScriptLib已经发布到maven，为了保证Artifact ID一致，你需要这样写：
+如需将当前工程构建的 ViScriptLib 嵌入子项目，使用 VSL 提供的 `embeddedLibrary` 配置：
 ```gradle
 dependencies {
-    jarJar "com.zhenshiz:ViScriptLib-neoforge-${minecraft_version}:${vsl_jij_version}"
+    jarJar project(path: ":ViScriptLib", configuration: "embeddedLibrary")
 }
 ```
+
+Gradle 会先构建本地 VSL，再将生成的 JAR 嵌入附属模组。该配置保留与 Maven 发布一致的依赖标识，版本直接取自 VSL 的 `project.version`，由根目录 `gradle.properties` 中的 `mod_version` 控制。更新 VSL 只需维护这一个版本参数；各附属模组自身的版本仍由各自的 `gradle.properties` 管理。
 
 ### 构建
 运行./gradlew buildAll 以构建所有子项目，然后你可以在项目根目录的build/libs文件夹下找到所有的构建产物。

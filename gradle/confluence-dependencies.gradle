@@ -1,0 +1,74 @@
+import groovy.json.JsonSlurper
+import org.gradle.api.artifacts.transform.CacheableTransform
+import org.gradle.api.artifacts.transform.InputArtifact
+import org.gradle.api.artifacts.transform.TransformAction
+import org.gradle.api.artifacts.transform.TransformOutputs
+import org.gradle.api.artifacts.transform.TransformParameters
+import org.gradle.api.artifacts.type.ArtifactTypeDefinition
+import org.gradle.api.file.FileSystemLocation
+import org.gradle.api.provider.Provider
+import org.gradle.api.tasks.PathSensitive
+import org.gradle.api.tasks.PathSensitivity
+
+import java.nio.file.Files
+import java.nio.file.StandardCopyOption
+import java.util.zip.ZipFile
+
+/** Compile against the libraries shipped by the selected Confluence release, without separate Maven downloads. */
+@CacheableTransform
+abstract class ExtractConfluenceCompileLibraries implements TransformAction<TransformParameters.None> {
+    @InputArtifact
+    @PathSensitive(PathSensitivity.NAME_ONLY)
+    abstract Provider<FileSystemLocation> getInputArtifact()
+
+    @Override
+    void transform(TransformOutputs outputs) {
+        def required = ['org.confluence:TerraCurio', 'org.confluence:TerraEntity',
+                        'org.confluence.lib:Confluence-Magic-Lib'] as Set
+        def archive = inputArtifact.get().asFile
+        new ZipFile(archive).withCloseable { zip ->
+            def metadata = zip.getEntry('META-INF/jarjar/metadata.json')
+            if (metadata == null) {
+                throw new GradleException("Confluence release ${archive.name} has no embedded-library metadata")
+            }
+            def libraries = zip.getInputStream(metadata).withCloseable { input ->
+                new JsonSlurper().parse(input).jars
+            }
+            libraries.each { library ->
+                def coordinate = "${library.identifier.group}:${library.identifier.artifact}".toString()
+                if (required.remove(coordinate)) {
+                    def entry = zip.getEntry(library.path.toString())
+                    if (entry == null || entry.directory) {
+                        throw new GradleException("Missing embedded Confluence library: ${library.path}")
+                    }
+                    def target = outputs.file(library.path.tokenize('/').last())
+                    zip.getInputStream(entry).withCloseable { input ->
+                        Files.copy(input, target.toPath(), StandardCopyOption.REPLACE_EXISTING)
+                    }
+                }
+            }
+            if (!required.isEmpty()) {
+                throw new GradleException("Confluence release ${archive.name} is missing compile libraries: ${required}")
+            }
+        }
+    }
+}
+
+def embeddedLibraryType = 'viscript-confluence-compile-libraries'
+dependencies.registerTransform(ExtractConfluenceCompileLibraries) {
+    from.attribute(ArtifactTypeDefinition.ARTIFACT_TYPE_ATTRIBUTE, ArtifactTypeDefinition.JAR_TYPE)
+    to.attribute(ArtifactTypeDefinition.ARTIFACT_TYPE_ATTRIBUTE, embeddedLibraryType)
+}
+
+def confluenceCompileLibraries = configurations.create('confluenceCompileLibraries') {
+    canBeConsumed = false
+    canBeResolved = true
+    transitive = false
+    attributes.attribute(ArtifactTypeDefinition.ARTIFACT_TYPE_ATTRIBUTE, embeddedLibraryType)
+}
+
+dependencies {
+    add(confluenceCompileLibraries.name, "maven.modrinth:confluence:${confluence_version}")
+    // File collection remains lazy; Gradle transforms and caches the embedded JARs on demand.
+    add('compileOnly', files(confluenceCompileLibraries))
+}
