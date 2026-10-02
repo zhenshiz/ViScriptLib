@@ -37,3 +37,24 @@ Gradle 会先构建本地 VSL，再将生成的 JAR 嵌入附属模组。该配�
 运行./gradlew buildAll 以构建所有子项目，然后你可以在项目根目录的build/libs文件夹下找到所有的构建产物。
 
 运行./gradlew cleanLibs 以清理所有子项目的构建产物文件夹。
+
+### 发布至 CurseForge
+
+在根目录 `publish.env` 或环境变量中设置 `CURSEFORGE_TOKEN`，项目 ID 使用各子项目的 `publish_curseforge_project_id`。VSL 可以单独试运行和发布：
+
+```bash
+# 仅构建并显示请求信息，不访问发布接口。
+bash ./gradlew :ViScriptLib:publishCurseforge -Ppublish_dry_run
+# 实际上传 VSL 到 CurseForge。
+bash ./gradlew :ViScriptLib:publishCurseforge
+```
+
+CF 发布任务使用 Java 21 自带的 HTTP 客户端，向官方 `legacy.curseforge.com` Upload API 的 `gameVersionNames` 字段提交版本名称、加载器、运行环境，并附上前置关系。注意 `gameVersions` 是另一字段，只接受整数 ID；发送前会校验两者类型，试运行也执行该校验。它不再查询旧版 CurseForgeGradle 使用的 `/api/game/version-types` 和 `/api/game/versions`，避免该查询被网站防护以 403 拦截。`publishMods` 仍聚合 CF 和 Modrinth；补发时可以只执行失败平台的任务。
+
+如果上传接口本身返回 `Just a moment…` 防护页面，任务会明确报告网站防护拦截；这种响应不能证明 Token 无效。上传连接中断或成功响应缺少文件 ID 时不自动重试，应先检查作者后台的文件列表，避免重复发布。
+
+本地协议测试使用临时工程、假 Token 和回环 HTTP 服务，不连接发布平台：
+
+```bash
+python3 gradle/tests/curseforge_upload_test.py
+```

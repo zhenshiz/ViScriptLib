@@ -1,12 +1,12 @@
 // 由根项目 build.gradle 对每个 mod 子项目 apply，配置发布：
 // - Modrinth: Minotaur（任务名 modrinth）
-// - CurseForge: CurseForgeGradle（任务名 publishCurseforge）
+// - CurseForge: 官方 Upload API（任务名 publishCurseforge，兼容 Java 21）
 // - 聚合任务 publishMods 同时发布两个平台；根项目另有 publishAllMods 发布全部子项目
 // 凭据读取优先级：系统环境变量 > 根目录 publish.env（已 gitignore）
 // 注意：本脚本在子项目自身 build.gradle 之前执行，project.version 尚未设置，
 // 因此版本号直接从 gradle.properties 的 mod_version 读取。
 apply plugin: 'com.modrinth.minotaur'
-apply plugin: 'net.darkhax.curseforgegradle'
+apply from: rootProject.file('gradle/curseforge-upload.gradle')
 
 def projectName = project.name
 def publishVersion = project.findProperty('mod_version')?.toString() ?: project.version.toString()
@@ -66,24 +66,21 @@ def dryRun = providers.gradleProperty('publish_dry_run').isPresent()
 // 未配置项目 ID 时干脆不注册任务，避免 publishAllMods 被未配置的子项目阻塞
 def cfTask = null
 if (cfProjectId) {
-    // apply plugin 方式下脚本类加载器不含插件类，需从插件自身的 classLoader 取任务类
-    def cfPlugin = project.plugins.findPlugin('net.darkhax.curseforgegradle')
-    def curseForgeTaskClass = cfPlugin.class.classLoader.loadClass('net.darkhax.curseforgegradle.TaskPublishCurseForge')
-    cfTask = tasks.register('publishCurseforge', curseForgeTaskClass) {
+    cfTask = tasks.register('publishCurseforge', project.ext.curseForgeUploadTaskType) {
         group = 'publishing'
-        dependsOn tasks.named('jar')
-        apiToken = cfToken
-        // -Ppublish_dry_run 时只打印请求不上传
-        debugMode = dryRun
-
-        def mainFile = upload(cfProjectId, tasks.named('jar').get())
-        mainFile.changelog = publishChangelog
-        mainFile.releaseType = releaseType
-        mainFile.addGameVersion(publishMinecraftVersion)
-        mainFile.addModLoader('NeoForge')
-        mainFile.addEnvironment('Client', 'Server')
-        mainFile.addJavaVersion('Java 21')
-        cfRequires.each { mainFile.addRequirement(it) }
+        description = "发布 ${projectName} 至 CurseForge"
+        uploadFile.set(tasks.named('jar').flatMap { it.archiveFile })
+        projectId.set(cfProjectId)
+        apiToken.set(cfToken ?: '')
+        dryRunMode.set(dryRun)
+        uploadMetadata.set([
+                changelog: publishChangelog,
+                changelogType: 'markdown',
+                releaseType: releaseType,
+                gameVersionNames: [publishMinecraftVersion, 'NeoForge', 'Client', 'Server', 'Java 21']
+        ] + (cfRequires ? [relations: [projects: cfRequires.collect {
+            [slug: it, type: 'requiredDependency']
+        }]] : [:]))
     }
 }
 
