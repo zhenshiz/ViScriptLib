@@ -6,6 +6,7 @@ import com.lowdragmc.lowdraglib2.syncdata.rpc.RPCSender;
 import com.viscript_lib.ViScriptLib;
 import com.viscript_lib.gui.editor.EditorServerUploads;
 import com.viscript_lib.network.s2c.EditorUploadS2CPackets;
+import net.minecraft.commands.Commands;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 
@@ -33,6 +34,13 @@ public final class EditorUploadC2SPackets {
 
         var player = sender.asPlayer();
         if (player == null) return;
+        if (!player.hasPermissions(Commands.LEVEL_OWNERS)) {
+            RPCPacketDistributor.rpcToPlayer(player,
+                    EditorUploadS2CPackets.EDITOR_UPLOAD_RESULT,
+                    Component.translatable("viscript_lib.editor.server_upload_result.error.title"),
+                    Component.translatable("viscript_lib.editor.server_upload_result.error.permission"));
+            return;
+        }
 
         try {
             var result = EditorServerUploads.writeOnServer(request);

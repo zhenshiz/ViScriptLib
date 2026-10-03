@@ -6,6 +6,8 @@
   "viscript_lib.item_stack_compare_mode.exclude_components": "排除指定物品组件",
   "viscript_lib.item_output_target.player_inventory": "输出至玩家背包",
   "viscript_lib.item_output_target.dimension_network": "输出至维度背包",
+  "viscript_lib.item_output_target.backpacked": "输出至 Backpacked 背包",
+  "viscript_lib.item_output_target.backpacked_unavailable": "你尚未装备 Backpacked 背包",
   "viscript_lib.item_output_target.unavailable": "输出目标“%s”当前不可用",
   "viscript_lib.item_output_target.dimension_network_unavailable": "你尚未开通维度背包",
   "viscript_lib.editor.menu.upload": "上传",
@@ -87,5 +89,6 @@
   "viscript_lib.dev_editor.project_file.case_missing_component": "物品组件不存在（集合字段）",
   "viscript_lib.dev_editor.project_file.case_missing_enchantment": "附魔不存在（嵌套字段）",
   "viscript_lib.dev_editor.project_file.arm_unavailable_items": "下次保存时写入三种异常物品",
-  "viscript_lib.dev_editor.project_file.unavailable_items_armed": "已启用；保存后重新打开文件"
+  "viscript_lib.dev_editor.project_file.unavailable_items_armed": "已启用；保存后重新打开文件",
+  "viscript_lib.editor.server_upload_result.error.permission": "你没有权限上传编辑器文件。"
 }

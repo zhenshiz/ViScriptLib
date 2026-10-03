@@ -22,12 +22,8 @@ git submodule add https://github.com/zhenshiz/ViScriptRecipe.git
 ```gradle
 dependencies {
     implementation project(":ViScriptLib")
-}
-```
-如需打包ViScriptLib，由于ViScriptLib已经发布到maven，为了保证Artifact ID一致，你需要这样写：
-```gradle
-dependencies {
-    jarJar "com.zhenshiz:ViScriptLib-neoforge-${minecraft_version}:${vsl_jij_version}"
+    // 如需打包ViScriptLib，取消下面这行的注释
+    // jarJar(project(":ViScriptLib"))
 }
 ```
 

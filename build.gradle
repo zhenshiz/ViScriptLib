@@ -118,12 +118,15 @@ subprojects {
             //精妙背包
             modCompileOnly "maven.modrinth:sophisticated-backpacks:${sophisticated_backpacks_version}"
             modCompileOnly "maven.modrinth:sophisticated-core:${sophisticated_core_version}"
+            // Backpacked 3.0.9
+            modCompileOnly "curse.maven:backpacked-352835:${backpacked_file}"
+            // modRuntimeOnly "curse.maven:framework-549225:7573740"
             //超越维度
             modCompileOnly "curse.maven:beyond-dimensions-1222890:${beyonddimensions_version}"
             //Lightman's Currency
             modCompileOnly "maven.modrinth:lightmans-currency:${lightmans_currency_version}"
             //汇流来世
-            modCompileOnly "top.theillusivec4.curios:curios-forge:${curios_version}"
+            modImplementation "top.theillusivec4.curios:curios-forge:${curios_version}"
             /*modCompileOnly "org.confluence.lib:Confluence-Magic-Lib:${confluence_lib_version}"
             modCompileOnly ("org.confluence.mod:ConfluenceOtherworld:${confluence_version}") {
                 transitive = false
