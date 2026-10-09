@@ -184,7 +184,7 @@ subprojects {
             compileOnly "curse.maven:ftb-teams-forge-404468:7369021"
             compileOnly "curse.maven:architectury-api-419699:5786327"
             //tacz
-            //compileOnly "maven.modrinth:tacz-1.21.1:${tacz_version}"
+            compileOnly "curse.maven:tacz-1-21-1-1353462:${tacz_file}"
             //拔刀剑
             //compileOnly "maven.modrinth:slashblade-resharped:${slashblade_resharped_version}"
 
