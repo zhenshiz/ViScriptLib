@@ -27,6 +27,12 @@ ViScript Lib 是给 ViScript 系列附属模组复用的 NeoForge/LDLib2 工具�
 - **早期访问器注册**
   - `@ViScriptRegisterAccessors` 用于在 LDLib2 扫描 RPC 前注册 typed RPC 参数需要的 accessor。
 
+## AI 基础接口
+
+VSL 提供服务端注册表与标签查询、分页 JSON 协议、访问权限和附属模组扩展接口。AI 配置位于 VSL 编辑器原生设置面板的 **AI** 分类，沿用编辑器的应用、确定和取消流程，默认关闭。通过顶部 **AI → 打开 AI 对话窗口** 使用 LDLib2 游戏外聊天窗口，可查询用法和注册表，支持 OpenAI/Anthropic 兼容服务（已验证智谱 `glm-5.3`）。聊天区分玩家与 AI 消息，提供工具记录与轮次跳转。ViScriptShop 已接入领域编辑，支持每轮预览、应用及 LDLib2 原生历史撤销/重做；其他编辑器可实现 `AiEditorAdapter` 接入。
+
+详细协议、编辑器配置、扩展约束及隔离测试见 [AI 接入说明](docs/ai-integration.md)。
+
 ## 编辑器创建
 
 详细流程见 [docs/editor-guide.md](docs/editor-guide.md)。

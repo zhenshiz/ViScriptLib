@@ -13,3 +13,6 @@
 [submodule "ViScriptQuests"]
 	path = ViScriptQuests
 	url = https://github.com/zhenshiz/ViScriptQuests.git
+[submodule "ViScriptNpc"]
+	path = ViScriptNpc
+	url = https://github.com/zhenshiz/ViScriptNpc.git

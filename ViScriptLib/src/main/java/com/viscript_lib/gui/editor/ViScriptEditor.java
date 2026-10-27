@@ -12,17 +12,17 @@ import com.lowdragmc.lowdraglib2.gui.ui.data.TextWrap;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.Button;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.Dialog;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.Label;
-import com.lowdragmc.lowdraglib2.gui.util.TreeBuilder;
-import com.viscript_lib.util.NbtHelper;
+import com.lowdragmc.lowdraglib2.gui.ui.event.UIEvent;
+import com.viscript_lib.gui.ai.AiChatWindow;
+import com.viscript_lib.gui.ai.AiEditorAdapter;
+import com.viscript_lib.gui.settings.AiEditorSettings;
 import com.viscript_lib.util.item.ViScriptItemStack;
-import net.minecraft.client.Minecraft;
 import net.minecraft.resources.ResourceLocation;
 
 import javax.annotation.Nullable;
 import java.io.File;
 import java.nio.file.Files;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -38,6 +38,54 @@ import java.util.Set;
 public abstract class ViScriptEditor extends Editor {
     final List<ProjectType> projectTypes = new ArrayList<>();
     private final Set<String> removedWindowAnchors = new HashSet<>();
+    @Nullable private AiChatWindow aiChat;
+
+    @Override
+    public boolean ownsKey(UIEvent event) {
+        return aiChat != null && aiChat.getSession().isPreviewing() || super.ownsKey(event);
+    }
+
+    /** @return 此编辑器拥有的 AI 会话及窗口控制器 */
+    public final AiChatWindow getAiChat() {
+        if (aiChat == null) aiChat = new AiChatWindow(this);
+        return aiChat;
+    }
+
+    /** @return 附属模组的领域适配器；未接入时仅提供用法问答与注册表查询 */
+    @Nullable
+    public AiEditorAdapter createAiEditorAdapter() {
+        return null;
+    }
+
+    @Override
+    public void screenTick() {
+        super.screenTick();
+        if (aiChat != null) aiChat.getSession().tick();
+    }
+
+    @Override
+    protected void onRemoved() {
+        if (aiChat != null) {
+            aiChat.getSession().dispose();
+            aiChat.close();
+        }
+        super.onRemoved();
+    }
+
+    @Override
+    protected void onExecuteCommand(UIEvent event) {
+        if (aiChat != null && aiChat.getSession().isPreviewing()) {
+            event.stopPropagation();
+            return;
+        }
+        super.onExecuteCommand(event);
+    }
+
+    @Override
+    protected void initEditorSettings() {
+        super.initEditorSettings();
+        editorSettings.registerSettings(new AiEditorSettings(), AiEditorSettings.CODEC);
+    }
 
     @Override
     protected void initMenus() {
@@ -45,6 +93,7 @@ public abstract class ViScriptEditor extends Editor {
         menuContainer.addChild(new UnavailableItemsMenu(this)
                 .createMenuTab()
                 .setId("viscript_lib_unavailable_items_menu"));
+        menuContainer.addChild(new AiMenu(this).createMenuTab().setId("viscript_lib_ai_menu"));
     }
 
     /**
@@ -58,12 +107,12 @@ public abstract class ViScriptEditor extends Editor {
     }
 
     /**
-     * 返回此编辑器支持的工程文件类型。
+     * 返回此编辑器已注册的工程类型。
      *
-     * @return 不可修改的项目类型列表
+     * @return 按注册顺序排列的只读列表快照；没有已注册类型时返回空列表
      */
-    protected final List<ProjectType> getProjectTypes() {
-        return Collections.unmodifiableList(projectTypes);
+    public final List<ProjectType> getProjectTypes() {
+        return List.copyOf(projectTypes);
     }
 
     /**
@@ -302,53 +351,6 @@ public abstract class ViScriptEditor extends Editor {
             return false;
         }
         return true;
-    }
-
-    protected void addExportLeaf(TreeBuilder.Menu menu) {
-        menu.leaf("viscript_lib.editor.export", // 导出数据到剪贴板
-                () -> Dialog.showNotification(exportToClipboard(), 3).show(getModularUI()));
-        menu.leaf("viscript_lib.editor.import", () -> { // 从剪贴板导入数据
-            var dialog = new Dialog()
-                    .setTitle("viscript_lib.editor.import.title") // 导入数据须知
-                    // 若操作成功，当前项目的数据会被覆盖，请确保当前项目的内容已经保存。若导入的数据有误，可能会导致游戏崩溃，你确定要继续吗？
-                    .addContent(new Label().setText("viscript_lib.editor.import.tip")
-                            .textStyle(style -> style.textWrap(TextWrap.WRAP).adaptiveHeight(true))
-                            .layout(layout -> layout.width(150)));
-            dialog.addButton(new Button()
-                    .setOnClick(e -> {
-                        Dialog.showNotification(loadFromClipboard(), 3).show(getModularUI());
-                        dialog.close();
-                    })
-                    .setText("ldlib.gui.tips.confirm")
-                    .addClass("__confirm-button__"));
-            dialog.addButton(new Button()
-                    .setOnClick(e -> dialog.close())
-                    .setText("ldlib.gui.tips.cancel")
-                    .addClass("__cancel-button__"));
-            dialog.show(getModularUI());
-        });
-    }
-
-    protected String exportToClipboard() {
-        var project = getCurrentProject();
-        if (project == null) return "viscript_lib.editor.no_project"; // 请先打开一个项目
-
-        var tag = project.serializeNBT(Platform.getFrozenRegistry());
-        Minecraft.getInstance().keyboardHandler.setClipboard(NbtHelper.tagToString(tag));
-        return "viscript_lib.editor.exported"; // 已将当前项目数据复制到剪贴板
-    }
-
-    protected String loadFromClipboard() {
-        var project = getProjectTypes().getFirst().newEmptyProject();
-        try {
-            var tag = NbtHelper.tagFromString(Minecraft.getInstance().keyboardHandler.getClipboard());
-            project.deserializeNBT(Platform.getFrozenRegistry(), tag);
-            if (getCurrentProject() != null) closeCurrentProject(false, null);
-            loadNewProject(project, null);
-            return "viscript_lib.editor.import.success"; // 已从剪贴板导入数据并覆盖当前项目
-        } catch (Exception e) {
-            return "viscript_lib.editor.import.fail"; // 剪贴板内容解析出错！
-        }
     }
 
     /**

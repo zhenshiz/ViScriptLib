@@ -73,6 +73,25 @@ subprojects {
         //cf
         maven {
             url "https://cursemaven.com"
+            content {
+                excludeModule "curse.maven", "ftb-quests-forge-289412"
+                excludeModule "curse.maven", "ftb-library-forge-404465"
+                excludeModule "curse.maven", "ftb-teams-forge-404468"
+            }
+        }
+        exclusiveContent {
+            forRepository {
+                maven {
+                    name = "CurseMaven"
+                    url "https://cursemaven.com"
+                }
+            }
+            // FTB 的 CurseForge 文件坐标只由 CurseMaven 提供，禁止向 NeoForge 等仓库探测。
+            filter {
+                includeModule "curse.maven", "ftb-quests-forge-289412"
+                includeModule "curse.maven", "ftb-library-forge-404465"
+                includeModule "curse.maven", "ftb-teams-forge-404468"
+            }
         }
 
         maven {
@@ -179,10 +198,16 @@ subprojects {
             //jech
             compileOnly "curse.maven:just-enough-characters-250702:${jech_version}"
             //ftb
-            compileOnly "curse.maven:ftb-quests-forge-289412:7324136"
-            compileOnly "curse.maven:ftb-library-forge-404465:7312258"
-            compileOnly "curse.maven:ftb-teams-forge-404468:7369021"
-            compileOnly "curse.maven:architectury-api-419699:5786327"
+            compileOnly "curse.maven:ftb-quests-forge-289412:${ftb_quests_file}"
+            compileOnly "curse.maven:ftb-library-forge-404465:${ftb_library_file}"
+            compileOnly "curse.maven:ftb-teams-forge-404468:${ftb_teams_file}"
+            compileOnly "maven.modrinth:architectury-api:${architectury_version}"
+            if (project.hasProperty('ftbTest')) {
+                runtimeOnly "curse.maven:ftb-quests-forge-289412:${ftb_quests_file}"
+                runtimeOnly "curse.maven:ftb-library-forge-404465:${ftb_library_file}"
+                runtimeOnly "curse.maven:ftb-teams-forge-404468:${ftb_teams_file}"
+                runtimeOnly "maven.modrinth:architectury-api:${architectury_version}"
+            }
             //tacz
             compileOnly "curse.maven:tacz-1-21-1-1353462:${tacz_file}"
             //拔刀剑

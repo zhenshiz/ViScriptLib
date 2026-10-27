@@ -30,3 +30,6 @@ runs
 ViScriptLib/src/main/java/com/viscript_lib/gametest/
 
 publish.env
+
+# Local documentation for all modules
+doc/

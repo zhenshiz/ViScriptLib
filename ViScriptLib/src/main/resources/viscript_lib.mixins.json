@@ -10,7 +10,8 @@
   "client": [
     "EditorWindowAccessor",
     "FtbLibraryClientMixin",
-    "ItemStackAccessorClientMixin"
+    "ItemStackAccessorClientMixin",
+    "OsWindowHintsMixin"
   ],
   "injectors": {
     "defaultRequire": 1

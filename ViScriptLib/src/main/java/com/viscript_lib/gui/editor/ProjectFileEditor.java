@@ -27,7 +27,6 @@ public abstract class ProjectFileEditor extends ViScriptEditor {
             if (currentContext() != null) {
                 menu.leaf(Icons.EXPORT, "viscript_lib.editor.menu.export_runtime_file", this::exportRuntimeFile);
             }
-            addExportLeaf(menu);
         });
         var uploadMenu = new UploadMenu(this);
         menuContainer.addChild(uploadMenu.createMenuTab());

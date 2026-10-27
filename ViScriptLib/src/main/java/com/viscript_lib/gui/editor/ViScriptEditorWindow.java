@@ -17,7 +17,6 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 
 import javax.annotation.Nullable;
-import java.util.ArrayList;
 import java.util.function.Supplier;
 
 /**
@@ -222,7 +221,14 @@ public class ViScriptEditorWindow extends EditorWindow {
     }
 
     private void applyWindowButtonPolicy(Editor editor) {
-        var buttonIndex = removeCustomScaleButton(editor);
+        for (var child : editor.buttonContainer.getChildren()) {
+            if (child.hasClass(CUSTOM_SCALE_BUTTON_CLASS)) {
+                child.setDisplay(defaultScaleButtonVisible);
+                return;
+            }
+        }
+
+        var buttonIndex = -1;
         var defaultScaleIndex = findDefaultScaleButtonIndex(editor);
         if (defaultScaleIndex >= 0) {
             var button = editor.buttonContainer.getChildren().get(defaultScaleIndex);
@@ -231,20 +237,17 @@ public class ViScriptEditorWindow extends EditorWindow {
                 buttonIndex = defaultScaleIndex;
             }
         }
-        if (!defaultScaleButtonVisible) {
-            return;
-        }
-
         if (buttonIndex < 0) {
             buttonIndex = findScaleButtonInsertionIndex(editor);
         }
-        editor.buttonContainer.addChildAt(createScaleButton(), Math.min(buttonIndex, editor.buttonContainer.getChildren().size()));
+        editor.buttonContainer.addChildAt(createScaleButton().setDisplay(defaultScaleButtonVisible),
+                Math.min(buttonIndex, editor.buttonContainer.getChildren().size()));
     }
 
     private Button createScaleButton() {
         var button = new Button();
         button.noText()
-                .addPreIcon(DynamicTexture.of(() -> isMaximized() ? Icons.WINDOW_RESTORE : Icons.WINDOW_MAXIMIZE))
+                .addPreIcon(DynamicTexture.of(() -> isShowingMaximized() ? Icons.WINDOW_RESTORE : Icons.WINDOW_MAXIMIZE))
                 .setOnClick(e -> handleScaleButtonClick());
         button.addClasses("__white_icon__", CUSTOM_SCALE_BUTTON_CLASS);
         button.layout(layout -> layout.height(12));
@@ -252,6 +255,10 @@ public class ViScriptEditorWindow extends EditorWindow {
     }
 
     private void handleScaleButtonClick() {
+        if (isInOsWindow()) {
+            toggleMaximized();
+            return;
+        }
         if (isMaximized()) {
             if (minimizedBounds != null) {
                 minimizeToConfiguredBounds();
@@ -342,20 +349,6 @@ public class ViScriptEditorWindow extends EditorWindow {
         if (mui != null && mui.getScreen() != null) {
             mui.getScreen().init(minecraft, minecraft.getWindow().getGuiScaledWidth(), minecraft.getWindow().getGuiScaledHeight());
         }
-    }
-
-    private int removeCustomScaleButton(Editor editor) {
-        var index = -1;
-        for (var child : new ArrayList<>(editor.buttonContainer.getChildren())) {
-            if (child.hasClass(CUSTOM_SCALE_BUTTON_CLASS)) {
-                var childIndex = editor.buttonContainer.getChildren().indexOf(child);
-                if (index < 0) {
-                    index = childIndex;
-                }
-                editor.buttonContainer.removeChild(child);
-            }
-        }
-        return index;
     }
 
     private int findDefaultScaleButtonIndex(Editor editor) {

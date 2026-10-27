@@ -4,6 +4,7 @@ import com.lowdragmc.lowdraglib2.Platform;
 import com.lowdragmc.lowdraglib2.registry.AutoRegistry;
 import com.lowdragmc.lowdraglib2.registry.annotation.LDLRegister;
 import com.mojang.logging.LogUtils;
+import com.viscript_lib.ai.AiEnvironment;
 import com.viscript_lib.register.ICommand;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.IEventBus;
@@ -21,7 +22,10 @@ public class ViScriptLib {
     public static final Logger LOGGER = LogUtils.getLogger();
 
     public ViScriptLib(IEventBus modEventBus, ModContainer modContainer, Dist dist) {
+        ViScriptLibRegistries.ATTACHMENT_TYPES.register(modEventBus);
         NeoForge.EVENT_BUS.addListener(this::onRegisterCommands);
+        NeoForge.EVENT_BUS.addListener(AiEnvironment::onTagsUpdated);
+        NeoForge.EVENT_BUS.addListener(AiEnvironment::onServerStopped);
     }
 
     //注册指令

@@ -1,0 +1,49 @@
+// 仅在指定 -PldTest 时配置真实客户端测试，不影响普通客户端运行。
+def ldTestEnabled = providers.gradleProperty('ldTest').isPresent()
+def ldTestReportDir = layout.buildDirectory.dir('ldlib2-uitest').get().asFile
+
+if (ldTestEnabled) {
+    neoForge.runs.matching { it.name == 'client' }.configureEach { run ->
+        run.gameDirectory.set(layout.buildDirectory.dir('ldlib2-uitest/game'))
+        run.systemProperty 'ldlib2.uitest.run', project.property('ldTest')
+        run.systemProperty 'ldlib2.uitest.out', ldTestReportDir.absolutePath
+        run.systemProperty 'ldlib2.uitest.window', project.findProperty('ldTestWindow') ?: '1280x720'
+        run.systemProperty 'ldlib2.uitest.inputMode', 'SYNTHETIC'
+        run.systemProperty 'ldlib2.uitest.watchdogSec', '90'
+        run.logLevel = org.slf4j.event.Level.INFO
+    }
+}
+
+tasks.register('ldlib2CleanUiTestReport', Delete) {
+    onlyIf { ldTestEnabled }
+    delete new File(ldTestReportDir, 'report.json'), new File(ldTestReportDir, 'report.txt')
+}
+
+tasks.register('verifyUiTest') {
+    group = 'verification'
+    description = '校验 LDLib2 真实客户端测试报告。'
+    onlyIf { ldTestEnabled }
+    doLast {
+        def reportFile = new File(ldTestReportDir, 'report.json')
+        if (!reportFile.isFile()) throw new GradleException("UI 测试缺少报告：${reportFile}")
+        def report = new groovy.json.JsonSlurper().parse(reportFile)
+        logger.lifecycle("UI 测试：${report.totals.passed}/${report.totals.scenarios} 场景，" +
+                "${report.totals.checks - report.totals.checksFailed}/${report.totals.checks} 项断言通过")
+        report.scenarios.findAll { it.status != 'PASS' }.each { scenario ->
+            logger.error("失败场景：${scenario.name}，${scenario.error}")
+            scenario.steps.findAll { it.status != 'PASS' }.each { step ->
+                logger.error("步骤 ${step.index} ${step.name}：${step.error}")
+                step.checks.findAll { !it.passed }.each { check -> logger.error("断言：${check}") }
+                step.captures.each { capture -> logger.error("截图：${new File(ldTestReportDir, capture.path)}") }
+            }
+        }
+        if (report.status != 'PASS') throw new GradleException("UI 测试失败：${reportFile}")
+    }
+}
+
+if (ldTestEnabled) {
+    tasks.named('runClient').configure {
+        dependsOn 'ldlib2CleanUiTestReport'
+        finalizedBy 'verifyUiTest'
+    }
+}

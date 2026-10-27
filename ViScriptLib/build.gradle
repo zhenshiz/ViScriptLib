@@ -27,6 +27,8 @@ neoForge {
 
 sourceSets.main.resources { srcDir 'src/generated/resources' }
 
+apply from: project.file('gradle/ldlib2-uitest.gradle')
+
 dependencies {
 }
 
