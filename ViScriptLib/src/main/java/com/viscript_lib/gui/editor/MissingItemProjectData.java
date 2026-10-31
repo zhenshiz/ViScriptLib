@@ -12,7 +12,7 @@ import java.util.*;
  * 在已序列化的编辑器项目中查找和删除缺失物品 ID。
  */
 final class MissingItemProjectData {
-    private static final Set<String> ITEM_STACK_FIELDS = Set.of("id", "count", "components");
+    private static final Set<String> ITEM_STACK_FIELDS = Set.of("id", "Count", "tag");
 
     private MissingItemProjectData() {
     }
@@ -70,7 +70,8 @@ final class MissingItemProjectData {
             var child = compound.get(key);
             if (child instanceof CompoundTag childCompound) {
                 if (isMatchingMissingItem(childCompound, itemId)) {
-                    compound.put(key, new CompoundTag());
+                    // compound.put(key, new CompoundTag()); // 如果塞一个空的回去会解析出错
+                    compound.remove(key);
                     removed++;
                 } else {
                     removed += deleteFromCompound(childCompound, itemId);
@@ -104,13 +105,12 @@ final class MissingItemProjectData {
 
     private static Optional<ResourceLocation> getMissingItemId(CompoundTag compound) {
         if (!compound.contains("id", Tag.TAG_STRING)
-                || !compound.contains("count", Tag.TAG_ANY_NUMERIC)
-                || compound.getInt("count") <= 0
+                || !compound.contains("Count", Tag.TAG_ANY_NUMERIC)
+                || compound.getInt("Count") <= 0
                 || !ITEM_STACK_FIELDS.containsAll(compound.getAllKeys())) {
             return Optional.empty();
         }
-        if (compound.contains("components")
-                && !compound.contains("components", Tag.TAG_COMPOUND)) {
+        if (compound.contains("tag") && !compound.contains("tag", Tag.TAG_COMPOUND)) {
             return Optional.empty();
         }
 

@@ -12,7 +12,11 @@ import com.lowdragmc.lowdraglib2.gui.ui.data.TextWrap;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.Button;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.Dialog;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.Label;
+import com.lowdragmc.lowdraglib2.gui.ui.event.UIEvent;
 import com.lowdragmc.lowdraglib2.gui.util.TreeBuilder;
+import com.viscript_lib.gui.ai.AiChatWindow;
+import com.viscript_lib.gui.ai.AiEditorAdapter;
+import com.viscript_lib.gui.settings.AiEditorSettings;
 import com.viscript_lib.util.NbtHelper;
 import com.viscript_lib.util.item.ViScriptItemStack;
 import net.minecraft.client.Minecraft;
@@ -33,6 +37,54 @@ import java.util.*;
 public abstract class ViScriptEditor extends Editor {
     final List<ProjectType> projectTypes = new ArrayList<>();
     private final Set<String> removedWindowAnchors = new HashSet<>();
+    @Nullable private AiChatWindow aiChat;
+
+    @Override
+    public boolean ownsKey(UIEvent event) {
+        return aiChat != null && aiChat.getSession().isPreviewing() || super.ownsKey(event);
+    }
+
+    /** @return 此编辑器拥有的 AI 会话及窗口控制器 */
+    public final AiChatWindow getAiChat() {
+        if (aiChat == null) aiChat = new AiChatWindow(this);
+        return aiChat;
+    }
+
+    /** @return 附属模组的领域适配器；未接入时仅提供用法问答与注册表查询 */
+    @Nullable
+    public AiEditorAdapter createAiEditorAdapter() {
+        return null;
+    }
+
+    @Override
+    public void screenTick() {
+        super.screenTick();
+        if (aiChat != null) aiChat.getSession().tick();
+    }
+
+    @Override
+    protected void onRemoved() {
+        if (aiChat != null) {
+            aiChat.getSession().dispose();
+            aiChat.close();
+        }
+        super.onRemoved();
+    }
+
+    @Override
+    protected void onExecuteCommand(UIEvent event) {
+        if (aiChat != null && aiChat.getSession().isPreviewing()) {
+            event.stopPropagation();
+            return;
+        }
+        super.onExecuteCommand(event);
+    }
+
+    @Override
+    protected void initEditorSettings() {
+        super.initEditorSettings();
+        editorSettings.registerSettings(new AiEditorSettings(), AiEditorSettings.CODEC);
+    }
 
     @Override
     protected void initMenus() {
@@ -40,6 +92,7 @@ public abstract class ViScriptEditor extends Editor {
         menuContainer.addChild(new UnavailableItemsMenu(this)
                 .createMenuTab()
                 .setId("viscript_lib_unavailable_items_menu"));
+        menuContainer.addChild(new AiMenu(this).createMenuTab().setId("viscript_lib_ai_menu"));
     }
 
     /**
@@ -53,12 +106,12 @@ public abstract class ViScriptEditor extends Editor {
     }
 
     /**
-     * 返回此编辑器支持的工程文件类型。
+     * 返回此编辑器已注册的工程类型。
      *
-     * @return 不可修改的项目类型列表
+     * @return 按注册顺序排列的只读列表快照；没有已注册类型时返回空列表
      */
-    protected final List<ProjectType> getProjectTypes() {
-        return Collections.unmodifiableList(projectTypes);
+    public final List<ProjectType> getProjectTypes() {
+        return List.copyOf(projectTypes);
     }
 
     /**
@@ -329,7 +382,7 @@ public abstract class ViScriptEditor extends Editor {
         if (project == null) return "viscript_lib.editor.no_project"; // 请先打开一个项目
 
         var tag = project.serializeNBT(Platform.getFrozenRegistry());
-        Minecraft.getInstance().keyboardHandler.setClipboard(NbtHelper.tagToString(tag));
+        Minecraft.getInstance().keyboardHandler.setClipboard(NbtHelper.toJson(tag));
         return "viscript_lib.editor.exported"; // 已将当前项目数据复制到剪贴板
     }
 

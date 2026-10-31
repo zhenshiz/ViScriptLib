@@ -5,6 +5,7 @@ import com.mojang.logging.LogUtils;
 import net.minecraftforge.event.RegisterCommandsEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import org.slf4j.Logger;
 
 @Mod(ViScriptLib.MOD_ID)
@@ -14,6 +15,8 @@ public class ViScriptLib {
     public static final Logger LOGGER = LogUtils.getLogger();
 
     public ViScriptLib() {
+        var modEventBus = FMLJavaModLoadingContext.get().getModEventBus();
+        ViScriptLibRegistries.ATTACHMENT_TYPES.register(modEventBus);
     }
 
     //注册指令

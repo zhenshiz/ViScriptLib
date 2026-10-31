@@ -10,7 +10,8 @@
     "PersistedParserMixin"
   ],
   "client": [
-    "FtbLibraryClientMixin"
+    "FtbLibraryClientMixin",
+    "OsWindowHintsMixin"
   ],
   "injectors": {
     "defaultRequire": 1

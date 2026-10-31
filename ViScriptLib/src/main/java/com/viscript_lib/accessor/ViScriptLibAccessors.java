@@ -4,6 +4,8 @@ import com.lowdragmc.lowdraglib2.syncdata.AccessorRegistries;
 import com.lowdragmc.lowdraglib2.syncdata.accessor.direct.CustomDirectAccessor;
 import com.viscript_lib.annotation.ViScriptRegisterAccessors;
 import com.viscript_lib.event.RegisterAccessorEvent;
+import com.viscript_lib.stage.StageFlagGroup;
+import com.viscript_lib.stage.StageRestriction;
 import com.viscript_lib.util.item.ViScriptItemStack;
 
 /**
@@ -15,6 +17,8 @@ public final class ViScriptLibAccessors {
 
     @ViScriptRegisterAccessors
     public static void register(RegisterAccessorEvent event) {
+        event.register(StageFlagGroup.class, StageFlagGroup::new);
+        event.register(StageRestriction.class, StageRestriction::new);
         AccessorRegistries.registerAccessor(CustomDirectAccessor.builder(ViScriptItemStack.class)
                 .codec(ViScriptItemStack.CODEC)
                 .streamCodec(ViScriptItemStack.STREAM_CODEC)
