@@ -70,6 +70,8 @@ public class MyFunctionEditor extends FunctionFileEditor {
 
 通过容器菜单打开编辑器时，在菜单的客户端工厂中给窗口设置 LDLib2 的 `setGameWindowReopener`。回调请求服务端重新打开原菜单，并返回是否已发送请求；菜单工厂继续通过同一 ID 调用 `ViScriptEditorWindow.open`。这样从独立窗口返回后仍是容器界面，JEI／REI／EMI 可以继续显示，编辑器实例、未保存工程和窗口还原尺寸也会保留。配方编辑器的接入示例见 `RecipeEditor.createUI()`。
 
+文件菜单提供“导出数据到剪贴板”和“从剪贴板导入数据”，使用 `NbtHelper` 在项目 NBT 与 JSON 之间转换。导出包含工程编辑数据；导入到当前项目类型，成功后作为未保存项目打开，解析失败保留原项目。JSON 不带 NBT 数字后缀和数组类型标记，读取时按数值范围恢复数字、将数组读取为列表；字符串转义和 64 位整数保留。
+
 开发环境内置两个测试入口：
 
 ```mcfunction

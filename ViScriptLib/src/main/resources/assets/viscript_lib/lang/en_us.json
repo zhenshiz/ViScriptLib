@@ -233,5 +233,13 @@
   "viscript_lib.ai.image.ready": "%s image(s) attached. Send when ready.",
   "viscript_lib.ai.image.failed": "Could not read the clipboard image.",
   "viscript_lib.ai.image.preview_failed": "Preview unavailable",
-  "viscript_lib.ai.image.remove": "Remove image"
+  "viscript_lib.ai.image.remove": "Remove image",
+  "viscript_lib.editor.export": "Export data to clipboard",
+  "viscript_lib.editor.exported": "Project JSON copied to clipboard",
+  "viscript_lib.editor.export.fail": "Could not export project data",
+  "viscript_lib.editor.import": "Import data from clipboard",
+  "viscript_lib.editor.import.title": "Import JSON",
+  "viscript_lib.editor.import.tip": "A successful import replaces the current project. Save any changes you want to keep first.",
+  "viscript_lib.editor.import.success": "Project JSON imported from clipboard",
+  "viscript_lib.editor.import.fail": "Could not import clipboard JSON into this project"
 }

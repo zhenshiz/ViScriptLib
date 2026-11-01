@@ -233,5 +233,13 @@
   "viscript_lib.ai.image.ready": "已添加 %s 张图片，点击发送后上传。",
   "viscript_lib.ai.image.failed": "无法读取剪贴板中的图片。",
   "viscript_lib.ai.image.preview_failed": "无法预览",
-  "viscript_lib.ai.image.remove": "移除图片"
+  "viscript_lib.ai.image.remove": "移除图片",
+  "viscript_lib.editor.export": "导出数据到剪贴板",
+  "viscript_lib.editor.exported": "已将当前项目 JSON 复制到剪贴板",
+  "viscript_lib.editor.export.fail": "项目数据导出失败",
+  "viscript_lib.editor.import": "从剪贴板导入数据",
+  "viscript_lib.editor.import.title": "导入 JSON",
+  "viscript_lib.editor.import.tip": "导入成功后将替换当前项目。请先保存需要保留的修改。",
+  "viscript_lib.editor.import.success": "已从剪贴板导入项目 JSON",
+  "viscript_lib.editor.import.fail": "剪贴板 JSON 无法导入当前项目"
 }

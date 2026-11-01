@@ -66,9 +66,9 @@ public final class EditorWindowControlsScenario implements UIScenario {
                 .click("#vsl_test_file_menu")
                 .check("文件菜单仍有原生设置入口", ctx -> menuLabels(ctx).stream()
                         .anyMatch(label -> label.startsWith(Component.translatable("editor.settings").getString())))
-                .check("文件菜单不含剪贴板导入导出", ctx -> menuLabels(ctx).stream().noneMatch(label ->
-                        label.equals("导出数据到剪贴板") || label.equals("从剪贴板导入数据")
-                                || label.equals("Export data to clipboard") || label.equals("Import data from clipboard")))
+                .check("文件菜单保留 JSON 剪贴板导入导出", ctx -> menuLabels(ctx).containsAll(java.util.List.of(
+                        Component.translatable("viscript_lib.editor.export").getString(),
+                        Component.translatable("viscript_lib.editor.import").getString())))
                 .click("#vsl_test_file_menu")
                 .click(SCALE_BUTTON).ticks(3)
                 .check("缩放按钮可缩到指定区域", ctx -> !root(ctx).isMaximized()
@@ -110,9 +110,9 @@ public final class EditorWindowControlsScenario implements UIScenario {
                 .click("#vsl_test_project_file_menu")
                 .check("工程编辑器保留运行时导出", ctx -> menuLabels(ctx).contains(
                         Component.translatable("viscript_lib.editor.menu.export_runtime_file").getString()))
-                .check("工程编辑器不含剪贴板导入导出", ctx -> menuLabels(ctx).stream().noneMatch(label ->
-                        label.equals("导出数据到剪贴板") || label.equals("从剪贴板导入数据")
-                                || label.equals("Export data to clipboard") || label.equals("Import data from clipboard")))
+                .check("工程编辑器保留 JSON 剪贴板导入导出", ctx -> menuLabels(ctx).containsAll(java.util.List.of(
+                        Component.translatable("viscript_lib.editor.export").getString(),
+                        Component.translatable("viscript_lib.editor.import").getString())))
                 .teardown("移除测试窗口缓存", ctx -> {
                     EditorWindowAccessor.viscript_lib$getMinimizedWindows().remove(WINDOW_ID);
                     ctx.mc().setScreen(null);

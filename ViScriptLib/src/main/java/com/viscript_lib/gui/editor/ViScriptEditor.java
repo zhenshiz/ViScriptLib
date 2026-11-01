@@ -13,10 +13,13 @@ import com.lowdragmc.lowdraglib2.gui.ui.elements.Button;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.Dialog;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.Label;
 import com.lowdragmc.lowdraglib2.gui.ui.event.UIEvent;
+import com.lowdragmc.lowdraglib2.gui.util.TreeBuilder;
 import com.viscript_lib.gui.ai.AiChatWindow;
 import com.viscript_lib.gui.ai.AiEditorAdapter;
 import com.viscript_lib.gui.settings.AiEditorSettings;
+import com.viscript_lib.util.NbtHelper;
 import com.viscript_lib.util.item.ViScriptItemStack;
+import net.minecraft.client.Minecraft;
 import net.minecraft.resources.ResourceLocation;
 
 import javax.annotation.Nullable;
@@ -90,10 +93,77 @@ public abstract class ViScriptEditor extends Editor {
     @Override
     protected void initMenus() {
         super.initMenus();
+        fileMenu.registerMenuCreator((tab, menu) -> addExportLeaf(menu));
         menuContainer.addChild(new UnavailableItemsMenu(this)
                 .createMenuTab()
                 .setId("viscript_lib_unavailable_items_menu"));
         menuContainer.addChild(new AiMenu(this).createMenuTab().setId("viscript_lib_ai_menu"));
+    }
+
+    /**
+     * 添加当前项目的 JSON 剪贴板导入导出菜单。
+     *
+     * @param menu 接收菜单项的文件菜单
+     */
+    protected void addExportLeaf(TreeBuilder.Menu menu) {
+        menu.leaf("viscript_lib.editor.export", () ->
+                Dialog.showNotification(exportToClipboard(), 3).show(getModularUI()));
+        menu.leaf("viscript_lib.editor.import", () -> {
+            if (projectTypes.isEmpty()) return;
+            var dialog = new Dialog().setTitle("viscript_lib.editor.import.title");
+            dialog.addContent(new Label().setText("viscript_lib.editor.import.tip")
+                    .textStyle(style -> style.textWrap(TextWrap.WRAP).adaptiveHeight(true))
+                    .layout(layout -> layout.width(200)));
+            dialog.addButton(new Button().setText("ldlib.gui.tips.confirm")
+                    .setOnClick(event -> {
+                        var result = loadFromClipboard();
+                        dialog.close();
+                        Dialog.showNotification(result, 3).show(getModularUI());
+                    }).setId("viscript_lib_json_import_confirm").addClass("__confirm-button__"));
+            dialog.addButton(new Button().setText("ldlib.gui.tips.cancel").setOnClick(event -> dialog.close())
+                    .addClass("__cancel-button__"));
+            dialog.show(getModularUI());
+        });
+    }
+
+    /**
+     * 使用 <code>NbtHelper</code> 将当前项目的 JSON 写入剪贴板。
+     *
+     * @return 导出结果的翻译键
+     */
+    protected String exportToClipboard() {
+        var project = getCurrentProject();
+        if (project == null) return "viscript_lib.editor.no_project";
+        try {
+            var json = NbtHelper.toJson(project.serializeNBT(Platform.getFrozenRegistry()));
+            Minecraft.getInstance().keyboardHandler.setClipboard(json);
+            return "viscript_lib.editor.exported";
+        } catch (RuntimeException exception) {
+            return "viscript_lib.editor.export.fail";
+        }
+    }
+
+    /**
+     * 解析剪贴板 JSON，并用同类型的新项目替换当前项目。
+     *
+     * <p>未打开项目时使用首个注册类型；解析或反序列化失败时保留当前项目。
+     * 成功导入的项目尚未关联本地文件。
+     *
+     * @return 导入结果的翻译键
+     */
+    protected String loadFromClipboard() {
+        if (projectTypes.isEmpty()) return "viscript_lib.editor.no_project";
+        try {
+            var type = getCurrentProject() == null ? projectTypes.getFirst() : getCurrentProject().getProjectType();
+            var project = type.newEmptyProject();
+            var tag = NbtHelper.tagFromJson(Minecraft.getInstance().keyboardHandler.getClipboard());
+            project.deserializeNBT(Platform.getFrozenRegistry(), tag);
+            if (getCurrentProject() != null) closeCurrentProject();
+            loadNewProject(project, null);
+            return "viscript_lib.editor.import.success";
+        } catch (RuntimeException exception) {
+            return "viscript_lib.editor.import.fail";
+        }
     }
 
     /**
