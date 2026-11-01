@@ -1,7 +1,5 @@
 package com.viscript_lib.gui.editor;
 
-import com.lowdragmc.lowdraglib2.LDLib2;
-import com.lowdragmc.lowdraglib2.editor.settings.AppearanceSettings;
 import com.lowdragmc.lowdraglib2.editor.ui.Editor;
 import com.lowdragmc.lowdraglib2.editor.ui.EditorWindow;
 import com.lowdragmc.lowdraglib2.gui.texture.DynamicTexture;
@@ -11,8 +9,6 @@ import com.lowdragmc.lowdraglib2.gui.ui.event.UIEvents;
 import com.viscript_lib.mixin.EditorWindowAccessor;
 import dev.vfyjxf.taffy.style.TaffyPosition;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.components.toasts.SystemToast;
-import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 
@@ -40,6 +36,9 @@ public class ViScriptEditorWindow extends EditorWindow {
      *
      * <p>{@code windowID} 唯一持有最小化窗口的缓存条目。若同一 ID 已缓存为其他
      * {@link EditorWindow} 子类型，本方法不会移除该缓存，而会拒绝以错误的窗口类型恢复它。
+     * <p>通过容器菜单打开的编辑器应设置
+     * {@link #setGameWindowReopener(java.util.function.BooleanSupplier)}，返回游戏窗口时重新打开
+     * 原菜单。菜单工厂仍调用本方法，以保留编辑器实例与未保存工程。
      *
      * @param windowID 此编辑器窗口的稳定资源标识符
      * @param editorCreator 未缓存最小化窗口时创建编辑器的供应器
@@ -52,14 +51,13 @@ public class ViScriptEditorWindow extends EditorWindow {
         if (minimizedWindow == null) {
             return new ViScriptEditorWindow(windowID, editorCreator);
         }
-        if (!(minimizedWindow instanceof ViScriptEditorWindow editorWindow)) {
+        if (!(minimizedWindow instanceof ViScriptEditorWindow)) {
             throw new IllegalStateException("窗口 ID %s 已由 %s 的最小化窗口占用"
                     .formatted(windowID, minimizedWindow.getClass().getName()));
         }
 
-        minimizedWindows.remove(windowID, editorWindow);
-        restoreMinimizedWindow(editorWindow);
-        return editorWindow;
+        // 由上游处理返回菜单时的状态、缩放和弹出前的窗口尺寸恢复。
+        return (ViScriptEditorWindow) EditorWindow.open(windowID, editorCreator);
     }
 
     public ViScriptEditorWindow(Supplier<Editor> editorCreator) {
@@ -113,32 +111,6 @@ public class ViScriptEditorWindow extends EditorWindow {
         accessor.viscript_lib$setWindowTop(top);
         accessor.viscript_lib$setWindowWidth(width);
         accessor.viscript_lib$setWindowHeight(height);
-    }
-
-    private static void restoreMinimizedWindow(ViScriptEditorWindow editorWindow) {
-        if (!LDLib2.isClient()) {
-            return;
-        }
-        var minecraft = Minecraft.getInstance();
-        minecraft.getToasts().addToast(new SystemToast(
-                new SystemToast.SystemToastId(1000L),
-                Component.translatable("editor.minimized.title"),
-                Component.translatable("editor.minimized.tips")
-        ));
-        var editor = editorWindow.getCurrentEditor();
-        if (editor == null) {
-            return;
-        }
-        editor.editorSettings.getSettings(AppearanceSettings.ID).ifPresent(settings -> {
-            if (settings instanceof AppearanceSettings appearanceSettings) {
-                var guiScale = minecraft.options.guiScale();
-                var scale = appearanceSettings.getScreenScale();
-                if (guiScale.get() != scale) {
-                    guiScale.set(scale);
-                    minecraft.resizeDisplay();
-                }
-            }
-        });
     }
 
     /**

@@ -68,6 +68,8 @@ public class MyFunctionEditor extends FunctionFileEditor {
 
 如果工程文件和运行时文件需要分开，项目类实现 `IRuntimeFileProject`，编辑器继承 `ProjectFileEditor`。工程文件会保存到 `assets/<modid>/project/*.xxxproj`，运行时文件会保存或上传到 `assets/<modid>/<domain>/*.xxx`。
 
+通过容器菜单打开编辑器时，在菜单的客户端工厂中给窗口设置 LDLib2 的 `setGameWindowReopener`。回调请求服务端重新打开原菜单，并返回是否已发送请求；菜单工厂继续通过同一 ID 调用 `ViScriptEditorWindow.open`。这样从独立窗口返回后仍是容器界面，JEI／REI／EMI 可以继续显示，编辑器实例、未保存工程和窗口还原尺寸也会保留。配方编辑器的接入示例见 `RecipeEditor.createUI()`。
+
 开发环境内置两个测试入口：
 
 ```mcfunction
