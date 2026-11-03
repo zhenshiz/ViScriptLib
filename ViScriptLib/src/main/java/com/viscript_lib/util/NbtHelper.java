@@ -1,8 +1,6 @@
 package com.viscript_lib.util;
 
 import com.google.common.base.Strings;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonParser;
 import com.mojang.brigadier.StringReader;
 import it.unimi.dsi.fastutil.bytes.ByteCollection;
 import it.unimi.dsi.fastutil.bytes.ByteOpenHashSet;
@@ -17,62 +15,6 @@ public class NbtHelper {
     public static CompoundTag tagFromString(String nbt) throws Exception {
         StringReader reader = new StringReader(nbt);
         return new TagParser(reader).readStruct();
-    }
-
-    /**
-     * 读取 JSON 对象为 NBT，保留字符串转义和有符号 64 位整数的精度。
-     *
-     * <p>JSON 不携带 NBT 数字类型和数组类型标记：整数按范围读取为
-     * <code>IntTag</code> 或 <code>LongTag</code>，小数读取为 <code>DoubleTag</code>，
-     * 数组读取为同类型元素的 <code>ListTag</code>。JSON 布尔值读取为 <code>ByteTag</code>。
-     *
-     * @param json 根节点为对象的 JSON 文本
-     * @return 解析后的复合标签
-     * @throws IllegalArgumentException 根节点不是对象、包含空值、数字超出范围或数组元素类型不一致时抛出
-     */
-    public static CompoundTag tagFromJson(String json) {
-        var root = JsonParser.parseString(json);
-        if (!root.isJsonObject()) throw new IllegalArgumentException("Expected a JSON object");
-        return (CompoundTag) fromJson(root);
-    }
-
-    private static Tag fromJson(JsonElement json) {
-        if (json.isJsonNull()) throw new IllegalArgumentException("NBT cannot represent JSON null");
-        if (json.isJsonObject()) {
-            var result = new CompoundTag();
-            json.getAsJsonObject().entrySet().forEach(entry -> result.put(entry.getKey(), fromJson(entry.getValue())));
-            return result;
-        }
-        if (json.isJsonArray()) {
-            var result = new ListTag();
-            var elements = new java.util.ArrayList<Tag>();
-            for (var element : json.getAsJsonArray()) elements.add(fromJson(element));
-            boolean numeric = !elements.isEmpty() && elements.stream().allMatch(NumericTag.class::isInstance);
-            int numericType = elements.stream().mapToInt(Tag::getId).max().orElse(Tag.TAG_END);
-            for (var element : elements) {
-                if (numeric && element instanceof NumericTag number) element = switch (numericType) {
-                    case Tag.TAG_DOUBLE -> DoubleTag.valueOf(number.getAsDouble());
-                    case Tag.TAG_LONG -> LongTag.valueOf(number.getAsLong());
-                    case Tag.TAG_INT -> IntTag.valueOf(number.getAsInt());
-                    default -> element;
-                };
-                if (!result.addTag(result.size(), element))
-                    throw new IllegalArgumentException("NBT lists require elements of the same type");
-            }
-            return result;
-        }
-        var value = json.getAsJsonPrimitive();
-        if (value.isBoolean()) return ByteTag.valueOf(value.getAsBoolean());
-        if (value.isString()) return StringTag.valueOf(value.getAsString());
-        var number = value.getAsString();
-        if (number.indexOf('.') < 0 && number.indexOf('e') < 0 && number.indexOf('E') < 0) {
-            long integer = Long.parseLong(number);
-            return integer >= Integer.MIN_VALUE && integer <= Integer.MAX_VALUE
-                    ? IntTag.valueOf((int) integer) : LongTag.valueOf(integer);
-        }
-        double decimal = Double.parseDouble(number);
-        if (!Double.isFinite(decimal)) throw new IllegalArgumentException("Non-finite JSON number");
-        return DoubleTag.valueOf(decimal);
     }
 
     /** 默认两空格缩进。 */

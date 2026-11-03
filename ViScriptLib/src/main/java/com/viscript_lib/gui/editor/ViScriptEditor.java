@@ -144,7 +144,7 @@ public abstract class ViScriptEditor extends Editor {
     }
 
     /**
-     * 解析剪贴板 JSON，并用同类型的新项目替换当前项目。
+     * 使用原版 NBT 解析器读取剪贴板文本，并用同类型的新项目替换当前项目。
      *
      * <p>未打开项目时使用首个注册类型；解析或反序列化失败时保留当前项目。
      * 成功导入的项目尚未关联本地文件。
@@ -156,12 +156,12 @@ public abstract class ViScriptEditor extends Editor {
         try {
             var type = getCurrentProject() == null ? projectTypes.getFirst() : getCurrentProject().getProjectType();
             var project = type.newEmptyProject();
-            var tag = NbtHelper.tagFromJson(Minecraft.getInstance().keyboardHandler.getClipboard());
+            var tag = NbtHelper.tagFromString(Minecraft.getInstance().keyboardHandler.getClipboard());
             project.deserializeNBT(Platform.getFrozenRegistry(), tag);
             if (getCurrentProject() != null) closeCurrentProject();
             loadNewProject(project, null);
             return "viscript_lib.editor.import.success";
-        } catch (RuntimeException exception) {
+        } catch (Exception exception) {
             return "viscript_lib.editor.import.fail";
         }
     }

@@ -238,8 +238,8 @@
   "viscript_lib.editor.exported": "Project JSON copied to clipboard",
   "viscript_lib.editor.export.fail": "Could not export project data",
   "viscript_lib.editor.import": "Import data from clipboard",
-  "viscript_lib.editor.import.title": "Import JSON",
+  "viscript_lib.editor.import.title": "Import data",
   "viscript_lib.editor.import.tip": "A successful import replaces the current project. Save any changes you want to keep first.",
-  "viscript_lib.editor.import.success": "Project JSON imported from clipboard",
-  "viscript_lib.editor.import.fail": "Could not import clipboard JSON into this project"
+  "viscript_lib.editor.import.success": "Project data imported from clipboard",
+  "viscript_lib.editor.import.fail": "Could not import clipboard data into this project"
 }

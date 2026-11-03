@@ -238,8 +238,8 @@
   "viscript_lib.editor.exported": "已将当前项目 JSON 复制到剪贴板",
   "viscript_lib.editor.export.fail": "项目数据导出失败",
   "viscript_lib.editor.import": "从剪贴板导入数据",
-  "viscript_lib.editor.import.title": "导入 JSON",
+  "viscript_lib.editor.import.title": "导入数据",
   "viscript_lib.editor.import.tip": "导入成功后将替换当前项目。请先保存需要保留的修改。",
-  "viscript_lib.editor.import.success": "已从剪贴板导入项目 JSON",
-  "viscript_lib.editor.import.fail": "剪贴板 JSON 无法导入当前项目"
+  "viscript_lib.editor.import.success": "已从剪贴板导入项目数据",
+  "viscript_lib.editor.import.fail": "剪贴板数据无法导入当前项目"
 }
